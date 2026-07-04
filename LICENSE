@@ -1,17 +1,21 @@
-Copyright (c) 2026 Sahil Khutey. All Rights Reserved.
+MIT License
 
-PROPRIETARY & CONFIDENTIAL
-This software and associated documentation files (the "Software") are the proprietary property of Sahil Khutey.
+Copyright (c) 2026 Sahil Khutey
 
-1. PERMITTED USE
-You are granted a limited, non-exclusive, non-transferable license to use the Software solely for the purposes explicitly authorized by the copyright holder in a separate written agreement.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-2. RESTRICTIONS
-You may NOT:
-- Modify, translate, reverse engineer, decompile, or disassemble the Software.
-- Copy, distribute, publish, display, or otherwise make the Software available to any third party.
-- Use the Software for any commercial purpose without explicit written consent.
-- Remove any copyright, trademark, or other proprietary notices from the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-3. NO WARRANTY
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
