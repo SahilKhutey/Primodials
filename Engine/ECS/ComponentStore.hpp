@@ -4,6 +4,7 @@
 #include "Core/Assert.hpp"
 #include <vector>
 #include <memory>
+#include <iostream>
 
 namespace Shape {
 
@@ -13,6 +14,9 @@ public:
     virtual void EntityDestroyed(Entity entity) = 0;
     virtual bool Has(Entity entity) const = 0;
     virtual void Remove(Entity entity) = 0;
+    virtual void Serialize(std::ostream& os) const = 0;
+    virtual void Deserialize(std::istream& is) = 0;
+    virtual u32 GetComponentTypeId() const = 0;
 };
 
 template <typename T>
@@ -85,6 +89,48 @@ public:
     const Entity* GetEntities() const { return m_DenseEntities.data(); }
     
     usize GetSize() const { return m_DenseComponents.size(); }
+
+    u32 GetComponentTypeId() const override {
+        return T::TypeId;
+    }
+
+    void Serialize(std::ostream& os) const override {
+        // Write size
+        u32 count = static_cast<u32>(m_DenseComponents.size());
+        os.write(reinterpret_cast<const char*>(&count), sizeof(count));
+
+        if (count > 0) {
+            // Write dense components array
+            os.write(reinterpret_cast<const char*>(m_DenseComponents.data()), count * sizeof(T));
+            // Write dense entities array
+            os.write(reinterpret_cast<const char*>(m_DenseEntities.data()), count * sizeof(Entity));
+            
+            // Write sparse array
+            u32 sparseSize = static_cast<u32>(m_Sparse.size());
+            os.write(reinterpret_cast<const char*>(&sparseSize), sizeof(sparseSize));
+            os.write(reinterpret_cast<const char*>(m_Sparse.data()), sparseSize * sizeof(u32));
+        }
+    }
+
+    void Deserialize(std::istream& is) override {
+        u32 count = 0;
+        is.read(reinterpret_cast<char*>(&count), sizeof(count));
+
+        m_DenseComponents.resize(count);
+        m_DenseEntities.resize(count);
+
+        if (count > 0) {
+            is.read(reinterpret_cast<char*>(m_DenseComponents.data()), count * sizeof(T));
+            is.read(reinterpret_cast<char*>(m_DenseEntities.data()), count * sizeof(Entity));
+
+            u32 sparseSize = 0;
+            is.read(reinterpret_cast<char*>(&sparseSize), sizeof(sparseSize));
+            m_Sparse.resize(sparseSize);
+            is.read(reinterpret_cast<char*>(m_Sparse.data()), sparseSize * sizeof(u32));
+        } else {
+            m_Sparse.clear();
+        }
+    }
 
 private:
     // Dense contiguous arrays

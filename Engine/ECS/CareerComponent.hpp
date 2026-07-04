@@ -1,4 +1,5 @@
 #pragma once
+#include "ECS/ComponentTypes.hpp"
 
 #include "Core/Platform.hpp"
 
@@ -27,6 +28,7 @@ enum class Profession : u8 {
 };
 
 struct CareerComponent {
+    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::CareerComponent);
     Department department = Department::Survival;
     Profession profession = Profession::Citizen;
 

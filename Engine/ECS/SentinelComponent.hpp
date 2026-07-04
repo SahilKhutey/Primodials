@@ -1,4 +1,5 @@
 #pragma once
+#include "ECS/ComponentTypes.hpp"
 
 #include "Core/Platform.hpp"
 
@@ -12,6 +13,7 @@ enum class SentinelType : u8 {
 };
 
 struct SentinelComponent {
+    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::SentinelComponent);
     SentinelType type = SentinelType::Economic;
     f32 commandRadius = 60.0f;
     f32 syncTimer = 0.0f;

@@ -1,4 +1,5 @@
 #pragma once
+#include "ECS/ComponentTypes.hpp"
 
 #include "Core/Platform.hpp"
 
@@ -10,6 +11,7 @@ enum class ColliderType : u8 {
 };
 
 struct ColliderComponent {
+    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::ColliderComponent);
     ColliderType type = ColliderType::Circle;
 
     // Physical Material properties

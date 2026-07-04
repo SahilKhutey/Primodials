@@ -1,4 +1,5 @@
 #pragma once
+#include "ECS/ComponentTypes.hpp"
 
 #include "ShapeEngine/Math/Vector2.hpp"
 #include <vector>
@@ -12,6 +13,7 @@ struct MemoryItem {
 };
 
 struct MindComponent {
+    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::MindComponent);
     // 1. Needs (0 to 100, where 100 is extreme urgency)
     f32 hunger = 0.0f;
     f32 fatigue = 0.0f;

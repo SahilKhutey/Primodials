@@ -1,4 +1,5 @@
 #pragma once
+#include "ECS/ComponentTypes.hpp"
 
 #include "Core/Platform.hpp"
 #include "Simulation/DeterministicRng.hpp"
@@ -8,6 +9,7 @@
 namespace Shape {
 
 struct GeneticsComponent {
+    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::GeneticsComponent);
     // 12 genes representing physiological and behavioral traits
     // 0: Target Side Count (Vertices)
     // 1: Radius Scale

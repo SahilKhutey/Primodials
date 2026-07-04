@@ -5,16 +5,19 @@
 using namespace Shape;
 
 struct PositionComponent {
+    static constexpr u32 TypeId = 999;
     f32 x;
     f32 y;
 };
 
 struct VelocityComponent {
+    static constexpr u32 TypeId = 998;
     f32 dx;
     f32 dy;
 };
 
 struct TagComponent {
+    static constexpr u32 TypeId = 997;
     const char* name;
 };
 

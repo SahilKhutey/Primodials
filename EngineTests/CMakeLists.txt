@@ -19,6 +19,7 @@ add_executable(ShapeEngineTests
     AI/CareerTests.cpp
     Civilization/CivilizationSystemTests.cpp
     Networking/NetworkingTests.cpp
+    Serialization/SerializationTests.cpp
     ContainerTests.cpp
 )
 

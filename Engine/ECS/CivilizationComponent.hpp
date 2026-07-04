@@ -1,4 +1,5 @@
 #pragma once
+#include "ECS/ComponentTypes.hpp"
 #include "Core/Platform.hpp"
 #include <vector>
 
@@ -11,6 +12,7 @@ enum class FactionAlignment {
 };
 
 struct CivilizationComponent {
+    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::CivilizationComponent);
     FactionAlignment alignment = FactionAlignment::Neutral;
     u32 factionId = 0;
     

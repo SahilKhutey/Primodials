@@ -1,10 +1,12 @@
 #pragma once
+#include "ECS/ComponentTypes.hpp"
 
 #include "ShapeEngine/Math/Vector2.hpp"
 
 namespace Shape {
 
 struct RigidBodyComponent {
+    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::RigidBodyComponent);
     Math::Vector2f velocity = Math::Vector2f::Zero();
     Math::Vector2f force = Math::Vector2f::Zero();
 

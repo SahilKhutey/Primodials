@@ -49,4 +49,31 @@ bool World::IsEntityValid(Entity entity) const {
     return index < m_Generations.size() && m_Generations[index] == GetEntityGeneration(entity);
 }
 
+void World::SerializeEntities(std::ostream& os) const {
+    auto writeVec = [&os](const auto& vec) {
+        u32 size = static_cast<u32>(vec.size());
+        os.write(reinterpret_cast<const char*>(&size), sizeof(size));
+        if (size > 0) {
+            os.write(reinterpret_cast<const char*>(vec.data()), size * sizeof(typename std::decay_t<decltype(vec)>::value_type));
+        }
+    };
+    writeVec(m_ActiveEntities);
+    writeVec(m_FreeIndices);
+    writeVec(m_Generations);
+}
+
+void World::DeserializeEntities(std::istream& is) {
+    auto readVec = [&is](auto& vec) {
+        u32 size = 0;
+        is.read(reinterpret_cast<char*>(&size), sizeof(size));
+        vec.resize(size);
+        if (size > 0) {
+            is.read(reinterpret_cast<char*>(vec.data()), size * sizeof(typename std::decay_t<decltype(vec)>::value_type));
+        }
+    };
+    readVec(m_ActiveEntities);
+    readVec(m_FreeIndices);
+    readVec(m_Generations);
+}
+
 } // namespace Shape

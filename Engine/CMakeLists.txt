@@ -32,6 +32,8 @@ add_library(ShapeEngine STATIC
     Utility/CRC32.cpp
     Networking/LockstepSynchronizer.cpp
     Networking/DesyncVerifier.cpp
+    Serialization/Serializer.cpp
+    Simulation/ReplaySystem.cpp
     Rendering/SDL3Renderer.cpp
     Rendering/RenderingSystem.cpp
 )

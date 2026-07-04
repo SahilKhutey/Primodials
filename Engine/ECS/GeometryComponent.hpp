@@ -1,4 +1,5 @@
 #pragma once
+#include "ECS/ComponentTypes.hpp"
 
 #include "ShapeEngine/Math/Vector2.hpp"
 #include "Math/PolygonGeometry.hpp"
@@ -7,6 +8,7 @@
 namespace Shape {
 
 struct GeometryComponent {
+    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::GeometryComponent);
     std::vector<Math::Vector2f> vertices;
     u32 sideCount = 3;
     f32 scale = 1.0f;

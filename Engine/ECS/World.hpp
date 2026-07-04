@@ -8,6 +8,7 @@
 #include <memory>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 namespace Shape {
 
@@ -20,6 +21,10 @@ public:
     Entity CreateEntity();
     void DestroyEntity(Entity entity);
     bool IsEntityValid(Entity entity) const;
+
+    // Serialization
+    void SerializeEntities(std::ostream& os) const;
+    void DeserializeEntities(std::istream& is);
 
     // Component Management
     template <typename T>
@@ -88,6 +93,16 @@ public:
         auto it = m_ComponentStores.find(typeIdx);
         SHAPE_ASSERT_MSG(it != m_ComponentStores.end(), "Component store not found!");
         return *static_cast<const ComponentStore<T>*>(it->second.get());
+    }
+
+    const std::unordered_map<std::type_index, std::unique_ptr<IComponentStore>>& GetComponentStores() const {
+        return m_ComponentStores;
+    }
+    
+    // Allows Serializer to dynamically create a store by type index
+    template <typename T>
+    void EnsureComponentStore() {
+        GetComponentStore<T>(); // Creates if it doesn't exist
     }
 
 private:

@@ -1,10 +1,12 @@
 #pragma once
+#include "ECS/ComponentTypes.hpp"
 
 #include "Core/Platform.hpp"
 
 namespace Shape {
 
 struct LifecycleComponent {
+    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::LifecycleComponent);
     f32 age = 0.0f;
     f32 maxAge = 80.0f;
     f32 health = 100.0f;
