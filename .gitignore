@@ -1,0 +1,34 @@
+# CMake build artifacts
+build/
+out/
+bin/
+lib/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# IDE and Editor files
+.vscode/
+.vs/
+*.suo
+*.user
+*.swp
+.cache/
+
+# Agent configuration
+.gemini/
+.agents/
+
+# Output and temporary files
+*.log
+*.txt
+!CMakeLists.txt
+test_out*.txt
+test_output*.txt
+test_results.txt
+all_tests.txt
+
+# OS generated files
+.DS_Store
+Thumbs.db
