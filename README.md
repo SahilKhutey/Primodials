@@ -5,7 +5,7 @@
 
   **A High-Performance, Data-Oriented C++23 Simulation Engine**
 
-  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+  [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
   [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://isocpp.org/)
   [![CMake](https://img.shields.io/badge/CMake-3.20+-green.svg)](https://cmake.org/)
   [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
@@ -87,6 +87,8 @@ The architecture is extensively documented. Please refer to the **[Simulation Bi
 
 ## 📜 License
 
-This project is licensed under the **MIT License**. This highly permissive license grants you full commercial rights to use, modify, and distribute the engine in your own proprietary software.
+This project is licensed under a **Proprietary & Confidential License**. Complete ownership and control of the Engine is retained by the author (Sahil Khutey). 
+
+You are strictly prohibited from using, copying, modifying, merging, publishing, distributing, sublicensing, and/or selling copies of this software without explicitly obtaining prior written permission. Any commercial use or integration into a service requires explicit authorization.
 
 See the [LICENSE](LICENSE) file for the full text.
