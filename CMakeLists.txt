@@ -74,6 +74,21 @@ if(SHAPE_BUILD_EXAMPLES)
     add_subdirectory(Examples)
 endif()
 
+add_subdirectory(Editor)
+
 if(SHAPE_BUILD_BENCHMARKS)
     add_subdirectory(Benchmarks)
 endif()
+
+# ─── Final Game & Tools ───────────────────────────────────────────────────────
+add_subdirectory(Games/PolygonalPrimordials)
+add_subdirectory(Launcher)
+add_subdirectory(Tools/cooker)
+add_subdirectory(Tools/documentation)
+add_subdirectory(Tools/trailer)
+add_subdirectory(Tools/localization)
+add_subdirectory(LiveOps)
+add_subdirectory(Bots/Discord)
+add_subdirectory(Bots/SteamModeration)
+add_subdirectory(Tools/liveops/curator)
+add_subdirectory(Tools/liveops/mod_validator)

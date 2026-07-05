@@ -1,0 +1,5 @@
+{
+    "endpoint": "https://telemetry.shapeengine.dev/v1/collect",
+    "batch_size": 50,
+    "flush_interval_ms": 60000
+}

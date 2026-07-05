@@ -1,0 +1,1 @@
+// ResourceDeposits stub

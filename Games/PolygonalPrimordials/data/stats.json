@@ -1,0 +1,6 @@
+{
+    "stats": [
+        {"id": "TOTAL_DEATHS", "api_name": "STAT_TOTAL_DEATHS", "type": "int"},
+        {"id": "MAX_POPULATION", "api_name": "STAT_MAX_POP", "type": "int"}
+    ]
+}

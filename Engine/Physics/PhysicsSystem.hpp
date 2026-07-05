@@ -20,6 +20,7 @@ public:
     ~PhysicsSystem() = default;
 
     void Update(World& world, f32 dt);
+    const SpatialHashGrid& GetGrid() const { return m_Grid; }
 
     // Dynamic collision checks
     static CollisionManifold CheckCircleCollision(

@@ -1,94 +1,74 @@
-<div align="center">
-  <img src="https://raw.githubusercontent.com/SahilKhutey/Primodials/main/docs/assets/logo.png" alt="Primodials Logo" width="200" onerror="this.style.display='none'"/>
+# Polygonal Primordials & Shape Engine 
 
-  # Primodials (ShapeEngine)
+Welcome to the **Polygonal Primordials** repository! This project consists of two major components:
+1. **Shape Engine**: A production-grade, highly-deterministic Entity Component System (ECS) C++23 game engine built from scratch.
+2. **Polygonal Primordials**: A deep artificial life simulation and evolution sandbox powered by the Shape Engine.
 
-  **A High-Performance, Data-Oriented C++23 Simulation Engine**
+## Project Phases Completed
+This repository represents the culmination of a massive, multi-phase engineering effort spanning eight distinct phases:
 
-  [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
-  [![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://isocpp.org/)
-  [![CMake](https://img.shields.io/badge/CMake-3.20+-green.svg)](https://cmake.org/)
-  [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-  [![Tests](https://img.shields.io/badge/tests-88%2F88%20passed-brightgreen.svg)]()
+- **Phase A (Foundation):** Core mathematics, SIMD vectors, custom memory allocators (Pool, Arena), lock-free data structures, and the foundational `ShapeConfig` & CMake build system.
+- **Phase B (ECS & Platform):** High-performance Archetype-based ECS capable of simulating 1,000,000 entities at 60 FPS. Integration with SDL3 for cross-platform windowing and input handling.
+- **Phase C (Simulation):** Deterministic tick scheduler (60Hz fixed-step), spatial hashing, and the complex Species Schema powering biological and genetic simulation.
+- **Phase D (Evolution):** Emergent gameplay mechanics including reproduction, genetic crossover, mutation, combat, predator-prey dynamics, and dynamic speciation.
+- **Phase E (Editor & Replay):** Full Dear ImGui integration, providing a professional hierarchy, inspector, and profiler. Complete deterministic rollback and replay timeline scrubbing.
+- **Phase F (Multiplayer & Vulkan):** Lockstep network multiplayer with rollback netcode. Advanced graphics pipelines preparing the groundwork for Vulkan rendering and Lua modding integrations.
+- **Phase G (Shipping):** Steamworks API integration, telemetry, automated crash reporting, accessibility features, localization, and a comprehensive build cooker.
+- **Phase H (LiveOps):** Post-launch support infrastructure including a real-time dashboard, anomaly detection, cohort analysis, Discord/Steam moderation bots, and modding Workshop curation tools.
 
-</div>
+## Repository Structure
 
----
-
-## 📖 Overview
-
-**Primodials** is a headless, deeply optimized ecosystem and civilization simulation framework built on a custom Entity-Component-System (ECS). Designed for extreme performance and determinism, it powers complex systemic interactions without runtime heap allocations, utilizing contiguous sparse sets and bump-allocated memory arenas.
-
-From narrowphase SAT collisions to Lockstep rollback networking, Primodials mathematical engine is designed to run massively complex scenarios in real-time.
-
----
-
-## ✨ Core Features
-
-* 🚀 **Data-Oriented ECS**: Custom contiguous sparse sets and zero-allocation memory pools for extreme cache-coherency.
-* ⚛️ **Deterministic Physics**: Euler-Cromer integration, Narrowphase SAT collision solvers, and Broadphase Spatial Hash Grids.
-* 🧬 **Biology & Evolution**: Lotka-Volterra dynamics, genetic crossovers, metabolic aging, and phenotypic drift.
-* 🧠 **AI & Cognition**: Utility AI architectures, perception fields, short/long term memory decay, and steering behaviors.
-* 🏛️ **Civilization & Economy**: Storage depot load balancing, logistics trade routes, and technology tree propagation.
-* 🌐 **Lockstep Networking**: Deterministic CRC32 state verification hashing, lockstep frame stalls, and rollback synchronization.
-* 🖥️ **Decoupled Architecture**: Strictly headless mechanics enabling independent visualization layers (e.g., SDL3/Vulkan) and dedicated server environments.
-
----
-
-## 📂 Repository Structure
-
-```text
-Primodials/
-├── Engine/             # Core simulation library (ECS, Physics, AI, Network, Math)
-├── EngineTests/        # Catch2 unit test suite asserting 100% engine determinism
-├── Examples/           # Reference implementations (Rendering interpolation loops)
-├── docs/               # The "Simulation Bible" - 21+ Architectural Blueprints
-├── CMakeLists.txt      # Root build configuration
-└── LICENSE             # MIT License
+```
+Primodilas/
+├── CMakeLists.txt           # Master CMake configuration
+├── Engine/                  # Core Shape Engine (Math, Memory, ECS, Platform)
+├── Editor/                  # Dear ImGui-based visual editor
+├── Games/                   # Target applications
+│   └── PolygonalPrimordials/# The main artificial life simulation game
+├── LiveOps/                 # Live-service telemetry, A/B testing, and health dashboards
+├── Bots/                    # Discord and Steam Moderation automation
+├── Content/                 # Lua scripts, JSON schemas, and game configurations (Mods)
+├── Tools/                   # Asset cooker, docs generator, trailer renderer, and liveops CLI
+├── Marketing/               # Launch assets, trailers, and announcement templates
+└── docs/                    # Extensive runbooks, manuals, and design documents
 ```
 
----
+## Building the Engine
 
-## 🛠️ Build Instructions
+### Prerequisites
+- **Compiler**: A C++23 compliant compiler (MSVC 19.34+, GCC 13+, Clang 16+).
+- **CMake**: Version 3.22 or higher.
+- **Git**: Required for FetchContent dependencies (SDL3, Catch2).
 
-Primodials utilizes **CMake** and requires a **C++23** compliant compiler (e.g., LLVM-MinGW, Clang, or MSVC). The engine enforces strict `-Werror` compliance to guarantee zero memory leaks or implicit cast bugs.
-
-### 1. Clone the Repository
+### Build Instructions
 ```bash
-git clone https://github.com/SahilKhutey/Primodials.git
-cd Primodials
+# Clone the repository
+git clone <YOUR_GITHUB_REPO_URL>
+cd Primodilas
+
+# Configure the build (Out-of-source)
+cmake -S . -B build -D CMAKE_BUILD_TYPE=Release
+
+# Build the project
+cmake --build build --config Release
 ```
 
-### 2. Configure & Build
-```bash
-mkdir build
-cd build
-cmake ..
-cmake --build . --config Release
-```
+## Running the Game & Tools
+After building, executables will be located in the `build/` directory (or `build/Release/` on MSVC).
 
-### 3. Run Validation Tests
-The engine includes a rigorous Catch2 testing suite covering math, physics, memory boundaries, and networking.
-```bash
-ctest -C Release --output-on-failure
-```
+- **Game**: `PolygonalPrimordials.exe`
+- **Editor**: `ShapeEditor.exe`
+- **Discord Bot**: `DiscordBot.exe`
+- **Dashboard API**: Runs internally via the LiveOps server module.
+
+## Modding & Workshop
+Polygonal Primordials supports extensive community modifications via Lua and JSON schemas.
+Check the `Content/v1.2_modding/` directory for templates.
+
+## Architecture Guidelines
+- **Determinism**: Cross-platform determinism is the lifeblood of this engine. Do not use standard floating-point functions (`std::sin`, `std::sqrt`) or standard random generators (`std::rand`) in the simulation layer. Always use `Shape::Math`.
+- **Memory**: Avoid `new`/`delete`. Use `LinearAllocator`, `PoolAllocator`, or standard library containers utilizing custom allocators where possible.
+- **Testing**: Every new system must have comprehensive unit tests in `EngineTests/` to maintain the stability of the rollback netcode.
 
 ---
-
-## 📚 Documentation
-
-The architecture is extensively documented. Please refer to the **[Simulation Bible](docs/README.md)** for exhaustive details on subsystem specifications, thermodynamic math formulas, and the ECS design philosophy.
-
-* **[Engine Architecture Blueprint](docs/04_Engine/00_Engine_Architecture_Blueprint.md)**
-* **[Physics & SAT Framework](docs/06_Design/Physics.md)**
-* **[Lockstep Networking](docs/06_Design/Networking.md)**
-
----
-
-## 📜 License
-
-This project is licensed under a **Proprietary & Confidential License**. Complete ownership and control of the Engine is retained by the author (Sahil Khutey). 
-
-You are strictly prohibited from using, copying, modifying, merging, publishing, distributing, sublicensing, and/or selling copies of this software without explicitly obtaining prior written permission. Any commercial use or integration into a service requires explicit authorization.
-
-See the [LICENSE](LICENSE) file for the full text.
+*Built with passion. Welcome to the primordial soup.*

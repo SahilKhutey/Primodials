@@ -1,0 +1,24 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure CMake
+      run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DSTEAMWORKS_SDK=ON
+
+    - name: Build
+      run: cmake --build build --config Release -j 4
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: PolygonalPrimordials-Win64
+        path: build/bin/Release/

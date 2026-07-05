@@ -1,0 +1,8 @@
+{
+    "name": "My Custom Mod",
+    "version": "1.0.0",
+    "description": "Template for a new mod.",
+    "author": "Your Name Here",
+    "type": "Species",
+    "compatibility": ["1.1.0", "1.2.0"]
+}

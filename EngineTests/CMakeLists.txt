@@ -13,6 +13,10 @@ add_executable(ShapeEngineTests
     Math/GeometryTests.cpp
     Math/PointTests.cpp
     ECS/EcsTests.cpp
+    ECS2/test_entity.cpp
+    ECS2/test_archetype.cpp
+    ECS2/test_command_buffer.cpp
+    ECS2/test_stress.cpp
     Physics/PhysicsTests.cpp
     Biology/BiologyTests.cpp
     AI/CognitiveTests.cpp
@@ -21,6 +25,35 @@ add_executable(ShapeEngineTests
     Networking/NetworkingTests.cpp
     Serialization/SerializationTests.cpp
     ContainerTests.cpp
+
+    # Phase C — Simulation Tests
+    SimulationTests/test_simulation_time.cpp
+    SimulationTests/test_spatial.cpp
+    SimulationTests/test_genetics.cpp
+    SimulationTests/test_species.cpp
+
+    # Phase D — Life Demo Tests
+    SimulationTests/test_reproduction.cpp
+    SimulationTests/test_combat.cpp
+    SimulationTests/test_genome_decoder.cpp
+    SimulationTests/test_snapshot.cpp
+    SimulationTests/test_speciation.cpp
+
+    # Phase E — Editor, Replay, Civilization Tests
+    PhaseETests/test_replay.cpp
+    PhaseETests/test_procedural.cpp
+    PhaseETests/test_tech_tree.cpp
+    PhaseETests/test_diplomacy.cpp
+
+    # Phase F — Vulkan, Multiplayer, Scripting, Assets
+    NetworkTests/test_network.cpp
+    ScriptingTests/test_scripting.cpp
+    AssetTests/test_asset.cpp
+    VulkanTests/test_vulkan.cpp
+
+    # Phase G — Game and Performance Tests
+    GameTests/test_steam_stub.cpp
+    PerformanceTests/test_baseline.cpp
 )
 
 target_link_libraries(ShapeEngineTests PRIVATE

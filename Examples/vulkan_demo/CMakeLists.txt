@@ -1,0 +1,8 @@
+add_executable(vulkan_demo src/main.cpp)
+target_include_directories(vulkan_demo PRIVATE ${CMAKE_SOURCE_DIR}/Engine/Rendering/include)
+target_link_libraries(vulkan_demo PRIVATE ShapeEngine ShapeRenderingVulkan SDL3::SDL3)
+if(NOT MSVC)
+    target_compile_options(vulkan_demo PRIVATE -Wall -Wextra)
+else()
+    target_compile_options(vulkan_demo PRIVATE /W3 /EHsc)
+endif()

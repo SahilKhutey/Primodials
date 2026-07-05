@@ -1,6 +1,32 @@
 #include "ECS/World.hpp"
+#include "Physics/PhysicsSystem.hpp"
+#include "Biology/BiologySystem.hpp"
+#include "AI/OptimizationSystem.hpp"
+#include "ECS/CommandBuffer.hpp"
 
 namespace Shape {
+
+World::World() 
+    : m_PhysicsSystem(std::make_unique<PhysicsSystem>())
+    , m_BiologySystem(std::make_unique<BiologySystem>())
+    , m_OptimizationSystem(std::make_unique<OptimizationSystem>())
+    , m_CommandBuffer(std::make_unique<CommandBuffer>(*this))
+{
+}
+
+World::~World() = default;
+
+void World::Tick(f32 dt) {
+    m_TickCount++;
+    
+    // Phase 2: Logic & Update
+    m_OptimizationSystem->Update(*this, m_PhysicsSystem->GetGrid(), dt);
+    m_BiologySystem->Update(*this, *m_CommandBuffer, dt, m_TickCount);
+    m_PhysicsSystem->Update(*this, dt);
+    
+    // Phase 3: Mutations & Command Buffer Flush
+    m_CommandBuffer->Flush();
+}
 
 Entity World::CreateEntity() {
     u32 index = 0;

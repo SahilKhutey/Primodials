@@ -12,10 +12,17 @@
 
 namespace Shape {
 
+class PhysicsSystem;
+class BiologySystem;
+class OptimizationSystem;
+class CommandBuffer;
+
 class World {
 public:
-    World() = default;
-    ~World() = default;
+    World();
+    ~World();
+
+    void Tick(f32 dt);
 
     // Entity Management
     Entity CreateEntity();
@@ -113,6 +120,14 @@ private:
 
     // Component Registry
     std::unordered_map<std::type_index, std::unique_ptr<IComponentStore>> m_ComponentStores;
+    
+    // Systems
+    std::unique_ptr<PhysicsSystem> m_PhysicsSystem;
+    std::unique_ptr<BiologySystem> m_BiologySystem;
+    std::unique_ptr<OptimizationSystem> m_OptimizationSystem;
+    std::unique_ptr<CommandBuffer> m_CommandBuffer;
+    
+    u32 m_TickCount = 0;
 };
 
 } // namespace Shape

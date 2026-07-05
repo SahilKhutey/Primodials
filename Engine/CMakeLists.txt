@@ -9,10 +9,20 @@ add_library(ShapeEngine STATIC
     Math/Source/Scalar.cpp
     Math/Source/Matrix2.cpp
     Jobs/JobSystem.cpp
-    
+
     ECS/World.cpp
     ECS/SpeciesSchema.cpp
     ECS/CommandBuffer.cpp
+
+    # ECS2 — Archetype-based ECS (Phase B)
+    ECS2/ArchetypeStorage.cpp
+    ECS2/World2.cpp
+    ECS2/CommandBuffer2.cpp
+
+    # Platform input layer (Phase B)
+    Platform/Events.cpp
+    Platform/Input.cpp
+
     Input/InputSystem.cpp
     Platform/Window.cpp
     Platform/Source/Platform.cpp
@@ -20,6 +30,20 @@ add_library(ShapeEngine STATIC
     Simulation/SimulationClock.cpp
     Simulation/SimulationScheduler.cpp
     Physics/SpatialHashGrid.cpp
+
+    # Phase C — Simulation Core
+    Simulation/Spatial/SpatialGrid.cpp
+    Simulation/Genetics/GeneticsSystem.cpp
+    Simulation/Evolution/EvolutionSystem.cpp
+    Simulation/Resources/ResourceSystem.cpp
+    
+    # Phase D — Life Demo Simulation
+    Simulation/Reproduction/ReproductionSystem.cpp
+    Simulation/Combat/CombatSystem.cpp
+    Simulation/Evolution/SpeciationSystem.cpp
+    Simulation/Analytics/PopulationGraph.cpp
+    Simulation/Snapshots/SimulationSnapshot.cpp
+
     Physics/PhysicsSystem.cpp
     Math/PolygonGeometry.cpp
     AI/OptimizationSystem.cpp
@@ -43,6 +67,8 @@ target_include_directories(ShapeEngine PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Platform/Include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Math/Include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Containers>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ECS2>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Reflection>
     $<INSTALL_INTERFACE:include>
 )
 
@@ -69,3 +95,15 @@ else()
         -fno-fast-math
     )
 endif()
+
+add_subdirectory(UI)
+add_subdirectory(Editor)
+add_subdirectory(Replay)
+add_subdirectory(Procedural)
+add_subdirectory(Rendering)
+add_subdirectory(Network)
+add_subdirectory(Scripting)
+add_subdirectory(Compute)
+add_subdirectory(AssetPipeline)
+add_subdirectory(Optimization)
+

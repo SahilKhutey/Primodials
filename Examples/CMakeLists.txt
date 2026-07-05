@@ -79,3 +79,64 @@ target_link_libraries(RenderingExample PRIVATE ShapeEngine)
 if(NOT MSVC)
     target_link_options(RenderingExample PRIVATE -static)
 endif()
+
+add_executable(simulation_demo
+    simulation_demo/src/main.cpp
+)
+
+target_link_libraries(simulation_demo PRIVATE ShapeEngine SDL3::SDL3)
+
+target_include_directories(simulation_demo PRIVATE
+    ${CMAKE_SOURCE_DIR}/Engine
+)
+
+if(MSVC)
+    target_compile_options(simulation_demo PRIVATE
+        /W3 /permissive- /EHsc /fp:precise)
+else()
+    target_compile_options(simulation_demo PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+# Copy species data files to output directory after build
+add_custom_command(TARGET simulation_demo POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/Data/Species
+        $<TARGET_FILE_DIR:simulation_demo>/Data/Species
+    COMMENT "Copying Species data files"
+)
+
+# ─── Phase D: Life Demo ───────────────────────────────────────────────────────
+
+add_executable(life_demo
+    life_demo/src/main.cpp
+)
+
+target_link_libraries(life_demo PRIVATE ShapeEngine SDL3::SDL3)
+
+target_include_directories(life_demo PRIVATE
+    ${CMAKE_SOURCE_DIR}/Engine
+)
+
+if(MSVC)
+    target_compile_options(life_demo PRIVATE
+        /W3 /permissive- /EHsc /fp:precise)
+else()
+    target_compile_options(life_demo PRIVATE -Wall -Wextra -pedantic)
+endif()
+
+add_custom_command(TARGET life_demo POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/Data/Species
+        $<TARGET_FILE_DIR:life_demo>/Data/Species
+    COMMENT "Copying Species data files"
+)
+
+# ─── Phase E: Demos ───────────────────────────────────────────────────────────
+add_subdirectory(editor_demo)
+add_subdirectory(replay_demo)
+add_subdirectory(civilization_demo)
+
+# ─── Phase F: Demos ───────────────────────────────────────────────────────────
+add_subdirectory(vulkan_demo)
+add_subdirectory(multiplayer_demo)
+add_subdirectory(scripted_demo)
