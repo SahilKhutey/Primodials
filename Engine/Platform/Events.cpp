@@ -76,7 +76,7 @@ void process([[maybe_unused]] void* sdl_event_raw, EventQueue& queue) {
             out.data = MouseButtonEvent{
                 static_cast<MouseButton>(ev.button.button - 1),
                 {ev.button.x, ev.button.y},
-                static_cast<u32>(ev.button.mod)
+                static_cast<u32>(SDL_GetModState())
             };
             break;
 
@@ -85,7 +85,7 @@ void process([[maybe_unused]] void* sdl_event_raw, EventQueue& queue) {
             out.data = MouseButtonEvent{
                 static_cast<MouseButton>(ev.button.button - 1),
                 {ev.button.x, ev.button.y},
-                static_cast<u32>(ev.button.mod)
+                static_cast<u32>(SDL_GetModState())
             };
             break;
 

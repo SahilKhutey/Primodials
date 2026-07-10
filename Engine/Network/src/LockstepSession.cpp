@@ -1,7 +1,8 @@
 // Shape/Network/LockstepSession.cpp
 #include "Shape/Network/LockstepSession.h"
-#include "Shape/Utility/CRC32.hpp"
-#include "Shape/Core/Logger.hpp"
+#include "Simulation/SplitMix64.hpp"
+#include "Utility/CRC32.hpp"
+#include "Core/Logger.hpp"
 
 #include <algorithm>
 #include <cstring>
@@ -51,7 +52,7 @@ namespace Shape::Network {
         m_local_input = input;
     }
 
-    void LockstepSession::update(ECS::World& world, Simulation::SimulationScheduler& scheduler, double /*real_delta*/) {
+    void LockstepSession::update(World& world, SimulationScheduler& scheduler, double /*real_delta*/) {
         if (!m_backend) return;
         m_backend->poll();
 
@@ -96,7 +97,7 @@ namespace Shape::Network {
         }
     }
 
-    void LockstepSession::run_frame(ECS::World& world, Simulation::SimulationScheduler& scheduler) {
+    void LockstepSession::run_frame(World& world, SimulationScheduler& scheduler) {
         // 1) Send local input for next tick
         Packet input_pkt(PacketType::Input);
         input_pkt.write(scheduler.current_tick() + 1);
@@ -108,7 +109,7 @@ namespace Shape::Network {
         collect_inputs(world, scheduler);
 
         // 3) Step simulation deterministically
-        scheduler.step_once(world);
+        scheduler.step_once();
 
         // 4) Periodically check state hashes
         if (scheduler.current_tick() % m_cfg.state_hash_interval_ticks == 0) {
@@ -116,7 +117,7 @@ namespace Shape::Network {
         }
     }
 
-    void LockstepSession::collect_inputs(ECS::World& /*world*/, Simulation::SimulationScheduler& scheduler) {
+    void LockstepSession::collect_inputs(World& /*world*/, SimulationScheduler& scheduler) {
         // For lockstep, we advance one tick only when all inputs are collected.
         // In a real impl, we'd block on inputs; here we just track that we have them.
         m_players.clear();
@@ -132,7 +133,7 @@ namespace Shape::Network {
 
     void LockstepSession::broadcast_commands() {}
 
-    void LockstepSession::check_state_hashes(ECS::World& world, Simulation::Tick tick) {
+    void LockstepSession::check_state_hashes(World& world, u64 tick) {
         const uint64_t h = hash_world_state(world);
         Packet p(PacketType::StateHash);
         p.write(tick);
@@ -140,14 +141,14 @@ namespace Shape::Network {
         m_backend->broadcast(p);
     }
 
-    void LockstepSession::send_state_hash(ECS::World& world, Simulation::Tick tick) {
+    void LockstepSession::send_state_hash(World& world, u64 tick) {
         check_state_hashes(world, tick);
     }
 
-    uint64_t LockstepSession::hash_world_state(ECS::World& world) const {
+    uint64_t LockstepSession::hash_world_state(World& world) const {
         // Hash a deterministic snapshot of all entity counts and one random position per entity
         uint64_t h = 0xCBF29CE484222325ull;
-        h ^= Random::SplitMix64(world.stats().entity_count).next();
+        h ^= Random::SplitMix64(world.GetActiveEntityCount()).Next();
         h *= 0x100000001B3ull;
         // Note: in full impl, hash every entity's position, velocity, health etc.
         return h;
@@ -165,7 +166,7 @@ namespace Shape::Network {
             }
             case PacketType::Input: {
                 size_t off = 0;
-                const Shape::Simulation::Tick tick = packet.read<Shape::Simulation::Tick>(off);
+                const u64 tick = packet.read<u64>(off);
                 const uint32_t player = packet.read<uint32_t>(off);
                 (void)tick; (void)player;
                 // Store input for processing
@@ -173,7 +174,7 @@ namespace Shape::Network {
             }
             case PacketType::StateHash: {
                 size_t off = 0;
-                const Shape::Simulation::Tick tick = packet.read<Shape::Simulation::Tick>(off);
+                const u64 tick = packet.read<u64>(off);
                 const uint64_t remote_hash = packet.read<uint64_t>(off);
                 (void)tick;
                 if (remote_hash != m_local_player_id) {
@@ -187,7 +188,7 @@ namespace Shape::Network {
         (void)peer;
     }
 
-    void LockstepSession::report_desync(Shape::Simulation::Tick tick, uint64_t local, uint64_t remote) {
+    void LockstepSession::report_desync(u64 tick, uint64_t local, uint64_t remote) {
         SHAPE_LOG_ERROR("Net", "DESYNC at tick {}: local={:X} remote={:X}", tick, local, remote);
         m_state = LockstepState::Desynced;
         ++m_desync_count;

@@ -1,8 +1,8 @@
 // CloudSaves.cpp
-#include "CloudSaves.h"
-#include "SteamStub.h"
-#include "Shape/Core/Logger.h"
-#include "Shape/Core/Platform.h"
+#include "CloudSaves.hpp"
+#include "SteamStub.hpp"
+#include "Core/Logger.hpp"
+#include "ShapeEngine/Platform/FileSystem.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -16,7 +16,7 @@ namespace PolygonalPrimordials {
 
     bool CloudSaves::initialize() {
         m_initialized = true;
-        Shape::Platform::create_directory("Saves");
+        Shape::FileSystem::CreateDirectory("Saves");
         return true;
     }
 
@@ -41,11 +41,11 @@ namespace PolygonalPrimordials {
     }
 
     bool CloudSaves::exists(const std::string& slot) const {
-        return Shape::Platform::file_exists("Saves/" + slot + ".shape");
+        return Shape::FileSystem::Exists("Saves/" + slot + ".shape");
     }
 
     bool CloudSaves::remove(const std::string& slot) {
-        return Shape::Platform::delete_file("Saves/" + slot + ".shape");
+        return Shape::FileSystem::Remove("Saves/" + slot + ".shape");
     }
 
     void CloudSaves::sync_now() {

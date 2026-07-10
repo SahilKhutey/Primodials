@@ -1,4 +1,4 @@
-shape_add_library(ShapeReplay
+shape_add_module(ShapeReplay
     "include/Shape/Replay/ReplayFormat.h"
     "include/Shape/Replay/ReplayWriter.h"
     "include/Shape/Replay/ReplayPlayer.h"

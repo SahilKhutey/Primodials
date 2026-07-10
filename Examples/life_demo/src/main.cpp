@@ -66,7 +66,7 @@ struct Camera {
     float zoom   = 1.0f;
 
     void pan(float dx, float dy) noexcept { x += dx / zoom; y += dy / zoom; }
-    void zoom_by(float factor)   noexcept { zoom = Math::clamp(zoom * factor, 0.05f, 20.0f); }
+    void zoom_by(float factor)   noexcept { zoom = Math::Clamp(zoom * factor, 0.05f, 20.0f); }
 
     float screen_x(float wx, float sw) const noexcept { return (wx - x) * zoom + sw * 0.5f; }
     float screen_y(float wy, float sh) const noexcept { return (wy - y) * zoom + sh * 0.5f; }
@@ -106,10 +106,10 @@ static void seed_creatures(ECS2::World2& world,
 
     for (u32 i = 0; i < count; ++i) {
         const u32 sp = i % 4;
-        const float x = bounds.min.x + rng.NextFloat() * bounds.width();
-        const float y = bounds.min.y + rng.NextFloat() * bounds.height();
-        const float angle = rng.NextFloat() * 6.28318530f;
-        const float speed = max_speeds[sp] * (0.2f + rng.NextFloat() * 0.4f);
+        const float x = bounds.min.x + rng.NextF32() * bounds.width();
+        const float y = bounds.min.y + rng.NextF32() * bounds.height();
+        const float angle = rng.NextF32() * 6.28318530f;
+        const float speed = max_speeds[sp] * (0.2f + rng.NextF32() * 0.4f);
 
         ECS2::EntityId e = world.create();
         world.add<Position>(e, {{x, y}});
@@ -162,7 +162,7 @@ static void tick_ai(ECS2::World2& world, float dt, const WorldBounds& bounds) {
             float diff = target_angle - rot.radians;
             while (diff >  3.14159f) diff -= 6.28318f;
             while (diff < -3.14159f) diff += 6.28318f;
-            rot.radians += Math::clamp(diff, -2.0f * dt, 2.0f * dt);
+            rot.radians += Math::Clamp(diff, -2.0f * dt, 2.0f * dt);
 
             float base_speed = da.max_speed * (0.5f + state.energy / (da.max_energy * 2.0f));
             vel.value = {std::cos(rot.radians) * base_speed,
@@ -346,9 +346,9 @@ int run() {
                     final_b = final_b * (1.0f - co.strength) + co.b * co.strength;
                 }
                 
-                Uint8 r8 = static_cast<Uint8>(Math::clamp(final_r * 255.0f, 0.0f, 255.0f));
-                Uint8 g8 = static_cast<Uint8>(Math::clamp(final_g * 255.0f, 0.0f, 255.0f));
-                Uint8 b8 = static_cast<Uint8>(Math::clamp(final_b * 255.0f, 0.0f, 255.0f));
+                Uint8 r8 = static_cast<Uint8>(Math::Clamp(final_r * 255.0f, 0.0f, 255.0f));
+                Uint8 g8 = static_cast<Uint8>(Math::Clamp(final_g * 255.0f, 0.0f, 255.0f));
+                Uint8 b8 = static_cast<Uint8>(Math::Clamp(final_b * 255.0f, 0.0f, 255.0f));
 
                 draw_polygon(renderer, sx, sy, screen_radius,
                              sp_sides[species_idx], r8, g8, b8, 230, rot.radians);

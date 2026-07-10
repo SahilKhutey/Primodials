@@ -1,7 +1,7 @@
 // Workshop.cpp
-#include "Workshop.h"
-#include "SteamStub.h"
-#include "Shape/Core/Logger.h"
+#include "Workshop.hpp"
+#include "SteamStub.hpp"
+#include "Core/Logger.hpp"
 
 namespace PolygonalPrimordials {
 

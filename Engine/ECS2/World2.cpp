@@ -1,6 +1,7 @@
 #include "ECS2/World2.hpp"
 #include "ECS2/CommandBuffer2.hpp"
 #include "Core/Logger.hpp"
+#include "Core/Assert.hpp"
 #include <cstring>
 
 namespace Shape::ECS2 {
@@ -35,6 +36,21 @@ void World2::destroy(EntityId e) {
     m_pool.free(e);
 }
 
+void World2::destroy_all() {
+    std::vector<EntityId> to_destroy;
+    for (auto& storage : m_storages) {
+        for (u32 ci = 0; ci < storage->chunk_count(); ++ci) {
+            Chunk* chunk = storage->chunk(ci);
+            for (u32 row = 0; row < chunk->count; ++row) {
+                to_destroy.push_back(chunk->entities()[row]);
+            }
+        }
+    }
+    for (auto e : to_destroy) {
+        destroy(e);
+    }
+}
+
 // ─── Archetype management ─────────────────────────────────────────────────────
 
 ArchetypeStorage* World2::get_or_create_storage(const ArchetypeId& id) {
@@ -53,11 +69,9 @@ ArchetypeStorage* World2::get_or_create_storage(const ArchetypeId& id) {
     return m_storages[idx].get();
 }
 
-void World2::move_entity(EntityId e, EntityRecord& rec, const ArchetypeId& new_id) {
-    const ArchetypeId& old_id = current_archetype_id(rec);
-
+void World2::move_entity(EntityId e, EntityRecord& rec, const ArchetypeId new_id) {
+    const ArchetypeId old_id = current_archetype_id(rec);
     if (old_id == new_id) return;
-
     ArchetypeStorage* new_storage = get_or_create_storage(new_id);
 
     // Allocate a row in the new archetype
@@ -113,6 +127,9 @@ void World2::cmd_add_raw(EntityId e, ComponentId cid,
 
     // Write value
     const TypeInfo& ti = ComponentRegistry::get(cid);
+    SHAPE_ASSERT_MSG(size == ti.size,
+        "cmd_add_raw: size mismatch for component {} (got {}, expected {})",
+        cid, size, ti.size);
     ArchetypeStorage* storage = m_storages[rec.archetype_idx].get();
     void* dst = storage->raw_array(rec.chunk_idx, cid) + rec.row_index * ti.size;
     ti.ops.destruct(dst);

@@ -60,7 +60,7 @@ std::vector<u8> SimulationSnapshot::save_to_memory(const ECS2::World2& world) {
     buf.reserve(1024 * 1024); // 1 MB reserve
 
     SnapshotHeader header;
-    header.tick = world.resource<WorldState>().tick;
+    header.tick = world.resource<WorldState>().environment.current_tick;
     // We'll rewrite entity_count later
     const usize header_offset = buf.size();
     write_comp(buf, header);

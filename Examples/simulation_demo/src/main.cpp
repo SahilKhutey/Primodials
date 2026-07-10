@@ -64,7 +64,7 @@ struct Camera {
     float zoom   = 1.0f;
 
     void pan(float dx, float dy) noexcept { x += dx / zoom; y += dy / zoom; }
-    void zoom_by(float factor)   noexcept { zoom = Math::clamp(zoom * factor, 0.05f, 20.0f); }
+    void zoom_by(float factor)   noexcept { zoom = Math::Clamp(zoom * factor, 0.05f, 20.0f); }
 
     // World → screen
     float screen_x(float wx, float sw) const noexcept { return (wx - x) * zoom + sw * 0.5f; }
@@ -128,10 +128,10 @@ static void seed_creatures(ECS2::World2& world,
     for (u32 i = 0; i < count; ++i) {
         const u32 sp = i % 4;
 
-        const float x = bounds.min.x + rng.NextFloat() * bounds.width();
-        const float y = bounds.min.y + rng.NextFloat() * bounds.height();
-        const float angle = rng.NextFloat() * 6.28318530f;
-        const float speed = max_speeds[sp] * (0.2f + rng.NextFloat() * 0.4f);
+        const float x = bounds.min.x + rng.NextF32() * bounds.width();
+        const float y = bounds.min.y + rng.NextF32() * bounds.height();
+        const float angle = rng.NextF32() * 6.28318530f;
+        const float speed = max_speeds[sp] * (0.2f + rng.NextF32() * 0.4f);
 
         ECS2::EntityId e = world.create();
         world.add<Position>(e, {{x, y}});
@@ -161,7 +161,7 @@ static void tick_ai(ECS2::World2& world, float dt, const WorldBounds& bounds) {
             float diff = target_angle - rot.radians;
             while (diff >  3.14159f) diff -= 6.28318f;
             while (diff < -3.14159f) diff += 6.28318f;
-            rot.radians += Math::clamp(diff, -2.0f * dt, 2.0f * dt);
+            rot.radians += Math::Clamp(diff, -2.0f * dt, 2.0f * dt);
 
             // Determine base speed from energy
             float base_speed = 50.0f * (0.5f + state.energy / 200.0f);
@@ -372,7 +372,7 @@ int run() {
                 }
 
                 // Energy pulse: brighter when energy > 80%
-                const float pulse = Math::clamp(state.energy / 100.0f, 0.3f, 1.0f);
+                const float pulse = Math::Clamp(state.energy / 100.0f, 0.3f, 1.0f);
                 draw_polygon(renderer, sx, sy, screen_radius,
                              sp_sides[species_idx],
                              static_cast<Uint8>(sp_r[species_idx] * pulse),

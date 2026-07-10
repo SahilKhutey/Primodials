@@ -67,10 +67,10 @@ CreatureGenome GeneticsSystem::from_species(const Species& species) noexcept {
     CreatureGenome g;
     // Map first 16 species genome genes directly
     const usize n = std::min(static_cast<usize>(CreatureGenome::GENE_COUNT),
-                              static_cast<usize>(species.genome.count));
+                              static_cast<usize>(species.genetics.genome.count));
     for (usize i = 0; i < n; ++i) {
         // Normalize gene value to [0,1] (gene.value can be any float in schema)
-        g.genes[i] = std::clamp(species.genome.genes[i].value, 0.0f, 1.0f);
+        g.genes[i] = std::clamp(species.genetics.genome.genes[i].value, 0.0f, 1.0f);
     }
     // Encode core attributes into remaining genes
     if constexpr (CreatureGenome::GENE_COUNT >= 16) {

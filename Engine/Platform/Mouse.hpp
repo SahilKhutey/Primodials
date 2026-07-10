@@ -18,9 +18,9 @@ enum class MouseButton : u8 {
 };
 
 struct MouseState {
-    Math::Vec2 position{0.0f, 0.0f};
-    Math::Vec2 delta{0.0f, 0.0f};
-    Math::Vec2 wheel{0.0f, 0.0f};
+    Math::Vec2f position{0.0f, 0.0f};
+    Math::Vec2f delta{0.0f, 0.0f};
+    Math::Vec2f wheel{0.0f, 0.0f};
     bool buttons[static_cast<usize>(MouseButton::Count)] = {};
     bool inside_window   = false;
     bool relative_mode   = false;

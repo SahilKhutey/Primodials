@@ -34,7 +34,7 @@ TEST_CASE("ArchetypeId — contains() works", "[ecs2][archetype]") {
 }
 
 TEST_CASE("ArchetypeId — with() adds component", "[ecs2][archetype]") {
-    ArchetypeId id({{component_id<CompA>()}});
+    ArchetypeId id({component_id<CompA>()});
     ArchetypeId extended = id.with(component_id<CompB>());
     REQUIRE(extended.contains(component_id<CompA>()));
     REQUIRE(extended.contains(component_id<CompB>()));
@@ -57,7 +57,7 @@ TEST_CASE("ArchetypeId — contains_all() subset check", "[ecs2][archetype]") {
 }
 
 TEST_CASE("ArchetypeStorage — alloc and free rows", "[ecs2][archetype]") {
-    ArchetypeId id({{component_id<CompA>()}});
+    ArchetypeId id({component_id<CompA>()});
     ArchetypeStorage storage(id);
 
     EntityId e1{0, 1}, e2{1, 1}, e3{2, 1};

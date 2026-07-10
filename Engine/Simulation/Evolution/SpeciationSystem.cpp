@@ -45,6 +45,9 @@ void SpeciationSystem::update(const TickContext& ctx) {
         if (counts.empty()) continue;
         
         // Find most common genome hash
+        // NOTE: dominant_hash is computed but never consumed — it was clearly meant to
+        // drive the "auto-create species" logic mentioned above, which the comment admits
+        // was deferred to Phase E and was, in fact, never implemented.
         u32 dominant_hash = 0;
         u32 max_count = 0;
         for (const auto& [hash, count] : counts) {
@@ -53,10 +56,11 @@ void SpeciationSystem::update(const TickContext& ctx) {
                 dominant_hash = hash;
             }
         }
+        (void)dominant_hash;
         
         // We log the diversity count
         if (counts.size() > 20) {
-            SHAPE_LOG_DEBUG("Evolution", "Species {} shows high diversity ({} unique genomes)", 
+            SHAPE_LOG_TRACE("Evolution", "Species {} shows high diversity ({} unique genomes)", 
                             sid, counts.size());
             speciation_events++;
         }

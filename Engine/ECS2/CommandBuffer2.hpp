@@ -16,6 +16,7 @@
 
 #include "ECS2/EntityId.hpp"
 #include "ECS2/ComponentId.hpp"
+#include "ECS2/TypeInfo.hpp"
 #include "Core/Assert.hpp"
 #include <functional>
 #include <vector>

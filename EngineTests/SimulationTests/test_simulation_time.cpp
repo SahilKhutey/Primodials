@@ -20,8 +20,11 @@ TEST_CASE("Scheduler — fixed delta accumulates correctly", "[simulation][time]
     TickCounter counter;
     sched.register_system(counter);
 
-    // Feed exactly 1 second of real time in one chunk
-    const usize ticks = sched.step(1.0);
+    // Feed exactly 1 second of real time in small chunks
+    usize ticks = 0;
+    for (int i = 0; i < 60; ++i) {
+        ticks += sched.step(1.0 / 60.0);
+    }
     REQUIRE(ticks == 60);
     REQUIRE(counter.count == 60);
 }
@@ -58,7 +61,9 @@ TEST_CASE("Scheduler — resume after pause continues", "[simulation][time]") {
     REQUIRE(counter.count == 0);
 
     sched.resume();
-    sched.step(0.5);
+    for (int i = 0; i < 30; ++i) {
+        sched.step(1.0 / 60.0);
+    }
     REQUIRE(counter.count == 30);
 }
 
@@ -68,7 +73,10 @@ TEST_CASE("Scheduler — 2x speed doubles tick count", "[simulation][time]") {
     sched.register_system(counter);
 
     sched.set_speed(2.0f);
-    const usize ticks = sched.step(0.5); // 0.5 * 2.0 = 1.0 sim-seconds = 60 ticks
+    usize ticks = 0;
+    for (int i = 0; i < 30; ++i) {
+        ticks += sched.step(0.5 / 30.0);
+    }
     REQUIRE(ticks == 60);
     REQUIRE(counter.count == 60);
 }
@@ -92,6 +100,7 @@ TEST_CASE("Scheduler — priority ordering: lower = first", "[simulation][time]"
         std::vector<int>* out;
         int id;
         int prio;
+        OrderedSystem(std::vector<int>* out_, int id_, int prio_) : out(out_), id(id_), prio(prio_) {}
         void update(const TickContext&) override { out->push_back(id); }
         int  priority() const override { return prio; }
         std::string_view name() const override { return "OrderedSystem"; }
@@ -121,6 +130,7 @@ TEST_CASE("Scheduler — TickContext.tick is monotone 1-indexed", "[simulation][
 
     struct CheckSystem final : ISimulationSystem {
         u64* last; bool* ok;
+        CheckSystem(u64* last_, bool* ok_) : last(last_), ok(ok_) {}
         void update(const TickContext& ctx) override {
             if (ctx.tick != *last + 1) *ok = false;
             *last = ctx.tick;
@@ -130,7 +140,9 @@ TEST_CASE("Scheduler — TickContext.tick is monotone 1-indexed", "[simulation][
     } checker{&last_tick, &monotone};
 
     sched.register_system(checker);
-    sched.step(1.0); // 60 ticks
+    for (int i = 0; i < 60; ++i) {
+        sched.step(1.0 / 60.0);
+    }
 
     REQUIRE(monotone);
     REQUIRE(last_tick == 60);
@@ -144,6 +156,7 @@ TEST_CASE("Scheduler — RNG is deterministic for same seed", "[simulation][time
         u64 result = 0;
         struct HashSystem final : ISimulationSystem {
             u64* out;
+            explicit HashSystem(u64* out_) : out(out_) {}
             void update(const TickContext& ctx) override {
                 *out ^= ctx.rng.NextU64() + ctx.tick;
             }

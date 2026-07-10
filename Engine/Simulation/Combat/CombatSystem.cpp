@@ -28,7 +28,7 @@ ECS2::EntityId CombatSystem::find_target(ECS2::EntityId self,
     m_grid->query_circle(pos, sight, nearby);
 
     // Sort for determinism
-    std::sort(nearby.begin(), nearby.end());
+    std::stable_sort(nearby.begin(), nearby.end());
 
     // Filter to valid living creatures that are NOT self
     std::vector<ECS2::EntityId> candidates;
@@ -52,12 +52,12 @@ ECS2::EntityId CombatSystem::find_target(ECS2::EntityId self,
     if (candidates.empty()) return ECS2::EntityId::invalid();
 
     // Pick smallest nearby (weakest prey preferred)
-    std::sort(candidates.begin(), candidates.end(),
-              [&](ECS2::EntityId a, ECS2::EntityId b) {
-                  const float sa = m_world->get<DerivedAttributes>(a).size;
-                  const float sb = m_world->get<DerivedAttributes>(b).size;
-                  return sa < sb;
-              });
+    std::stable_sort(candidates.begin(), candidates.end(),
+                     [&](ECS2::EntityId a, ECS2::EntityId b) {
+                         const float sa = m_world->get<DerivedAttributes>(a).size;
+                         const float sb = m_world->get<DerivedAttributes>(b).size;
+                         return sa < sb;
+                     });
 
     // Among the smallest third, pick randomly for variety
     const usize pool = std::max(usize{1}, candidates.size() / 3 + 1);
@@ -210,7 +210,7 @@ void CombatSystem::update(const TickContext& ctx) {
         ws.stats.current_population = ws.stats.current_population > 0
             ? ws.stats.current_population - 1 : 0;
 
-        SHAPE_LOG_DEBUG("Combat", "Kill: attacker={} kills prey={} (gen={})",
+        SHAPE_LOG_TRACE("Combat", "Kill: attacker={} kills prey={} (gen={})",
                         kill.attacker.index, kill.target.index,
                         m_world->has<Ancestors>(kill.target)
                             ? m_world->get<Ancestors>(kill.target).generation : 0u);

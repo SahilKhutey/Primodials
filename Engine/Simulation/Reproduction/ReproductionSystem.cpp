@@ -91,7 +91,7 @@ void ReproductionSystem::find_mates(ECS2::EntityId self,
     // (SpatialGrid stores u32 indices; we use entity.index for matching).
     // Sort for determinism before returning.
     std::vector<u32> sorted_idx = nearby_idx;
-    std::sort(sorted_idx.begin(), sorted_idx.end());
+    std::stable_sort(sorted_idx.begin(), sorted_idx.end());
 
     for (u32 idx : sorted_idx) {
         // Attempt to reconstruct EntityId (generation = 0 for lookup; World2
@@ -326,7 +326,7 @@ ECS2::EntityId ReproductionSystem::spawn_offspring(ECS2::EntityId mother,
     // Register in spatial grid
     if (m_grid) m_grid->insert(child.index, spawn_pos);
 
-    SHAPE_LOG_DEBUG("Reproduction", "Offspring spawned gen={} species={}",
+    SHAPE_LOG_TRACE("Reproduction", "Offspring spawned gen={} species={}",
                     cs.generation, sid);
 
     return child;

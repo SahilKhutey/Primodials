@@ -103,10 +103,10 @@ public:
         Bitset r; for (usize i=0;i<WORDS;++i) r.m_words[i]=~m_words[i]; return r;
     }
     Bitset& operator&=(const Bitset& o) noexcept {
-        for (usize i=0;i<WORDS;++i) m_words[i]&=o.m_words[i]; return *this;
+        for (usize i=0;i<WORDS;++i) { m_words[i]&=o.m_words[i]; } return *this;
     }
     Bitset& operator|=(const Bitset& o) noexcept {
-        for (usize i=0;i<WORDS;++i) m_words[i]|=o.m_words[i]; return *this;
+        for (usize i=0;i<WORDS;++i) { m_words[i]|=o.m_words[i]; } return *this;
     }
 
     bool operator==(const Bitset& o) const noexcept {

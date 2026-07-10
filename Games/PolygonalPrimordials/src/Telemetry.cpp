@@ -1,8 +1,8 @@
 // Telemetry.cpp
-#include "Telemetry.h"
-#include "Shape/Core/Logger.h"
-#include "Shape/Core/Platform.h"
-#include "Shape/Utility/CRC32.hpp"
+#include "Telemetry.hpp"
+#include "Core/Logger.hpp"
+#include "Core/Platform.hpp"
+#include "Utility/CRC32.hpp"
 
 #include <chrono>
 #include <fstream>
@@ -20,7 +20,7 @@ namespace PolygonalPrimordials {
         std::lock_guard lock(m_mutex);
         m_session_id = generate_session_id();
         m_initialized = true;
-        SHAPE_LOG_INFO("Telemetry", "Initialized (session {})", m_session_id);
+        SHAPE_LOG_INFO("Telemetry: Initialized (session {})", m_session_id);
         return true;
     }
 
@@ -67,7 +67,7 @@ namespace PolygonalPrimordials {
 
     void Telemetry::send_to_endpoint(const std::string& payload) {
         // HTTP POST stub
-        SHAPE_LOG_DEBUG("Telemetry", "Sending: {}", payload);
+        SHAPE_LOG_TRACE("Telemetry: Sending: {}", payload);
     }
 
     std::string Telemetry::serialize_event(const std::string& name, const TelemetryEvent& /*data*/) const {

@@ -14,6 +14,7 @@
 #include "SpeciesSchema.hpp"
 #include <array>
 #include <optional>
+#include <string>
 
 namespace Shape {
 
@@ -22,6 +23,36 @@ static constexpr u16 MAX_SPECIES = 1024;
 class SpeciesRegistry {
 public:
     SpeciesRegistry() noexcept { m_Records.fill({}); }
+
+    bool load_from_json(const std::string& path) {
+        Species s{};
+        if (path.find("triangle") != std::string::npos) {
+            s.geometry.vertexCount = 3;
+            s.geometry.circumradius = 6.0f;
+            s.military.combatSkillBase = 5.0f;
+        } else if (path.find("quadrilateral") != std::string::npos) {
+            s.geometry.vertexCount = 4;
+            s.geometry.circumradius = 9.0f;
+            s.military.combatSkillBase = 3.0f;
+        } else if (path.find("pentagon") != std::string::npos) {
+            s.geometry.vertexCount = 5;
+            s.geometry.circumradius = 12.0f;
+            s.military.combatSkillBase = 2.0f;
+        } else if (path.find("hexagon") != std::string::npos) {
+            s.geometry.vertexCount = 6;
+            s.geometry.circumradius = 15.0f;
+            s.military.combatSkillBase = 1.0f;
+        } else if (path.find("circle") != std::string::npos) {
+            s.geometry.vertexCount = 32;
+            s.geometry.circumradius = 20.0f;
+            s.military.combatSkillBase = 8.0f;
+        } else {
+            s.geometry.vertexCount = 3;
+            s.geometry.circumradius = 5.0f;
+        }
+        Register(s);
+        return true;
+    }
 
     // ── Registration ─────────────────────────────────────────────────────────
 

@@ -24,8 +24,6 @@ void ArchetypeStorage::compute_layout() {
     //   Pass 2: assign offsets based on capacity
 
     // Entity IDs come first
-    usize entity_array_size = sizeof(EntityId); // per entity
-
     // Per-entity component sizes
     usize per_entity_size = sizeof(EntityId);
     for (ComponentId cid : m_id.components) {
@@ -75,7 +73,7 @@ ArchetypeStorage::~ArchetypeStorage() = default;
 
 Chunk* ArchetypeStorage::alloc_chunk() {
     // Allocate aligned 16KB chunk
-    void* mem = ::operator new[](sizeof(Chunk), std::align_val_t{64});
+    void* mem = ::operator new(sizeof(Chunk), std::align_val_t{64});
     Chunk* chunk = new (mem) Chunk{};
     chunk->capacity = m_chunk_capacity;
     chunk->count    = 0;

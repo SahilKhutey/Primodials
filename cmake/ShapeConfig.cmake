@@ -37,11 +37,13 @@ function(shape_add_module name)
     endif()
     target_include_directories(${name} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/Engine>
     )
     if(NOT ARG_UNPARSED_ARGUMENTS)
         return()
     endif()
+    target_link_libraries(${name} PUBLIC ShapeEngine)
     shape_apply_warnings(${name})
     shape_apply_sanitizers(${name})
 endfunction()

@@ -34,18 +34,18 @@ struct TextInputEvent {
 
 struct MouseButtonEvent {
     MouseButton button;
-    Math::Vec2  position;
+    Math::Vec2f  position;
     u32         modifiers;
 };
 
 struct MouseMovedEvent {
-    Math::Vec2 position;
-    Math::Vec2 delta;
+    Math::Vec2f position;
+    Math::Vec2f delta;
 };
 
 struct MouseWheelEvent {
-    Math::Vec2 wheel;
-    Math::Vec2 position;
+    Math::Vec2f wheel;
+    Math::Vec2f position;
 };
 
 struct GamepadButtonEvent {

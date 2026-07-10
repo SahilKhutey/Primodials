@@ -1,4 +1,4 @@
-project(ShapeEditor)
+project(ShapeEditorApp)
 
 # Fetch ImGui (Docking Branch)
 include(FetchContent)
@@ -28,7 +28,7 @@ target_include_directories(ImGui PUBLIC
 target_link_libraries(ImGui PUBLIC SDL3::SDL3)
 
 # Editor Executable
-add_executable(ShapeEditor
+add_executable(ShapeEditorApp
     Main.cpp
     Application.cpp
     EntityInspector.cpp
@@ -36,11 +36,11 @@ add_executable(ShapeEditor
     Renderer2D.cpp
 )
 
-target_include_directories(ShapeEditor PRIVATE
+target_include_directories(ShapeEditorApp PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(ShapeEditor PRIVATE
+target_link_libraries(ShapeEditorApp PRIVATE
     ShapeEngine
     ImGui
     SDL3::SDL3

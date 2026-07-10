@@ -66,16 +66,20 @@ void EvolutionSystem::run_selection(const TickContext& ctx) {
         entries.reserve(pop);
 
         m_world->for_each<CreatureState, ReproductionState>(
-            [&](ECS2::EntityId e, CreatureState& cs, ReproductionState& rs) {
+            [&](ECS2::EntityId e, CreatureState& cs, [[maybe_unused]] ReproductionState& rs) {
                 if (!cs.is_alive) return;
+                // NOTE: fitness currently ignores ReproductionState entirely — this was left
+                // as "deferred to Phase D" per the comment below, but Phase D is marked
+                // complete elsewhere in this codebase. Reproduction-aware fitness (e.g.
+                // factoring in offspring count / reproductive fitness) was never implemented.
                 // Use default species for fitness (full lookup deferred to Phase D)
                 const float f = 0.5f * (cs.energy / 100.0f) + 0.5f * (cs.health / 100.0f);
                 entries.push_back({e, f});
             });
 
         // Sort ascending by fitness — least fit first
-        std::sort(entries.begin(), entries.end(),
-                  [](const Entry& a, const Entry& b) { return a.fitness < b.fitness; });
+        std::stable_sort(entries.begin(), entries.end(),
+                         [](const Entry& a, const Entry& b) { return a.fitness < b.fitness; });
 
         // Cull until within capacity (max 5% per selection cycle to prevent mass-die-offs)
         const usize max_cull = static_cast<usize>(pop * 0.05f) + 1;

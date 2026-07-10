@@ -25,7 +25,7 @@ bool Engine::Initialize() {
     
     // Wire up Simulation Systems to Phase 2 (Update/Physics)
     m_scheduler.RegisterPhase2([this]() {
-        f32 dt = m_scheduler.GetClock().GetTimeStepSeconds();
+        f32 dt = m_scheduler.clock().GetTimeStepSeconds();
         m_cognitiveSystem.Update(m_world, dt);
         m_civilizationSystem.Update(m_world, dt);
         m_biologySystem.Update(m_world, m_commandBuffer, dt, m_frameCounter++);

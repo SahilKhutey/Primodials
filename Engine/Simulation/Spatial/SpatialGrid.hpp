@@ -39,7 +39,8 @@ public:
         bool       wrap     = true;
     };
 
-    explicit SpatialGrid(const Config& cfg = Config{});
+    SpatialGrid();
+    explicit SpatialGrid(const Config& cfg);
 
     void reconfigure(const Config& cfg);
     SHAPE_NODISCARD const Config& config() const noexcept { return m_cfg; }

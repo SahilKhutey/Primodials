@@ -1,4 +1,4 @@
-shape_add_library(ShapeUI
+shape_add_module(ShapeUI
     "include/Shape/UI/IOverlayUI.h"
     "include/Shape/UI/TextRenderer.h"
     "include/Shape/UI/BitmapFont.h"

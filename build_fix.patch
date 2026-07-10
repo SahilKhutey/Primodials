@@ -1,0 +1,775 @@
+From 6bae49a316c9fc984ab419ac2b67e7ad1ccf27d9 Mon Sep 17 00:00:00 2001
+From: Build Verification Session <build-verification@local>
+Date: Thu, 9 Jul 2026 11:03:35 +0000
+Subject: [PATCH] Fix build: resolve 15+ compile errors preventing clean build
+
+Verified with: cmake -S . -B build -D CMAKE_BUILD_TYPE=Release && cmake --build build
+
+Fixes applied (grouped by root cause):
+
+CMake build system:
+- shape_add_library() called but never defined; renamed 4 callers
+  (UI, Editor, Replay, Procedural) to the actual shape_add_module()
+- Target name collision: top-level Editor/ exe and Engine/Editor library
+  both named ShapeEditor; renamed the standalone app to ShapeEditorApp
+- Tools/liveops/{curator,mod_validator} referenced by root CMakeLists.txt
+  but had no CMakeLists.txt of their own; added minimal ones
+- Win32Window.cpp (uses windows.h) was compiled unconditionally on all
+  platforms; gated behind if(WIN32)
+
+Disabled pending real implementation (see PR description):
+- Engine/Editor: CMakeLists.txt lists 10 headers that do not exist on disk
+  (HierarchyPanel.h, InspectorPanel.h, ArchetypeViewer.h, SpeciesEditor.h,
+  ProfilerPanel.h, ConsolePanel.h, SimulationView.h, AssetBrowser.h,
+  TimelinePanel.h, MemoryPanel.h); matching .cpp files are one-line stubs
+- LiveOps (+ dependent Bots/Discord, Bots/SteamModeration): CMakeLists.txt
+  lists src/HealthMonitor.cpp and src/RemoteConfig.cpp which do not exist
+- Examples/editor_demo: depends on the disabled Engine/Editor library
+
+Core engine bugs (Engine/ compiles and libShapeEngine.a links cleanly
+after these):
+- DeterministicRng.hpp: SHAPE_ASSERT_MSG used before Core/Assert.hpp
+  is included (worked only by transitive-include accident)
+- Bootstrap.cpp: called SimulationScheduler::GetClock() which does not
+  exist; actual accessor is clock()
+- ArchetypeStorage.cpp: alloc_chunk() allocated with operator new[]
+  but stored the pointer in std::unique_ptr<Chunk>, whose deleter calls
+  scalar delete -- mismatched new[]/delete is undefined behavior; fixed
+  to use matching scalar aligned new
+- ArchetypeStorage.cpp: removed dead/unused entity_array_size variable
+- World2.cpp cmd_add_raw(): size parameter was received but never
+  validated against the registered component's actual size; added an
+  assert so mismatches fail loudly instead of silently corrupting memory
+- CommandBuffer2.hpp: used TypeOps / make_type_ops without including
+  ECS2/TypeInfo.hpp where they are defined
+- Mouse.hpp/Events.hpp/Input.hpp: bare Math::Vec2 (a template) used
+  without its argument in 11 places; should be Vec2f
+- Events.cpp: read ev.button.mod, a field SDL3's SDL_MouseButtonEvent
+  does not have; modifier keys now read via SDL_GetModState()
+- Input.cpp: .size() called on a raw C array; compare against
+  MouseButton::Count instead
+- Input.cpp: SDL_GamepadHasRumble() and SDL_SetRelativeMouseMode() are
+  SDL2 APIs that do not exist in the pinned SDL3 (release-3.2.8, verified
+  against the actual vendored header, not just docs). Replaced with
+  SDL_GetBooleanProperty(..., SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN) and
+  SDL_SetWindowRelativeMouseMode() respectively. The latter is now
+  per-window in SDL3; Input has no window reference of its own, so this
+  uses SDL_GetKeyboardFocus() as a stand-in -- fine for this engine's
+  current single-window use, but flagged as needing a real fix
+  (Input should take an explicit SDL_Window*) before multi-window support
+- SpatialGrid.hpp: SpatialGrid(const Config& cfg = Config{}) -- a
+  default argument building a nested type -- triggered a GCC nested-class
+  default-member-initializer ordering diagnostic; split into two
+  constructor overloads
+- GeneticsSystem.cpp: read species.genome; actual field is one level
+  deeper at species.genetics.genome
+- EvolutionSystem.cpp: fitness calculation silently ignored
+  ReproductionState; comment says this was "deferred to Phase D", which
+  the repo's own commit history marks complete elsewhere. Left the
+  behavior as-is (did not invent the missing logic) but documented it
+  and silenced the resulting unused-parameter error explicitly
+- SpeciationSystem.cpp: dominant_hash computed but never consumed --
+  same "deferred, never implemented" pattern as above, documented in
+  place rather than silently discarded
+
+Result: libShapeEngine.a and ShapeEngineTests now build and link from
+a clean checkout. Running ShapeEngineTests: 36/37 test cases pass; one
+("ECS2 Entity - remove component") crashes with SIGSEGV, indicating a
+real memory-safety bug in the archetype move/remove path still to be
+tracked down.
+---
+ CMakeLists.txt                                   | 10 +++++++---
+ Editor/CMakeLists.txt                            |  8 ++++----
+ Engine/CMakeLists.txt                            | 13 +++++++++++--
+ Engine/Containers/Bitset.hpp                     |  4 ++--
+ Engine/Core/Bootstrap.cpp                        |  2 +-
+ Engine/ECS2/ArchetypeStorage.cpp                 |  4 +---
+ Engine/ECS2/CommandBuffer2.hpp                   |  1 +
+ Engine/ECS2/World2.cpp                           |  4 ++++
+ Engine/Editor/CMakeLists.txt                     |  2 +-
+ Engine/Platform/Events.cpp                       |  4 ++--
+ Engine/Platform/Events.hpp                       | 10 +++++-----
+ Engine/Platform/Input.cpp                        | 16 ++++++++++++----
+ Engine/Platform/Input.hpp                        |  7 ++++---
+ Engine/Platform/Mouse.hpp                        |  6 +++---
+ Engine/Procedural/CMakeLists.txt                 |  2 +-
+ Engine/Replay/CMakeLists.txt                     |  2 +-
+ Engine/Simulation/Analytics/PopulationGraph.hpp  |  1 -
+ Engine/Simulation/Combat/CombatSystem.cpp        |  2 +-
+ Engine/Simulation/Combat/CombatSystem.hpp        |  1 +
+ Engine/Simulation/DeterministicRng.hpp           |  1 +
+ Engine/Simulation/Evolution/EvolutionSystem.cpp  |  6 +++++-
+ Engine/Simulation/Evolution/SpeciationSystem.cpp |  6 +++++-
+ Engine/Simulation/Genetics/GeneticsSystem.cpp    |  4 ++--
+ .../Reproduction/ReproductionSystem.cpp          |  2 +-
+ .../Reproduction/ReproductionSystem.hpp          |  2 ++
+ .../Simulation/Snapshots/SimulationSnapshot.cpp  |  2 +-
+ Engine/Simulation/Spatial/SpatialGrid.cpp        |  2 ++
+ Engine/Simulation/Spatial/SpatialGrid.hpp        |  3 ++-
+ Engine/UI/CMakeLists.txt                         |  2 +-
+ EngineTests/ContainerTests.cpp                   |  3 +--
+ .../SimulationTests/test_simulation_time.cpp     |  3 +++
+ Examples/CMakeLists.txt                          |  3 ++-
+ Games/PolygonalPrimordials/src/Game.cpp          |  2 +-
+ .../src/SteamIntegration.cpp                     |  4 ++--
+ Games/PolygonalPrimordials/src/Telemetry.cpp     |  2 +-
+ Tools/liveops/curator/CMakeLists.txt             |  1 +
+ Tools/liveops/mod_validator/CMakeLists.txt       |  1 +
+ 37 files changed, 96 insertions(+), 52 deletions(-)
+ create mode 100644 Tools/liveops/curator/CMakeLists.txt
+ create mode 100644 Tools/liveops/mod_validator/CMakeLists.txt
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 534d4e3..65dc2b5 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -87,8 +87,12 @@ add_subdirectory(Tools/cooker)
+ add_subdirectory(Tools/documentation)
+ add_subdirectory(Tools/trailer)
+ add_subdirectory(Tools/localization)
+-add_subdirectory(LiveOps)
+-add_subdirectory(Bots/Discord)
+-add_subdirectory(Bots/SteamModeration)
++# DISABLED for build-verification pass: LiveOps/CMakeLists.txt lists src/HealthMonitor.cpp
++# and src/RemoteConfig.cpp which do not exist on disk. Bots/Discord and Bots/SteamModeration
++# both link against LiveOps (Discord's own CMakeLists.txt even comments
++# "# Mocked link against LiveOps"), so they cascade-fail too until LiveOps is fixed.
++# add_subdirectory(LiveOps)
++# add_subdirectory(Bots/Discord)
++# add_subdirectory(Bots/SteamModeration)
+ add_subdirectory(Tools/liveops/curator)
+ add_subdirectory(Tools/liveops/mod_validator)
+diff --git a/Editor/CMakeLists.txt b/Editor/CMakeLists.txt
+index 4fd1086..cc638a6 100644
+--- a/Editor/CMakeLists.txt
++++ b/Editor/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-project(ShapeEditor)
++project(ShapeEditorApp)
+ 
+ # Fetch ImGui (Docking Branch)
+ include(FetchContent)
+@@ -28,7 +28,7 @@ target_include_directories(ImGui PUBLIC
+ target_link_libraries(ImGui PUBLIC SDL3::SDL3)
+ 
+ # Editor Executable
+-add_executable(ShapeEditor
++add_executable(ShapeEditorApp
+     Main.cpp
+     Application.cpp
+     EntityInspector.cpp
+@@ -36,11 +36,11 @@ add_executable(ShapeEditor
+     Renderer2D.cpp
+ )
+ 
+-target_include_directories(ShapeEditor PRIVATE
++target_include_directories(ShapeEditorApp PRIVATE
+     ${CMAKE_CURRENT_SOURCE_DIR}
+ )
+ 
+-target_link_libraries(ShapeEditor PRIVATE
++target_link_libraries(ShapeEditorApp PRIVATE
+     ShapeEngine
+     ImGui
+     SDL3::SDL3
+diff --git a/Engine/CMakeLists.txt b/Engine/CMakeLists.txt
+index 395abd8..04d6e6f 100644
+--- a/Engine/CMakeLists.txt
++++ b/Engine/CMakeLists.txt
+@@ -26,7 +26,6 @@ add_library(ShapeEngine STATIC
+     Input/InputSystem.cpp
+     Platform/Window.cpp
+     Platform/Source/Platform.cpp
+-    Platform/Source/Windows/Win32Window.cpp
+     Simulation/SimulationClock.cpp
+     Simulation/SimulationScheduler.cpp
+     Physics/SpatialHashGrid.cpp
+@@ -62,6 +61,12 @@ add_library(ShapeEngine STATIC
+     Rendering/RenderingSystem.cpp
+ )
+ 
++# Win32Window.cpp uses <windows.h> and only makes sense on Windows; the cross-platform
++# Platform/Window.cpp (SDL3-based) is what's actually used on all platforms including Windows.
++if(WIN32)
++    target_sources(ShapeEngine PRIVATE Platform/Source/Windows/Win32Window.cpp)
++endif()
++
+ target_include_directories(ShapeEngine PUBLIC
+     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Platform/Include>
+@@ -97,7 +102,11 @@ else()
+ endif()
+ 
+ add_subdirectory(UI)
+-add_subdirectory(Editor)
++# DISABLED for build-verification pass: Engine/Editor/CMakeLists.txt lists 10 headers
++# (HierarchyPanel.h, InspectorPanel.h, ArchetypeViewer.h, SpeciesEditor.h, ProfilerPanel.h,
++# ConsolePanel.h, SimulationView.h, AssetBrowser.h, TimelinePanel.h, MemoryPanel.h) that do
++# not exist on disk; the matching .cpp files are one-line stubs. Needs real implementation.
++# add_subdirectory(Editor)
+ add_subdirectory(Replay)
+ add_subdirectory(Procedural)
+ add_subdirectory(Rendering)
+diff --git a/Engine/Containers/Bitset.hpp b/Engine/Containers/Bitset.hpp
+index 967438d..833e7aa 100644
+--- a/Engine/Containers/Bitset.hpp
++++ b/Engine/Containers/Bitset.hpp
+@@ -103,10 +103,10 @@ public:
+         Bitset r; for (usize i=0;i<WORDS;++i) r.m_words[i]=~m_words[i]; return r;
+     }
+     Bitset& operator&=(const Bitset& o) noexcept {
+-        for (usize i=0;i<WORDS;++i) m_words[i]&=o.m_words[i]; return *this;
++        for (usize i=0;i<WORDS;++i) { m_words[i]&=o.m_words[i]; } return *this;
+     }
+     Bitset& operator|=(const Bitset& o) noexcept {
+-        for (usize i=0;i<WORDS;++i) m_words[i]|=o.m_words[i]; return *this;
++        for (usize i=0;i<WORDS;++i) { m_words[i]|=o.m_words[i]; } return *this;
+     }
+ 
+     bool operator==(const Bitset& o) const noexcept {
+diff --git a/Engine/Core/Bootstrap.cpp b/Engine/Core/Bootstrap.cpp
+index b8486d9..2645f1e 100644
+--- a/Engine/Core/Bootstrap.cpp
++++ b/Engine/Core/Bootstrap.cpp
+@@ -25,7 +25,7 @@ bool Engine::Initialize() {
+     
+     // Wire up Simulation Systems to Phase 2 (Update/Physics)
+     m_scheduler.RegisterPhase2([this]() {
+-        f32 dt = m_scheduler.GetClock().GetTimeStepSeconds();
++        f32 dt = m_scheduler.clock().GetTimeStepSeconds();
+         m_cognitiveSystem.Update(m_world, dt);
+         m_civilizationSystem.Update(m_world, dt);
+         m_biologySystem.Update(m_world, m_commandBuffer, dt, m_frameCounter++);
+diff --git a/Engine/ECS2/ArchetypeStorage.cpp b/Engine/ECS2/ArchetypeStorage.cpp
+index c876722..1715603 100644
+--- a/Engine/ECS2/ArchetypeStorage.cpp
++++ b/Engine/ECS2/ArchetypeStorage.cpp
+@@ -24,8 +24,6 @@ void ArchetypeStorage::compute_layout() {
+     //   Pass 2: assign offsets based on capacity
+ 
+     // Entity IDs come first
+-    usize entity_array_size = sizeof(EntityId); // per entity
+-
+     // Per-entity component sizes
+     usize per_entity_size = sizeof(EntityId);
+     for (ComponentId cid : m_id.components) {
+@@ -75,7 +73,7 @@ ArchetypeStorage::~ArchetypeStorage() = default;
+ 
+ Chunk* ArchetypeStorage::alloc_chunk() {
+     // Allocate aligned 16KB chunk
+-    void* mem = ::operator new[](sizeof(Chunk), std::align_val_t{64});
++    void* mem = ::operator new(sizeof(Chunk), std::align_val_t{64});
+     Chunk* chunk = new (mem) Chunk{};
+     chunk->capacity = m_chunk_capacity;
+     chunk->count    = 0;
+diff --git a/Engine/ECS2/CommandBuffer2.hpp b/Engine/ECS2/CommandBuffer2.hpp
+index c0e3ef4..e1a3581 100644
+--- a/Engine/ECS2/CommandBuffer2.hpp
++++ b/Engine/ECS2/CommandBuffer2.hpp
+@@ -16,6 +16,7 @@
+ 
+ #include "ECS2/EntityId.hpp"
+ #include "ECS2/ComponentId.hpp"
++#include "ECS2/TypeInfo.hpp"
+ #include "Core/Assert.hpp"
+ #include <functional>
+ #include <vector>
+diff --git a/Engine/ECS2/World2.cpp b/Engine/ECS2/World2.cpp
+index 550b951..e32c001 100644
+--- a/Engine/ECS2/World2.cpp
++++ b/Engine/ECS2/World2.cpp
+@@ -1,6 +1,7 @@
+ #include "ECS2/World2.hpp"
+ #include "ECS2/CommandBuffer2.hpp"
+ #include "Core/Logger.hpp"
++#include "Core/Assert.hpp"
+ #include <cstring>
+ 
+ namespace Shape::ECS2 {
+@@ -113,6 +114,9 @@ void World2::cmd_add_raw(EntityId e, ComponentId cid,
+ 
+     // Write value
+     const TypeInfo& ti = ComponentRegistry::get(cid);
++    SHAPE_ASSERT_MSG(size == ti.size,
++        "cmd_add_raw: size mismatch for component {} (got {}, expected {})",
++        cid, size, ti.size);
+     ArchetypeStorage* storage = m_storages[rec.archetype_idx].get();
+     void* dst = storage->raw_array(rec.chunk_idx, cid) + rec.row_index * ti.size;
+     ti.ops.destruct(dst);
+diff --git a/Engine/Editor/CMakeLists.txt b/Engine/Editor/CMakeLists.txt
+index 17b0a6f..cb72193 100644
+--- a/Engine/Editor/CMakeLists.txt
++++ b/Engine/Editor/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-shape_add_library(ShapeEditor
++shape_add_module(ShapeEditor
+     "include/Shape/Editor/Editor.h"
+     "include/Shape/Editor/EditorContext.h"
+     "include/Shape/Editor/HierarchyPanel.h"
+diff --git a/Engine/Platform/Events.cpp b/Engine/Platform/Events.cpp
+index a34f85d..0ffefa5 100644
+--- a/Engine/Platform/Events.cpp
++++ b/Engine/Platform/Events.cpp
+@@ -76,7 +76,7 @@ void process([[maybe_unused]] void* sdl_event_raw, EventQueue& queue) {
+             out.data = MouseButtonEvent{
+                 static_cast<MouseButton>(ev.button.button - 1),
+                 {ev.button.x, ev.button.y},
+-                static_cast<u32>(ev.button.mod)
++                static_cast<u32>(SDL_GetModState())
+             };
+             break;
+ 
+@@ -85,7 +85,7 @@ void process([[maybe_unused]] void* sdl_event_raw, EventQueue& queue) {
+             out.data = MouseButtonEvent{
+                 static_cast<MouseButton>(ev.button.button - 1),
+                 {ev.button.x, ev.button.y},
+-                static_cast<u32>(ev.button.mod)
++                static_cast<u32>(SDL_GetModState())
+             };
+             break;
+ 
+diff --git a/Engine/Platform/Events.hpp b/Engine/Platform/Events.hpp
+index a62a74b..0886caa 100644
+--- a/Engine/Platform/Events.hpp
++++ b/Engine/Platform/Events.hpp
+@@ -34,18 +34,18 @@ struct TextInputEvent {
+ 
+ struct MouseButtonEvent {
+     MouseButton button;
+-    Math::Vec2  position;
++    Math::Vec2f  position;
+     u32         modifiers;
+ };
+ 
+ struct MouseMovedEvent {
+-    Math::Vec2 position;
+-    Math::Vec2 delta;
++    Math::Vec2f position;
++    Math::Vec2f delta;
+ };
+ 
+ struct MouseWheelEvent {
+-    Math::Vec2 wheel;
+-    Math::Vec2 position;
++    Math::Vec2f wheel;
++    Math::Vec2f position;
+ };
+ 
+ struct GamepadButtonEvent {
+diff --git a/Engine/Platform/Input.cpp b/Engine/Platform/Input.cpp
+index 0ce29ba..9c52d59 100644
+--- a/Engine/Platform/Input.cpp
++++ b/Engine/Platform/Input.cpp
+@@ -63,7 +63,7 @@ void Input::process_sdl_event([[maybe_unused]] void* raw) noexcept {
+ 
+         case SDL_EVENT_MOUSE_BUTTON_DOWN: {
+             const usize btn = static_cast<usize>(ev.button.button - 1);
+-            if (btn < in.m_mouse.buttons.size()) {
++            if (btn < static_cast<usize>(MouseButton::Count)) {
+                 in.m_mouse.buttons[btn]   = true;
+                 in.m_mouse_pressed[btn]   = true;
+                 in.m_mouse.position = {ev.button.x, ev.button.y};
+@@ -72,7 +72,7 @@ void Input::process_sdl_event([[maybe_unused]] void* raw) noexcept {
+         }
+         case SDL_EVENT_MOUSE_BUTTON_UP: {
+             const usize btn = static_cast<usize>(ev.button.button - 1);
+-            if (btn < in.m_mouse.buttons.size()) {
++            if (btn < static_cast<usize>(MouseButton::Count)) {
+                 in.m_mouse.buttons[btn]   = false;
+                 in.m_mouse_released[btn]  = true;
+                 in.m_mouse.position = {ev.button.x, ev.button.y};
+@@ -124,7 +124,8 @@ void Input::process_sdl_event([[maybe_unused]] void* raw) noexcept {
+                 SDL_Gamepad* gp = SDL_OpenGamepad(ev.gdevice.which);
+                 in.m_gamepads[idx].connected    = (gp != nullptr);
+                 in.m_gamepads[idx].device_index = idx;
+-                in.m_gamepads[idx].has_rumble   = gp && SDL_GamepadHasRumble(gp);
++                in.m_gamepads[idx].has_rumble   = gp && SDL_GetBooleanProperty(
++                    SDL_GetGamepadProperties(gp), SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false);
+                 SHAPE_LOG_INFO("Input", "Gamepad {} connected", idx);
+             }
+             break;
+@@ -148,7 +149,14 @@ void Input::process_sdl_event([[maybe_unused]] void* raw) noexcept {
+ 
+ void Input::set_relative_mouse([[maybe_unused]] bool enabled) noexcept {
+ #if SHAPE_HAVE_SDL3
+-    SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE);
++    // NOTE: SDL3 made mouse-capture mode per-window (SDL_SetWindowRelativeMouseMode),
++    // but Input has no window reference of its own. Using the currently focused window
++    // as a stand-in works for this engine's current single-window usage, but this should
++    // be revisited (Input should be given an explicit SDL_Window* at construction) before
++    // any multi-window feature is added.
++    if (SDL_Window* focused = SDL_GetKeyboardFocus()) {
++        SDL_SetWindowRelativeMouseMode(focused, enabled);
++    }
+     m_mouse.relative_mode = enabled;
+ #endif
+ }
+diff --git a/Engine/Platform/Input.hpp b/Engine/Platform/Input.hpp
+index 974ff83..b859e93 100644
+--- a/Engine/Platform/Input.hpp
++++ b/Engine/Platform/Input.hpp
+@@ -8,6 +8,7 @@
+ #include "Platform/Gamepad.hpp"
+ #include "Math/Vec2.hpp"
+ #include "Core/Platform.hpp"
++#include "Core/Assert.hpp"
+ #include <array>
+ #include <string>
+ 
+@@ -55,9 +56,9 @@ public:
+     // ── Mouse ─────────────────────────────────────────────────────────────────
+ 
+     SHAPE_NODISCARD const MouseState& mouse()           const noexcept { return m_mouse; }
+-    SHAPE_NODISCARD Math::Vec2        mouse_position()  const noexcept { return m_mouse.position; }
+-    SHAPE_NODISCARD Math::Vec2        mouse_delta()     const noexcept { return m_mouse.delta; }
+-    SHAPE_NODISCARD Math::Vec2        mouse_wheel()     const noexcept { return m_mouse.wheel; }
++    SHAPE_NODISCARD Math::Vec2f        mouse_position()  const noexcept { return m_mouse.position; }
++    SHAPE_NODISCARD Math::Vec2f        mouse_delta()     const noexcept { return m_mouse.delta; }
++    SHAPE_NODISCARD Math::Vec2f        mouse_wheel()     const noexcept { return m_mouse.wheel; }
+     SHAPE_NODISCARD bool is_mouse_down(MouseButton b)   const noexcept {
+         return m_mouse.buttons[static_cast<usize>(b)];
+     }
+diff --git a/Engine/Platform/Mouse.hpp b/Engine/Platform/Mouse.hpp
+index ea4e1aa..c4d722b 100644
+--- a/Engine/Platform/Mouse.hpp
++++ b/Engine/Platform/Mouse.hpp
+@@ -18,9 +18,9 @@ enum class MouseButton : u8 {
+ };
+ 
+ struct MouseState {
+-    Math::Vec2 position{0.0f, 0.0f};
+-    Math::Vec2 delta{0.0f, 0.0f};
+-    Math::Vec2 wheel{0.0f, 0.0f};
++    Math::Vec2f position{0.0f, 0.0f};
++    Math::Vec2f delta{0.0f, 0.0f};
++    Math::Vec2f wheel{0.0f, 0.0f};
+     bool buttons[static_cast<usize>(MouseButton::Count)] = {};
+     bool inside_window   = false;
+     bool relative_mode   = false;
+diff --git a/Engine/Procedural/CMakeLists.txt b/Engine/Procedural/CMakeLists.txt
+index 41b2202..827974b 100644
+--- a/Engine/Procedural/CMakeLists.txt
++++ b/Engine/Procedural/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-shape_add_library(ShapeProcedural
++shape_add_module(ShapeProcedural
+     "include/Shape/Procedural/Noise.h"
+     "include/Shape/Procedural/SimplexNoise.h"
+     "include/Shape/Procedural/WorleyNoise.h"
+diff --git a/Engine/Replay/CMakeLists.txt b/Engine/Replay/CMakeLists.txt
+index 3005b6f..9ae8228 100644
+--- a/Engine/Replay/CMakeLists.txt
++++ b/Engine/Replay/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-shape_add_library(ShapeReplay
++shape_add_module(ShapeReplay
+     "include/Shape/Replay/ReplayFormat.h"
+     "include/Shape/Replay/ReplayWriter.h"
+     "include/Shape/Replay/ReplayPlayer.h"
+diff --git a/Engine/Simulation/Analytics/PopulationGraph.hpp b/Engine/Simulation/Analytics/PopulationGraph.hpp
+index 0c10d48..94ab8cf 100644
+--- a/Engine/Simulation/Analytics/PopulationGraph.hpp
++++ b/Engine/Simulation/Analytics/PopulationGraph.hpp
+@@ -7,7 +7,6 @@
+ #include "Math/Include/ShapeEngine/Math/Vector2.hpp"
+ #include "ECS/SpeciesSchema.hpp"
+ #include "ECS2/World2.hpp"
+-#include "Simulation/SimulationTime.hpp"
+ #include <deque>
+ #include <map>
+ #include <vector>
+diff --git a/Engine/Simulation/Combat/CombatSystem.cpp b/Engine/Simulation/Combat/CombatSystem.cpp
+index 9632ad3..0e73269 100644
+--- a/Engine/Simulation/Combat/CombatSystem.cpp
++++ b/Engine/Simulation/Combat/CombatSystem.cpp
+@@ -210,7 +210,7 @@ void CombatSystem::update(const TickContext& ctx) {
+         ws.stats.current_population = ws.stats.current_population > 0
+             ? ws.stats.current_population - 1 : 0;
+ 
+-        SHAPE_LOG_DEBUG("Combat", "Kill: attacker={} kills prey={} (gen={})",
++        SHAPE_LOG_TRACE("Combat", "Kill: attacker={} kills prey={} (gen={})",
+                         kill.attacker.index, kill.target.index,
+                         m_world->has<Ancestors>(kill.target)
+                             ? m_world->get<Ancestors>(kill.target).generation : 0u);
+diff --git a/Engine/Simulation/Combat/CombatSystem.hpp b/Engine/Simulation/Combat/CombatSystem.hpp
+index 301e333..62075b0 100644
+--- a/Engine/Simulation/Combat/CombatSystem.hpp
++++ b/Engine/Simulation/Combat/CombatSystem.hpp
+@@ -15,6 +15,7 @@
+ #include "Core/Platform.hpp"
+ #include "Simulation/ISimulationSystem.hpp"
+ #include "Simulation/Spatial/SpatialGrid.hpp"
++#include "Simulation/Components/LineageComponents.hpp"
+ #include "ECS2/World2.hpp"
+ 
+ namespace Shape {
+diff --git a/Engine/Simulation/DeterministicRng.hpp b/Engine/Simulation/DeterministicRng.hpp
+index edf1622..74d1032 100644
+--- a/Engine/Simulation/DeterministicRng.hpp
++++ b/Engine/Simulation/DeterministicRng.hpp
+@@ -1,6 +1,7 @@
+ #pragma once
+ 
+ #include "Core/Platform.hpp"
++#include "Core/Assert.hpp"
+ #include "Math/Vec2.hpp"
+ #include "Math/Vec3.hpp"
+ #include <span>
+diff --git a/Engine/Simulation/Evolution/EvolutionSystem.cpp b/Engine/Simulation/Evolution/EvolutionSystem.cpp
+index 6c4f724..edd5c90 100644
+--- a/Engine/Simulation/Evolution/EvolutionSystem.cpp
++++ b/Engine/Simulation/Evolution/EvolutionSystem.cpp
+@@ -66,8 +66,12 @@ void EvolutionSystem::run_selection(const TickContext& ctx) {
+         entries.reserve(pop);
+ 
+         m_world->for_each<CreatureState, ReproductionState>(
+-            [&](ECS2::EntityId e, CreatureState& cs, ReproductionState& rs) {
++            [&](ECS2::EntityId e, CreatureState& cs, [[maybe_unused]] ReproductionState& rs) {
+                 if (!cs.is_alive) return;
++                // NOTE: fitness currently ignores ReproductionState entirely — this was left
++                // as "deferred to Phase D" per the comment below, but Phase D is marked
++                // complete elsewhere in this codebase. Reproduction-aware fitness (e.g.
++                // factoring in offspring count / reproductive fitness) was never implemented.
+                 // Use default species for fitness (full lookup deferred to Phase D)
+                 const float f = 0.5f * (cs.energy / 100.0f) + 0.5f * (cs.health / 100.0f);
+                 entries.push_back({e, f});
+diff --git a/Engine/Simulation/Evolution/SpeciationSystem.cpp b/Engine/Simulation/Evolution/SpeciationSystem.cpp
+index a26ad41..4227c70 100644
+--- a/Engine/Simulation/Evolution/SpeciationSystem.cpp
++++ b/Engine/Simulation/Evolution/SpeciationSystem.cpp
+@@ -45,6 +45,9 @@ void SpeciationSystem::update(const TickContext& ctx) {
+         if (counts.empty()) continue;
+         
+         // Find most common genome hash
++        // NOTE: dominant_hash is computed but never consumed — it was clearly meant to
++        // drive the "auto-create species" logic mentioned above, which the comment admits
++        // was deferred to Phase E and was, in fact, never implemented.
+         u32 dominant_hash = 0;
+         u32 max_count = 0;
+         for (const auto& [hash, count] : counts) {
+@@ -53,10 +56,11 @@ void SpeciationSystem::update(const TickContext& ctx) {
+                 dominant_hash = hash;
+             }
+         }
++        (void)dominant_hash;
+         
+         // We log the diversity count
+         if (counts.size() > 20) {
+-            SHAPE_LOG_DEBUG("Evolution", "Species {} shows high diversity ({} unique genomes)", 
++            SHAPE_LOG_TRACE("Evolution", "Species {} shows high diversity ({} unique genomes)", 
+                             sid, counts.size());
+             speciation_events++;
+         }
+diff --git a/Engine/Simulation/Genetics/GeneticsSystem.cpp b/Engine/Simulation/Genetics/GeneticsSystem.cpp
+index 7c33b1e..8dfd28d 100644
+--- a/Engine/Simulation/Genetics/GeneticsSystem.cpp
++++ b/Engine/Simulation/Genetics/GeneticsSystem.cpp
+@@ -67,10 +67,10 @@ CreatureGenome GeneticsSystem::from_species(const Species& species) noexcept {
+     CreatureGenome g;
+     // Map first 16 species genome genes directly
+     const usize n = std::min(static_cast<usize>(CreatureGenome::GENE_COUNT),
+-                              static_cast<usize>(species.genome.count));
++                              static_cast<usize>(species.genetics.genome.count));
+     for (usize i = 0; i < n; ++i) {
+         // Normalize gene value to [0,1] (gene.value can be any float in schema)
+-        g.genes[i] = std::clamp(species.genome.genes[i].value, 0.0f, 1.0f);
++        g.genes[i] = std::clamp(species.genetics.genome.genes[i].value, 0.0f, 1.0f);
+     }
+     // Encode core attributes into remaining genes
+     if constexpr (CreatureGenome::GENE_COUNT >= 16) {
+diff --git a/Engine/Simulation/Reproduction/ReproductionSystem.cpp b/Engine/Simulation/Reproduction/ReproductionSystem.cpp
+index 892e5ad..e2d7199 100644
+--- a/Engine/Simulation/Reproduction/ReproductionSystem.cpp
++++ b/Engine/Simulation/Reproduction/ReproductionSystem.cpp
+@@ -326,7 +326,7 @@ ECS2::EntityId ReproductionSystem::spawn_offspring(ECS2::EntityId mother,
+     // Register in spatial grid
+     if (m_grid) m_grid->insert(child.index, spawn_pos);
+ 
+-    SHAPE_LOG_DEBUG("Reproduction", "Offspring spawned gen={} species={}",
++    SHAPE_LOG_TRACE("Reproduction", "Offspring spawned gen={} species={}",
+                     cs.generation, sid);
+ 
+     return child;
+diff --git a/Engine/Simulation/Reproduction/ReproductionSystem.hpp b/Engine/Simulation/Reproduction/ReproductionSystem.hpp
+index 71eb736..a361d24 100644
+--- a/Engine/Simulation/Reproduction/ReproductionSystem.hpp
++++ b/Engine/Simulation/Reproduction/ReproductionSystem.hpp
+@@ -18,6 +18,8 @@
+ #include "Core/Platform.hpp"
+ #include "Simulation/ISimulationSystem.hpp"
+ #include "Simulation/Spatial/SpatialGrid.hpp"
++#include "Simulation/Components/CreatureComponents.hpp"
++#include "ECS/SpeciesSchema.hpp"
+ #include "ECS2/World2.hpp"
+ #include <vector>
+ 
+diff --git a/Engine/Simulation/Snapshots/SimulationSnapshot.cpp b/Engine/Simulation/Snapshots/SimulationSnapshot.cpp
+index 621b986..157b43f 100644
+--- a/Engine/Simulation/Snapshots/SimulationSnapshot.cpp
++++ b/Engine/Simulation/Snapshots/SimulationSnapshot.cpp
+@@ -60,7 +60,7 @@ std::vector<u8> SimulationSnapshot::save_to_memory(const ECS2::World2& world) {
+     buf.reserve(1024 * 1024); // 1 MB reserve
+ 
+     SnapshotHeader header;
+-    header.tick = world.resource<WorldState>().tick;
++    header.tick = world.resource<WorldState>().environment.current_tick;
+     // We'll rewrite entity_count later
+     const usize header_offset = buf.size();
+     write_comp(buf, header);
+diff --git a/Engine/Simulation/Spatial/SpatialGrid.cpp b/Engine/Simulation/Spatial/SpatialGrid.cpp
+index 451d387..c95abe3 100644
+--- a/Engine/Simulation/Spatial/SpatialGrid.cpp
++++ b/Engine/Simulation/Spatial/SpatialGrid.cpp
+@@ -4,6 +4,8 @@
+ 
+ namespace Shape {
+ 
++SpatialGrid::SpatialGrid() : SpatialGrid(Config{}) {}
++
+ SpatialGrid::SpatialGrid(const Config& cfg) {
+     reconfigure(cfg);
+ }
+diff --git a/Engine/Simulation/Spatial/SpatialGrid.hpp b/Engine/Simulation/Spatial/SpatialGrid.hpp
+index f1defc9..a034393 100644
+--- a/Engine/Simulation/Spatial/SpatialGrid.hpp
++++ b/Engine/Simulation/Spatial/SpatialGrid.hpp
+@@ -39,7 +39,8 @@ public:
+         bool       wrap     = true;
+     };
+ 
+-    explicit SpatialGrid(const Config& cfg = Config{});
++    SpatialGrid();
++    explicit SpatialGrid(const Config& cfg);
+ 
+     void reconfigure(const Config& cfg);
+     SHAPE_NODISCARD const Config& config() const noexcept { return m_cfg; }
+diff --git a/Engine/UI/CMakeLists.txt b/Engine/UI/CMakeLists.txt
+index aafa243..d278fe2 100644
+--- a/Engine/UI/CMakeLists.txt
++++ b/Engine/UI/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-shape_add_library(ShapeUI
++shape_add_module(ShapeUI
+     "include/Shape/UI/IOverlayUI.h"
+     "include/Shape/UI/TextRenderer.h"
+     "include/Shape/UI/BitmapFont.h"
+diff --git a/EngineTests/ContainerTests.cpp b/EngineTests/ContainerTests.cpp
+index 8d2119e..e2bf281 100644
+--- a/EngineTests/ContainerTests.cpp
++++ b/EngineTests/ContainerTests.cpp
+@@ -316,8 +316,7 @@ TEST_CASE("Pool: acquire and release", "[containers][pool]") {
+ 
+ TEST_CASE("Pool: full detection", "[containers][pool]") {
+     Pool<TestObj, 4> pool;
+-    u32 ids[4];
+-    for (int i = 0; i < 4; ++i) ids[i] = pool.Acquire();
++    for (int i = 0; i < 4; ++i) pool.Acquire();
+     REQUIRE(pool.Full());
+     REQUIRE(pool.Acquire() == Pool<TestObj, 4>::INVALID);
+ }
+diff --git a/EngineTests/SimulationTests/test_simulation_time.cpp b/EngineTests/SimulationTests/test_simulation_time.cpp
+index 88fabc2..6b700cc 100644
+--- a/EngineTests/SimulationTests/test_simulation_time.cpp
++++ b/EngineTests/SimulationTests/test_simulation_time.cpp
+@@ -92,6 +92,7 @@ TEST_CASE("Scheduler — priority ordering: lower = first", "[simulation][time]"
+         std::vector<int>* out;
+         int id;
+         int prio;
++        OrderedSystem(std::vector<int>* out_, int id_, int prio_) : out(out_), id(id_), prio(prio_) {}
+         void update(const TickContext&) override { out->push_back(id); }
+         int  priority() const override { return prio; }
+         std::string_view name() const override { return "OrderedSystem"; }
+@@ -121,6 +122,7 @@ TEST_CASE("Scheduler — TickContext.tick is monotone 1-indexed", "[simulation][
+ 
+     struct CheckSystem final : ISimulationSystem {
+         u64* last; bool* ok;
++        CheckSystem(u64* last_, bool* ok_) : last(last_), ok(ok_) {}
+         void update(const TickContext& ctx) override {
+             if (ctx.tick != *last + 1) *ok = false;
+             *last = ctx.tick;
+@@ -144,6 +146,7 @@ TEST_CASE("Scheduler — RNG is deterministic for same seed", "[simulation][time
+         u64 result = 0;
+         struct HashSystem final : ISimulationSystem {
+             u64* out;
++            explicit HashSystem(u64* out_) : out(out_) {}
+             void update(const TickContext& ctx) override {
+                 *out ^= ctx.rng.NextU64() + ctx.tick;
+             }
+diff --git a/Examples/CMakeLists.txt b/Examples/CMakeLists.txt
+index fda908f..e0dace1 100644
+--- a/Examples/CMakeLists.txt
++++ b/Examples/CMakeLists.txt
+@@ -132,7 +132,8 @@ add_custom_command(TARGET life_demo POST_BUILD
+ )
+ 
+ # ─── Phase E: Demos ───────────────────────────────────────────────────────────
+-add_subdirectory(editor_demo)
++# DISABLED: links ShapeEditor (Engine/Editor), which is currently disabled — see root/Engine CMakeLists.
++# add_subdirectory(editor_demo)
+ add_subdirectory(replay_demo)
+ add_subdirectory(civilization_demo)
+ 
+diff --git a/Games/PolygonalPrimordials/src/Game.cpp b/Games/PolygonalPrimordials/src/Game.cpp
+index 74bd2ee..0dd8fe1 100644
+--- a/Games/PolygonalPrimordials/src/Game.cpp
++++ b/Games/PolygonalPrimordials/src/Game.cpp
+@@ -143,7 +143,7 @@ void Game::shutdown() {
+ 
+ void Game::set_state(GameState s) {
+     if (m_state == s) return;
+-    SHAPE_LOG_DEBUG("Game", "State: {} -> {}", (int)m_state, (int)s);
++    SHAPE_LOG_TRACE("Game", "State: {} -> {}", (int)m_state, (int)s);
+     m_state = s;
+ }
+ 
+diff --git a/Games/PolygonalPrimordials/src/SteamIntegration.cpp b/Games/PolygonalPrimordials/src/SteamIntegration.cpp
+index 85c32f8..40d7b00 100644
+--- a/Games/PolygonalPrimordials/src/SteamIntegration.cpp
++++ b/Games/PolygonalPrimordials/src/SteamIntegration.cpp
+@@ -92,7 +92,7 @@ namespace PolygonalPrimordials::Steam {
+ #ifdef STEAMWORKS_SDK
+         if (SteamUserStats()) SteamUserStats()->SetStat(name.c_str(), value);
+ #else
+-        SHAPE_LOG_DEBUG("Steam", "Stat {} = {} (stub)", name, value);
++        SHAPE_LOG_TRACE("Steam", "Stat {} = {} (stub)", name, value);
+ #endif
+     }
+ 
+@@ -100,7 +100,7 @@ namespace PolygonalPrimordials::Steam {
+ #ifdef STEAMWORKS_SDK
+         if (SteamUserStats()) SteamUserStats()->SetStat(name.c_str(), value);
+ #else
+-        SHAPE_LOG_DEBUG("Steam", "Stat {} = {} (stub)", name, value);
++        SHAPE_LOG_TRACE("Steam", "Stat {} = {} (stub)", name, value);
+ #endif
+     }
+ 
+diff --git a/Games/PolygonalPrimordials/src/Telemetry.cpp b/Games/PolygonalPrimordials/src/Telemetry.cpp
+index 284ad87..b369061 100644
+--- a/Games/PolygonalPrimordials/src/Telemetry.cpp
++++ b/Games/PolygonalPrimordials/src/Telemetry.cpp
+@@ -67,7 +67,7 @@ namespace PolygonalPrimordials {
+ 
+     void Telemetry::send_to_endpoint(const std::string& payload) {
+         // HTTP POST stub
+-        SHAPE_LOG_DEBUG("Telemetry", "Sending: {}", payload);
++        SHAPE_LOG_TRACE("Telemetry", "Sending: {}", payload);
+     }
+ 
+     std::string Telemetry::serialize_event(const std::string& name, const TelemetryEvent& /*data*/) const {
+diff --git a/Tools/liveops/curator/CMakeLists.txt b/Tools/liveops/curator/CMakeLists.txt
+new file mode 100644
+index 0000000..05d7de2
+--- /dev/null
++++ b/Tools/liveops/curator/CMakeLists.txt
+@@ -0,0 +1 @@
++add_executable(ShapeLiveOpsCurator main.cpp)
+diff --git a/Tools/liveops/mod_validator/CMakeLists.txt b/Tools/liveops/mod_validator/CMakeLists.txt
+new file mode 100644
+index 0000000..304443b
+--- /dev/null
++++ b/Tools/liveops/mod_validator/CMakeLists.txt
+@@ -0,0 +1 @@
++add_executable(ShapeLiveOpsModValidator main.cpp)
+-- 
+2.43.0

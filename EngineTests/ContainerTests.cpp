@@ -316,8 +316,7 @@ TEST_CASE("Pool: acquire and release", "[containers][pool]") {
 
 TEST_CASE("Pool: full detection", "[containers][pool]") {
     Pool<TestObj, 4> pool;
-    u32 ids[4];
-    for (int i = 0; i < 4; ++i) ids[i] = pool.Acquire();
+    for (int i = 0; i < 4; ++i) pool.Acquire();
     REQUIRE(pool.Full());
     REQUIRE(pool.Acquire() == Pool<TestObj, 4>::INVALID);
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Core/Platform.hpp"
+#include "Core/Assert.hpp"
 #include "Math/Vec2.hpp"
 #include "Math/Vec3.hpp"
 #include <span>

@@ -1,4 +1,4 @@
-shape_add_library(ShapeProcedural
+shape_add_module(ShapeProcedural
     "include/Shape/Procedural/Noise.h"
     "include/Shape/Procedural/SimplexNoise.h"
     "include/Shape/Procedural/WorleyNoise.h"

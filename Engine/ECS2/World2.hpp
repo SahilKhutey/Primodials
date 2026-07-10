@@ -47,6 +47,7 @@ public:
 
     /// Destroy an entity and all its components.
     void destroy(EntityId e);
+    void destroy_all();
 
     /// Is this handle still valid?
     SHAPE_NODISCARD bool valid(EntityId e) const noexcept { return m_pool.valid(e); }
@@ -153,14 +154,14 @@ public:
 
 private:
     ArchetypeStorage* get_or_create_storage(const ArchetypeId& id);
-    void move_entity(EntityId e, EntityRecord& rec, const ArchetypeId& new_id);
+    void move_entity(EntityId e, EntityRecord& rec, const ArchetypeId new_id);
 
     SHAPE_NODISCARD ArchetypeStorage* storage_for(const EntityRecord& rec) noexcept {
         if (rec.archetype_idx == ~u32{0}) return nullptr;
         return m_storages[rec.archetype_idx].get();
     }
 
-    SHAPE_NODISCARD const ArchetypeId& current_archetype_id(const EntityRecord& rec) const noexcept {
+    SHAPE_NODISCARD ArchetypeId current_archetype_id(const EntityRecord& rec) const noexcept {
         if (rec.archetype_idx == ~u32{0}) return EMPTY_ARCHETYPE;
         return m_archetype_ids[rec.archetype_idx];
     }

@@ -1,6 +1,6 @@
 // CrashReporter.cpp
-#include "CrashReporter.h"
-#include "Shape/Core/Logger.h"
+#include "CrashReporter.hpp"
+#include "Core/Logger.hpp"
 
 namespace PolygonalPrimordials {
 
@@ -10,14 +10,14 @@ namespace PolygonalPrimordials {
     }
 
     bool CrashReporter::initialize(const std::string&, const std::string&) {
-        SHAPE_LOG_INFO("CrashReporter", "Initialized");
+        SHAPE_LOG_INFO("CrashReporter: Initialized");
         return true;
     }
 
     void CrashReporter::shutdown() {}
 
     void CrashReporter::generate_minidump() {
-        SHAPE_LOG_ERROR("CrashReporter", "Generating minidump...");
+        SHAPE_LOG_ERROR("CrashReporter: Generating minidump...");
     }
 
 } // namespace

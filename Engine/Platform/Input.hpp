@@ -8,6 +8,7 @@
 #include "Platform/Gamepad.hpp"
 #include "Math/Vec2.hpp"
 #include "Core/Platform.hpp"
+#include "Core/Assert.hpp"
 #include <array>
 #include <string>
 
@@ -55,9 +56,9 @@ public:
     // ── Mouse ─────────────────────────────────────────────────────────────────
 
     SHAPE_NODISCARD const MouseState& mouse()           const noexcept { return m_mouse; }
-    SHAPE_NODISCARD Math::Vec2        mouse_position()  const noexcept { return m_mouse.position; }
-    SHAPE_NODISCARD Math::Vec2        mouse_delta()     const noexcept { return m_mouse.delta; }
-    SHAPE_NODISCARD Math::Vec2        mouse_wheel()     const noexcept { return m_mouse.wheel; }
+    SHAPE_NODISCARD Math::Vec2f        mouse_position()  const noexcept { return m_mouse.position; }
+    SHAPE_NODISCARD Math::Vec2f        mouse_delta()     const noexcept { return m_mouse.delta; }
+    SHAPE_NODISCARD Math::Vec2f        mouse_wheel()     const noexcept { return m_mouse.wheel; }
     SHAPE_NODISCARD bool is_mouse_down(MouseButton b)   const noexcept {
         return m_mouse.buttons[static_cast<usize>(b)];
     }

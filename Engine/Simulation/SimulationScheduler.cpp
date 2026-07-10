@@ -38,10 +38,10 @@ SimulationScheduler::SimulationScheduler(u64 tick_rate_hz)
 
 void SimulationScheduler::register_system(ISimulationSystem& system) {
     m_systems.push_back({&system, system.priority()});
-    std::sort(m_systems.begin(), m_systems.end(),
-              [](const SystemEntry& a, const SystemEntry& b) {
-                  return a.priority < b.priority;
-              });
+    std::stable_sort(m_systems.begin(), m_systems.end(),
+                     [](const SystemEntry& a, const SystemEntry& b) {
+                         return a.priority < b.priority;
+                     });
     system.on_register();
 }
 

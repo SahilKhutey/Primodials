@@ -21,7 +21,8 @@
 namespace Shape {
 
 // ─── Forward declarations ─────────────────────────────────────────────────────
-struct DeterministicRng;
+namespace Simulation { class DeterministicRng; }
+using DeterministicRng = Simulation::DeterministicRng;
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 static constexpr u16 MAX_KNOWN_TECHS      = 256;

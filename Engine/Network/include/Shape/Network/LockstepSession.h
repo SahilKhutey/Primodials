@@ -4,9 +4,9 @@
 
 #include "Shape/Network/INetworkBackend.h"
 #include "Shape/Network/NetPacket.h"
-#include "Shape/Simulation/SimulationScheduler.hpp"
-#include "Shape/ECS/World.hpp"
-#include "Shape/Random/DeterministicRng.hpp"
+#include "Simulation/SimulationScheduler.hpp"
+#include "ECS/World.hpp"
+#include "Simulation/DeterministicRng.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -58,33 +58,33 @@ namespace Shape::Network {
         LockstepState state() const { return m_state; }
 
         // Per-frame update
-        void update(ECS::World& world, Simulation::SimulationScheduler& scheduler, double real_delta);
+        void update(World& world, SimulationScheduler& scheduler, double real_delta);
 
         // Submit local input
         void submit_local_input(const std::vector<uint8_t>& input);
 
         // Desync handling
-        void report_desync(Shape::Simulation::Tick tick, uint64_t local_hash, uint64_t remote_hash);
+        void report_desync(u64 tick, uint64_t local_hash, uint64_t remote_hash);
 
         // Stats
         struct Stats {
             LockstepState state = LockstepState::Idle;
             int connected_players = 0;
             int ready_players = 0;
-            Shape::Simulation::Tick current_tick = 0;
+            u64 current_tick = 0;
             double avg_latency_ms = 0;
             uint64_t desync_count = 0;
         };
         Stats stats() const;
 
     private:
-        void run_frame(ECS::World& world, Simulation::SimulationScheduler& scheduler);
-        void collect_inputs(ECS::World& world, Simulation::SimulationScheduler& scheduler);
+        void run_frame(World& world, SimulationScheduler& scheduler);
+        void collect_inputs(World& world, SimulationScheduler& scheduler);
         void broadcast_commands();
-        void check_state_hashes(ECS::World& world, Shape::Simulation::Tick tick);
-        void send_state_hash(ECS::World& world, Shape::Simulation::Tick tick);
+        void check_state_hashes(World& world, u64 tick);
+        void send_state_hash(World& world, u64 tick);
         void on_packet(uint32_t peer, const Packet& packet);
-        uint64_t hash_world_state(ECS::World& world) const;
+        uint64_t hash_world_state(World& world) const;
 
         std::unique_ptr<INetworkBackend> m_backend;
         LockstepConfig m_cfg;
@@ -95,7 +95,7 @@ namespace Shape::Network {
         std::vector<uint8_t> m_local_input;
         std::vector<std::vector<uint8_t>> m_tick_inputs;
         uint32_t m_seq_counter = 0;
-        Shape::Simulation::Tick m_last_state_hash_tick = 0;
+        u64 m_last_state_hash_tick = 0;
         double m_total_latency = 0;
         uint64_t m_desync_count = 0;
     };

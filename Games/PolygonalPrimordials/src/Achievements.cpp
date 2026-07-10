@@ -1,9 +1,9 @@
 // Achievements.cpp
-#include "Achievements.h"
-#include "SteamIntegration.h"
-#include "SteamStub.h"
-#include "Shape/Core/Logger.h"
-#include "Shape/Core/Assert.hpp"
+#include "Achievements.hpp"
+#include "SteamIntegration.hpp"
+#include "SteamStub.hpp"
+#include "Core/Logger.hpp"
+#include "Core/Assert.hpp"
 
 #include <fstream>
 #include <sstream>
@@ -20,7 +20,7 @@ namespace PolygonalPrimordials {
 
     bool Achievements::initialize() {
         load_definitions("data/achievements.json");
-        SHAPE_LOG_INFO("Ach", "Loaded {} achievement definitions", m_defs.size());
+        SHAPE_LOG_INFO("Achievements: Loaded {} achievement definitions", m_defs.size());
         return true;
     }
 
@@ -29,7 +29,7 @@ namespace PolygonalPrimordials {
     void Achievements::load_definitions(const std::string& path) {
         std::ifstream f(path);
         if (!f) {
-            SHAPE_LOG_WARN("Ach", "Definitions not found: {}", path);
+            SHAPE_LOG_WARN("Achievements: Definitions not found: {}", path);
         }
 
         // For brevity, we register a hardcoded set if file isn't well-formed
@@ -88,7 +88,7 @@ namespace PolygonalPrimordials {
         }
         prog_it->second.unlock_time = static_cast<uint64_t>(
             std::chrono::system_clock::now().time_since_epoch().count());
-        SHAPE_LOG_INFO("Ach", "Unlocked: {}", id);
+        SHAPE_LOG_INFO("Achievements: Unlocked: {}", id);
 #ifdef STEAMWORKS_SDK
         const auto* def = get_definition(id);
         if (def && SteamUserStats()) {

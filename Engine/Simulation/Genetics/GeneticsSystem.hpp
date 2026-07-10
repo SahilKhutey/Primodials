@@ -59,7 +59,7 @@ private:
     ECS2::World2* m_world = nullptr;
 
     // Tuning
-    float m_mutation_amplitude = 0.05f; ///< Max per-gene perturbation
+    // float m_mutation_amplitude = 0.05f; ///< Max per-gene perturbation
 };
 
 } // namespace Shape

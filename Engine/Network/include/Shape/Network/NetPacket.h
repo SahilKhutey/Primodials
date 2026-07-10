@@ -4,7 +4,7 @@
 #include <vector>
 #include <span>
 #include <cstring>
-#include "Shape/Core/Assert.hpp"
+#include "Core/Assert.hpp"
 
 namespace Shape::Network {
 

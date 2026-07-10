@@ -1,7 +1,7 @@
 // SteamIntegration.cpp
-#include "SteamIntegration.h"
-#include "SteamStub.h"
-#include "Shape/Core/Logger.h"
+#include "SteamIntegration.hpp"
+#include "SteamStub.hpp"
+#include "Core/Logger.hpp"
 
 namespace PolygonalPrimordials::Steam {
 
@@ -13,7 +13,7 @@ namespace PolygonalPrimordials::Steam {
     bool SteamIntegration::initialize() {
 #ifdef STEAMWORKS_SDK
         if (!SteamAPI_Init()) {
-            SHAPE_LOG_ERROR("Steam", "SteamAPI_Init failed");
+            SHAPE_LOG_ERROR("Steam: SteamAPI_Init failed");
             return false;
         }
         auto* user = SteamUser();
@@ -35,7 +35,7 @@ namespace PolygonalPrimordials::Steam {
             m_player.language = apps->GetCurrentGameLanguage();
         }
         m_initialized = true;
-        SHAPE_LOG_INFO("Steam", "Initialized for user: {} (ID: {})",
+        SHAPE_LOG_INFO("Steam: Initialized for user: {} (ID: {})",
                        m_player.persona_name, m_player.steam_id);
 #else
         // Stub mode: pretend we're a single-player dev build
@@ -46,7 +46,7 @@ namespace PolygonalPrimordials::Steam {
         m_player.online = true;
         m_player.level = 42;
         m_initialized = true;
-        SHAPE_LOG_INFO("Steam", "Running in stub mode (no Steam client)");
+        SHAPE_LOG_INFO("Steam: Running in stub mode (no Steam client)");
 #endif
         return true;
     }
@@ -92,7 +92,7 @@ namespace PolygonalPrimordials::Steam {
 #ifdef STEAMWORKS_SDK
         if (SteamUserStats()) SteamUserStats()->SetStat(name.c_str(), value);
 #else
-        SHAPE_LOG_DEBUG("Steam", "Stat {} = {} (stub)", name, value);
+        SHAPE_LOG_TRACE("Steam: Stat {} = {} (stub)", name, value);
 #endif
     }
 
@@ -100,7 +100,7 @@ namespace PolygonalPrimordials::Steam {
 #ifdef STEAMWORKS_SDK
         if (SteamUserStats()) SteamUserStats()->SetStat(name.c_str(), value);
 #else
-        SHAPE_LOG_DEBUG("Steam", "Stat {} = {} (stub)", name, value);
+        SHAPE_LOG_TRACE("Steam: Stat {} = {} (stub)", name, value);
 #endif
     }
 

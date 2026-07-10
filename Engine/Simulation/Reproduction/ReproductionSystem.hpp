@@ -18,6 +18,8 @@
 #include "Core/Platform.hpp"
 #include "Simulation/ISimulationSystem.hpp"
 #include "Simulation/Spatial/SpatialGrid.hpp"
+#include "Simulation/Components/CreatureComponents.hpp"
+#include "ECS/SpeciesSchema.hpp"
 #include "ECS2/World2.hpp"
 #include <vector>
 

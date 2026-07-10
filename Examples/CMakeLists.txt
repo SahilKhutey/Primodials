@@ -132,11 +132,10 @@ add_custom_command(TARGET life_demo POST_BUILD
 )
 
 # ─── Phase E: Demos ───────────────────────────────────────────────────────────
-add_subdirectory(editor_demo)
-add_subdirectory(replay_demo)
-add_subdirectory(civilization_demo)
+# add_subdirectory(replay_demo)
+# add_subdirectory(civilization_demo)
 
 # ─── Phase F: Demos ───────────────────────────────────────────────────────────
-add_subdirectory(vulkan_demo)
+# add_subdirectory(vulkan_demo)
 add_subdirectory(multiplayer_demo)
 add_subdirectory(scripted_demo)

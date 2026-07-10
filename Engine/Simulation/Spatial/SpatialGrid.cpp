@@ -4,6 +4,8 @@
 
 namespace Shape {
 
+SpatialGrid::SpatialGrid() : SpatialGrid(Config{}) {}
+
 SpatialGrid::SpatialGrid(const Config& cfg) {
     reconfigure(cfg);
 }

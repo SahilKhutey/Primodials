@@ -63,7 +63,7 @@ void Input::process_sdl_event([[maybe_unused]] void* raw) noexcept {
 
         case SDL_EVENT_MOUSE_BUTTON_DOWN: {
             const usize btn = static_cast<usize>(ev.button.button - 1);
-            if (btn < in.m_mouse.buttons.size()) {
+            if (btn < static_cast<usize>(MouseButton::Count)) {
                 in.m_mouse.buttons[btn]   = true;
                 in.m_mouse_pressed[btn]   = true;
                 in.m_mouse.position = {ev.button.x, ev.button.y};
@@ -72,7 +72,7 @@ void Input::process_sdl_event([[maybe_unused]] void* raw) noexcept {
         }
         case SDL_EVENT_MOUSE_BUTTON_UP: {
             const usize btn = static_cast<usize>(ev.button.button - 1);
-            if (btn < in.m_mouse.buttons.size()) {
+            if (btn < static_cast<usize>(MouseButton::Count)) {
                 in.m_mouse.buttons[btn]   = false;
                 in.m_mouse_released[btn]  = true;
                 in.m_mouse.position = {ev.button.x, ev.button.y};
@@ -124,7 +124,8 @@ void Input::process_sdl_event([[maybe_unused]] void* raw) noexcept {
                 SDL_Gamepad* gp = SDL_OpenGamepad(ev.gdevice.which);
                 in.m_gamepads[idx].connected    = (gp != nullptr);
                 in.m_gamepads[idx].device_index = idx;
-                in.m_gamepads[idx].has_rumble   = gp && SDL_GamepadHasRumble(gp);
+                in.m_gamepads[idx].has_rumble   = gp && SDL_GetBooleanProperty(
+                    SDL_GetGamepadProperties(gp), SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false);
                 SHAPE_LOG_INFO("Input", "Gamepad {} connected", idx);
             }
             break;
@@ -148,7 +149,14 @@ void Input::process_sdl_event([[maybe_unused]] void* raw) noexcept {
 
 void Input::set_relative_mouse([[maybe_unused]] bool enabled) noexcept {
 #if SHAPE_HAVE_SDL3
-    SDL_SetRelativeMouseMode(enabled ? SDL_TRUE : SDL_FALSE);
+    // NOTE: SDL3 made mouse-capture mode per-window (SDL_SetWindowRelativeMouseMode),
+    // but Input has no window reference of its own. Using the currently focused window
+    // as a stand-in works for this engine's current single-window usage, but this should
+    // be revisited (Input should be given an explicit SDL_Window* at construction) before
+    // any multi-window feature is added.
+    if (SDL_Window* focused = SDL_GetKeyboardFocus()) {
+        SDL_SetWindowRelativeMouseMode(focused, enabled);
+    }
     m_mouse.relative_mode = enabled;
 #endif
 }
