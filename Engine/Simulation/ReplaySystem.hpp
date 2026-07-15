@@ -1,8 +1,7 @@
 #pragma once
 #include "Core/Platform.hpp"
 #include "ECS/World.hpp"
-#include <string>
-#include <unordered_map>
+#include <map>
 
 namespace Shape {
     class ReplaySystem {
@@ -17,6 +16,6 @@ namespace Shape {
         static usize GetKeyframeCount();
         
     private:
-        static std::unordered_map<u64, std::string> s_Keyframes;
+        static std::map<u64, std::string> s_Keyframes;
     };
 }

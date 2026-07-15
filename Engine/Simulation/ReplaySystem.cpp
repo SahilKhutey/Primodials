@@ -4,7 +4,7 @@
 
 namespace Shape {
 
-std::unordered_map<u64, std::string> ReplaySystem::s_Keyframes;
+std::map<u64, std::string> ReplaySystem::s_Keyframes;
 
 void ReplaySystem::CaptureKeyframe(const World& world, u64 tick) {
     std::ostringstream oss(std::ios::binary);

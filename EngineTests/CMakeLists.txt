@@ -28,6 +28,7 @@ add_executable(ShapeEngineTests
 
     # Phase C — Simulation Tests
     SimulationTests/test_simulation_time.cpp
+    SimulationTests/test_simulation_catchup.cpp
     SimulationTests/test_spatial.cpp
     SimulationTests/test_genetics.cpp
     SimulationTests/test_species.cpp
@@ -53,7 +54,13 @@ add_executable(ShapeEngineTests
 
     # Phase G — Game and Performance Tests
     GameTests/test_steam_stub.cpp
+    GameTests/test_achievements_roundtrip.cpp
+    ../Games/PolygonalPrimordials/src/Achievements.cpp
     PerformanceTests/test_baseline.cpp
+)
+
+target_include_directories(ShapeEngineTests PRIVATE
+    ${CMAKE_SOURCE_DIR}/Games/PolygonalPrimordials/src
 )
 
 target_link_libraries(ShapeEngineTests PRIVATE

@@ -151,4 +151,18 @@ EntityId ArchetypeStorage::free_row(u32 chunk_idx, u32 row) {
     return moved_entity;
 }
 
+void ArchetypeStorage::clear() noexcept {
+    for (auto& chunk : m_chunks) {
+        for (u32 row = 0; row < chunk->count; ++row) {
+            for (const auto& co : m_offsets) {
+                const TypeInfo& ti = ComponentRegistry::get(co.id);
+                void* ptr = chunk->data + co.offset + row * co.size;
+                ti.ops.destruct(ptr);
+            }
+        }
+        chunk->count = 0;
+    }
+    m_entity_count = 0;
+}
+
 } // namespace Shape::ECS2

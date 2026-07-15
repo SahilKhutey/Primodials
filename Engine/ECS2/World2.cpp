@@ -2,6 +2,7 @@
 #include "ECS2/CommandBuffer2.hpp"
 #include "Core/Logger.hpp"
 #include "Core/Assert.hpp"
+#include "ECS2/TypeInfo.hpp"
 #include <cstring>
 
 namespace Shape::ECS2 {
@@ -49,6 +50,17 @@ void World2::destroy_all() {
     for (auto e : to_destroy) {
         destroy(e);
     }
+}
+
+void World2::clear_all() {
+    for (auto& storage : m_storages) {
+        storage->clear();
+    }
+    m_pool.clear();
+}
+
+void World2::force_alloc_entity(EntityId e) {
+    m_pool.force_alloc(e);
 }
 
 // ─── Archetype management ─────────────────────────────────────────────────────

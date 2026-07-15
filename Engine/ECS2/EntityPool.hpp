@@ -13,6 +13,7 @@
 #include "ECS2/EntityId.hpp"
 #include "Core/Assert.hpp"
 #include <vector>
+#include <algorithm>
 
 namespace Shape::ECS2 {
 
@@ -27,6 +28,26 @@ struct EntityRecord {
 class EntityPool {
 public:
     EntityPool() = default;
+
+    /// Reset the pool state completely.
+    void clear() noexcept {
+        m_records.clear();
+        m_free_list.clear();
+    }
+
+    /// Force allocate an entity with a specific EntityId.
+    void force_alloc(EntityId e) {
+        if (e.index >= m_records.size()) {
+            m_records.resize(e.index + 1, EntityRecord{});
+        }
+        m_records[e.index].generation = e.generation;
+        m_records[e.index].archetype_idx = ~u32{0};
+        m_records[e.index].chunk_idx     = ~u32{0};
+        m_records[e.index].row_index     = ~u32{0};
+
+        // Remove from free list if it exists
+        m_free_list.erase(std::remove(m_free_list.begin(), m_free_list.end(), e.index), m_free_list.end());
+    }
 
     /// Allocate a new entity handle.
     SHAPE_NODISCARD EntityId alloc() {

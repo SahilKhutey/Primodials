@@ -48,6 +48,8 @@ public:
     /// Destroy an entity and all its components.
     void destroy(EntityId e);
     void destroy_all();
+    void clear_all();
+    void force_alloc_entity(EntityId e);
 
     /// Is this handle still valid?
     SHAPE_NODISCARD bool valid(EntityId e) const noexcept { return m_pool.valid(e); }

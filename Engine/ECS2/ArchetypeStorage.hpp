@@ -45,6 +45,9 @@ public:
     /// EntityId::invalid() if the deleted entity was already the last.
     EntityId free_row(u32 chunk_idx, u32 row);
 
+    /// Clear all rows and destruct components.
+    void clear() noexcept;
+
     // ── Component access ──────────────────────────────────────────────────────
 
     /// Get a typed pointer to component c in chunk chunk_idx at row.

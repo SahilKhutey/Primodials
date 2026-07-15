@@ -86,3 +86,30 @@ TEST_CASE("CommandBuffer2 — clear discards commands", "[ecs2][cmdbuf]") {
 
     REQUIRE(world.valid(e)); // Not destroyed — command was cleared
 }
+
+TEST_CASE("CommandBuffer2 — deferred create and add component", "[ecs2][cmdbuf]") {
+    World2 world;
+    CommandBuffer2 cmd;
+
+    EntityId e = cmd.create();
+    cmd.add<CHealth>(e, {45});
+    cmd.add<CDead>(e, {false});
+
+    // Before flush, entity is not valid in world
+    REQUIRE_FALSE(world.valid(e));
+
+    cmd.flush(world);
+
+    int found_count = 0;
+    int health_val = 0;
+    bool is_dead = true;
+    world.for_each<CHealth, CDead>([&](EntityId, CHealth& h, CDead& d) {
+        found_count++;
+        health_val = h.hp;
+        is_dead = d.dead;
+    });
+
+    REQUIRE(found_count == 1);
+    REQUIRE(health_val == 45);
+    REQUIRE(is_dead == false);
+}

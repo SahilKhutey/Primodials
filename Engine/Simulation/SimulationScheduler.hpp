@@ -81,6 +81,43 @@ public:
     float speed()           const noexcept { return m_clock.GetSpeedMultiplier(); }
     void  set_tick_rate(u64 hz) noexcept;
 
+    // ---- Catch-up / drop policy ----
+    enum class DebtPolicy {
+        CatchUpGradually,
+        DropDebtImmediately,
+        RequireUserAcknowledgment,
+    };
+
+    void set_max_ticks_per_step(size_t n) noexcept { m_max_ticks_per_step = n; }
+    size_t max_ticks_per_step() const noexcept { return m_max_ticks_per_step; }
+
+    void set_warn_ticks_per_step(size_t n) noexcept { m_warn_ticks_per_step = n; }
+    size_t warn_ticks_per_step() const noexcept { return m_warn_ticks_per_step; }
+
+    void set_max_owed_ticks(u64 n) noexcept       { m_max_owed_ticks = n; }
+    u64 max_owed_ticks() const noexcept           { return m_max_owed_ticks; }
+
+    void set_debt_policy(DebtPolicy p) noexcept { m_debt_policy = p; }
+    DebtPolicy debt_policy() const noexcept     { return m_debt_policy; }
+
+    // Observability
+    u64 dropped_ticks_total() const noexcept { return m_dropped_ticks_total; }
+    u64 owed_ticks_unrun() const noexcept    { return m_owed_ticks_unrun; }
+    u64 last_step_ticks() const noexcept    { return m_last_step_ticks; }
+
+    // Recovery actions
+    void acknowledge_debt() noexcept;
+    void reset_debt() noexcept;
+
+    // Snapshot/restore — for save games.
+    struct DebtSnapshot {
+        u64 dropped_ticks_total;
+        u64 owed_ticks_unrun;
+        bool debt_acknowledged;
+    };
+    DebtSnapshot debt_snapshot() const noexcept;
+    void restore_debt(const DebtSnapshot& snap) noexcept;
+
     // ── RNG control ────────────────────────────────────────────────────────
 
     void set_seed(u64 seed)              { m_rng = DeterministicRng(seed); }
@@ -97,7 +134,7 @@ public:
     void reset_stats() noexcept;
 
     u64    current_tick()  const noexcept { return m_clock.GetTotalTicks(); }
-    double sim_time()      const noexcept { return m_sim_time; }
+    double sim_time()      const noexcept { return static_cast<double>(m_clock.GetTotalTicks()) * m_fixed_delta; }
 
     static constexpr usize MAX_TICKS_PER_FRAME = 8;
 
@@ -107,7 +144,6 @@ private:
 
     SimulationClock  m_clock;
     DeterministicRng m_rng{12345678ULL};
-    double           m_sim_time     = 0.0;
     double           m_accumulator  = 0.0;   ///< Seconds waiting for next tick
     double           m_fixed_delta  = 1.0 / 60.0;
 
@@ -124,6 +160,15 @@ private:
     double m_ema_tick_ms  = 0.0;
     double m_min_tick_ms  = 0.0;
     double m_max_tick_ms  = 0.0;
+
+    size_t     m_max_ticks_per_step  = 32;
+    size_t     m_warn_ticks_per_step = 32;
+    u64        m_max_owed_ticks      = 86400;
+    u64        m_dropped_ticks_total = 0;
+    u64        m_owed_ticks_unrun    = 0;
+    u64        m_last_step_ticks     = 0;
+    bool       m_debt_acknowledged   = false;
+    DebtPolicy m_debt_policy         = DebtPolicy::CatchUpGradually;
 };
 
 } // namespace Shape

@@ -1,29 +1,39 @@
-// Achievements.h
+// Achievements.hpp
 #pragma once
+
 #include "Core/NonCopyable.hpp"
+
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace PolygonalPrimordials {
 
+    // Static definition of an achievement. Loaded from data/achievements.json
+    // and/or from the Steamworks app config at startup.
     struct AchievementDef {
-        std::string id;            // e.g. "FIRST_LAUNCH"
-        std::string api_name;      // Steam API name
-        std::string title;
-        std::string description;
-        std::string icon_locked;
-        std::string icon_unlocked;
-        bool hidden = false;
-        int  progress_target = 0;  // 0 = simple unlock
+        std::string id;             // Internal identifier (e.g., "POPULATION_100")
+        std::string api_name;       // Steam API name (e.g., "ACH_POP_100")
+        std::string title;          // Display title
+        std::string description;    // Player-facing description
+        std::string icon_locked;     // Path to locked icon
+        std::string icon_unlocked;   // Path to unlocked icon
+        bool hidden = false;        // If true, hidden until unlocked
+        int  progress_target = 0;   // 0 = simple unlock, >0 = progressive
     };
 
+    // Per-player state. Persisted in cloud saves.
     struct AchievementProgress {
         std::string id;
         int current = 0;
         int target = 0;
         bool unlocked = false;
-        uint64_t unlock_time = 0;
+
+        // Unix timestamp of unlock (microseconds since epoch). 0 if locked.
+        // 64 bits at microsecond resolution gives ~292,000 years of range,
+        // which is comfortable.
+        uint64_t unlock_time_us = 0;
     };
 
     class Achievements : public Shape::NonCopyable {
@@ -45,17 +55,40 @@ namespace PolygonalPrimordials {
         const AchievementProgress* get_progress(const std::string& id) const;
         std::vector<AchievementProgress> all_progress() const;
 
-        // Save/load
-        void save_state(std::vector<uint8_t>& out);
-        void load_state(const std::vector<uint8_t>& data);
+        // Persistence
+        // save_state appends to `out` a deterministic binary blob:
+        //   magic[4] = "ACHV"
+        //   version[4] = uint32 LE
+        //   record_count[4] = uint32 LE
+        //   for each record:
+        //     id_len[4] = uint32 LE
+        //     id[id_len] = UTF-8 bytes
+        //     current[4] = int32 LE
+        //     target[4] = int32 LE
+        //     unlocked[1] = uint8 (0 or 1)
+        //     unlock_time_us[8] = uint64 LE
+        void save_state(std::vector<uint8_t>& out) const;
+        bool load_state(const std::vector<uint8_t>& data);
 
         // Reset (for testing)
         void reset_all();
 
+        // Diagnostics
+        size_t count() const { return m_progress.size(); }
+        size_t unlocked_count() const;
+
     private:
         Achievements() = default;
-        std::unordered_map<std::string, AchievementDef> m_defs;
+
+        static constexpr uint32_t SAVE_MAGIC   = 0x56434841;  // "ACHV" LE
+        static constexpr uint32_t SAVE_VERSION = 1;
+
+        // Helpers
+        bool unlock_internal(const std::string& id, AchievementProgress& prog);
+        AchievementProgress& ensure_progress(const std::string& id);
+
+        std::unordered_map<std::string, AchievementDef>     m_defs;
         std::unordered_map<std::string, AchievementProgress> m_progress;
     };
 
-} // namespace
+} // namespace PolygonalPrimordials

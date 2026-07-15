@@ -26,6 +26,10 @@ public:
     u64 GetTimeStepUs() const { return m_TimeStepUs; }
     f32 GetTimeStepSeconds() const { return static_cast<f32>(m_TimeStepUs) / 1000000.0f; }
 
+    void IncrementTicks() noexcept { m_TotalTicks++; }
+    void SetTotalTicks(u64 ticks) noexcept { m_TotalTicks = ticks; }
+    void SetAccumulatorUs(u64 accUs) noexcept { m_AccumulatorUs = accUs; }
+
     // Decoupled interpolation factor (for rendering smooth transitions between ticks)
     f32 GetAlpha() const;
 

@@ -73,7 +73,7 @@ std::vector<u8> SimulationSnapshot::save_to_memory(const ECS2::World2& world) {
     // We serialize all entities with Position
     // We can't iterate ALL entities directly easily without a query, 
     // but almost all entities have Position.
-    const_cast<ECS2::World2&>(world).for_each<ECS2::EntityId, Position>([&](ECS2::EntityId e, const Position& pos) {
+    const_cast<ECS2::World2&>(world).for_each<Position>([&](ECS2::EntityId e, const Position& pos) {
         entity_count++;
         
         write_comp(buf, e);
@@ -121,12 +121,12 @@ bool SimulationSnapshot::load_from_memory(ECS2::World2& world, const std::vector
 
     if (header.magic[0] != 'S' || header.magic[1] != 'H' ||
         header.magic[2] != 'S' || header.magic[3] != 'N') {
-        SHAPE_LOG_ERROR("Snapshot", "Invalid magic bytes in snapshot");
+        SHAPE_LOG_ERROR("Snapshot: Invalid magic bytes in snapshot");
         return false;
     }
     
     if (header.version != 1) {
-        SHAPE_LOG_ERROR("Snapshot", "Unsupported snapshot version {}", header.version);
+        SHAPE_LOG_ERROR("Snapshot: Unsupported snapshot version {}", header.version);
         return false;
     }
 
@@ -134,27 +134,17 @@ bool SimulationSnapshot::load_from_memory(ECS2::World2& world, const std::vector
     read_comp(ptr, ws);
     world.set_resource(ws);
 
-    // We do NOT clear the world pool here because World2 doesn't have an easy reset.
-    // In a real load we'd need to destroy all existing entities first.
-    // For Phase D time scrubbing, we assume the world is either fresh or we
-    // handle it externally. But let's at least destroy existing entities that have Position.
-    std::vector<ECS2::EntityId> to_destroy;
-    world.for_each<ECS2::EntityId, Position>([&](ECS2::EntityId e, Position&) {
-        to_destroy.push_back(e);
-    });
-    for (auto e : to_destroy) {
-        world.destroy(e);
-    }
+    // Destroy all existing entities and reset pool state
+    world.clear_all();
 
     // Now load entities
     for (u32 i = 0; i < header.entity_count; ++i) {
         ECS2::EntityId e;
         read_comp(ptr, e);
 
-        // We create a new entity. It might not match the saved EntityId exactly
-        // if the pool generations have advanced, but it will have the same index
-        // in our simple pool (since we just emptied it).
-        ECS2::EntityId new_e = world.create();
+        // Recreate the entity with its original exact EntityId
+        world.force_alloc_entity(e);
+        ECS2::EntityId new_e = e;
 
         u32 mask = 0;
         read_comp(ptr, mask);
@@ -199,7 +189,7 @@ bool SimulationSnapshot::load_from_memory(ECS2::World2& world, const std::vector
         }
     }
 
-    SHAPE_LOG_INFO("Snapshot", "Loaded {} entities at tick {}", header.entity_count, header.tick);
+    SHAPE_LOG_INFO("Snapshot: Loaded {} entities at tick {}", header.entity_count, header.tick);
     return true;
 }
 

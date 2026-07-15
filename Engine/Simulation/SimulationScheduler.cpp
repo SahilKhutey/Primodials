@@ -83,36 +83,96 @@ void SimulationScheduler::Update(u64 real_delta_us) {
 // ─── set_tick_rate ────────────────────────────────────────────────────────────
 
 void SimulationScheduler::set_tick_rate(u64 hz) noexcept {
-    // Re-create the clock at new rate, preserving tick count
     const u64 old_ticks = m_clock.GetTotalTicks();
     m_clock = SimulationClock(hz);
+    m_clock.SetTotalTicks(old_ticks);
     m_fixed_delta = 1.0 / static_cast<double>(hz);
-    (void)old_ticks; // clock resets internal tick count
 }
 
 // ─── step ─────────────────────────────────────────────────────────────────────
 
 usize SimulationScheduler::step(double real_delta_seconds) {
-    if (m_clock.IsPaused() || m_clock.GetSpeedMultiplier() <= 0.0f) return 0;
+    SHAPE_ASSERT_MSG(std::isfinite(real_delta_seconds), "step: real_delta is not finite");
+    SHAPE_ASSERT_MSG(real_delta_seconds >= 0.0,        "step: real_delta is negative");
+    SHAPE_ASSERT_MSG(real_delta_seconds < 86400.0,    "step: real_delta exceeds 24h — likely a bug");
 
-    const double scaled = real_delta_seconds * static_cast<double>(m_clock.GetSpeedMultiplier());
-    m_accumulator += scaled;
+    if (m_clock.IsPaused() || m_clock.GetSpeedMultiplier() <= 0.0f) {
+        return 0;
+    }
+
     m_stats.total_real_time += real_delta_seconds;
 
-    usize ticks_executed = 0;
+    const double scaled_delta = real_delta_seconds * static_cast<double>(m_clock.GetSpeedMultiplier());
+    m_accumulator += scaled_delta;
 
-    while (m_accumulator >= m_fixed_delta && ticks_executed < MAX_TICKS_PER_FRAME) {
+    u64 owed_total = static_cast<u64>(m_accumulator / m_fixed_delta);
+    const u64 budget = static_cast<u64>(m_max_ticks_per_step);
+
+    // Hard ceiling
+    if (owed_total > m_max_owed_ticks) {
+        if (m_debt_policy == DebtPolicy::RequireUserAcknowledgment) {
+            m_last_step_ticks = 0;
+            m_owed_ticks_unrun = owed_total;
+            return 0; // Frozen until user acks
+        }
+        if (m_debt_policy == DebtPolicy::DropDebtImmediately) {
+            const u64 dropped = owed_total - 1;
+            m_dropped_ticks_total += dropped;
+            m_accumulator = m_fixed_delta; // Keep one tick's worth
+            owed_total = 1;
+        } else {
+            // CatchUpGradually
+            SHAPE_LOG_WARN("Catch-up debt exceeds hard ceiling: {} ticks owed, max={}. "
+                "Continuing at per-step budget of {} ticks/frame. "
+                "This will take ~{} frames to clear at the current rate.",
+                owed_total, m_max_owed_ticks, budget,
+                (owed_total + budget - 1) / budget);
+        }
+    }
+
+    u64 ticks_to_run = owed_total;
+    if (owed_total > budget) {
+        if (m_debt_policy == DebtPolicy::DropDebtImmediately) {
+            const u64 dropped = owed_total - 1;
+            m_dropped_ticks_total += dropped;
+            m_accumulator = m_fixed_delta; // Keep one tick's worth
+            ticks_to_run = 1;
+            m_owed_ticks_unrun = 0;
+        } else {
+            ticks_to_run = budget;
+            m_owed_ticks_unrun = owed_total - budget;
+        }
+    } else {
+        m_owed_ticks_unrun = 0;
+    }
+
+    for (u64 i = 0; i < ticks_to_run; ++i) {
         run_tick();
         m_accumulator -= m_fixed_delta;
-        ++ticks_executed;
     }
 
-    // Spiral-of-death prevention: if still behind, drop excess
-    if (m_accumulator > m_fixed_delta) {
-        m_accumulator = std::fmod(m_accumulator, m_fixed_delta);
+    m_last_step_ticks = ticks_to_run;
+
+    // Log warning if budget was exhausted (and not dropping immediately)
+    if (ticks_to_run == budget && m_owed_ticks_unrun > 0 && m_debt_policy == DebtPolicy::CatchUpGradually) {
+        SHAPE_LOG_WARN("Catch-up budget exhausted: ran {} of {} owed ticks this step. "
+            "{} ticks remaining for next step. Total dropped: {}.",
+            ticks_to_run, owed_total, m_owed_ticks_unrun,
+            m_dropped_ticks_total);
     }
 
-    return ticks_executed;
+    // Defensive check
+    if (m_accumulator > 3600.0) {
+        SHAPE_LOG_ERROR("Accumulator reached {}s without hitting max_owed_ticks cap. "
+            "This is a bug. Resetting to 0. sim_time may be inaccurate.",
+            m_accumulator);
+        m_accumulator = 0.0;
+        m_owed_ticks_unrun = 0;
+    }
+
+    m_clock.SetAccumulatorUs(static_cast<u64>(m_accumulator * 1'000'000.0));
+
+    return ticks_to_run;
 }
 
 void SimulationScheduler::step_once() {
@@ -124,24 +184,19 @@ void SimulationScheduler::step_once() {
 void SimulationScheduler::run_tick() {
     const auto t0 = std::chrono::high_resolution_clock::now();
 
-    m_sim_time += m_fixed_delta;
+    // Advance clock tick count directly (bypassing speed double-scaling)
+    m_clock.IncrementTicks();
 
     const TickContext ctx{
-        m_clock.GetTotalTicks() + 1,  // 1-indexed tick
+        m_clock.GetTotalTicks(),  // 1-indexed tick
         m_fixed_delta,
-        m_sim_time,
+        static_cast<double>(m_clock.GetTotalTicks()) * m_fixed_delta,
         m_rng
     };
 
     for (auto& entry : m_systems) {
         entry.system->update(ctx);
     }
-
-    // Advance clock (also calls legacy tick callbacks if any remain)
-    m_clock.Update(
-        static_cast<u64>(m_fixed_delta * 1'000'000.0),
-        []{} // no legacy callback — systems already ran above
-    );
 
     const auto t1 = std::chrono::high_resolution_clock::now();
     const double tick_ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
@@ -158,7 +213,7 @@ void SimulationScheduler::update_stats(double tick_ms) {
     m_max_tick_ms = std::max(m_max_tick_ms, tick_ms);
 
     m_stats.total_ticks     = m_clock.GetTotalTicks();
-    m_stats.total_sim_time  = m_sim_time;
+    m_stats.total_sim_time  = sim_time();
     m_stats.avg_tick_ms     = m_ema_tick_ms;
     m_stats.min_tick_ms     = m_min_tick_ms;
     m_stats.max_tick_ms     = m_max_tick_ms;
@@ -172,6 +227,37 @@ void SimulationScheduler::reset_stats() noexcept {
     m_ema_tick_ms = 0.0;
     m_min_tick_ms = 0.0;
     m_max_tick_ms = 0.0;
+}
+
+void SimulationScheduler::acknowledge_debt() noexcept {
+    m_debt_acknowledged = true;
+    m_owed_ticks_unrun = 0;
+    m_accumulator = 0.0;
+    m_clock.SetAccumulatorUs(0);
+    SHAPE_LOG_INFO("Debt acknowledged and cleared by user.");
+}
+
+void SimulationScheduler::reset_debt() noexcept {
+    m_owed_ticks_unrun = 0;
+    m_dropped_ticks_total = 0;
+    m_accumulator = 0.0;
+    m_clock.SetAccumulatorUs(0);
+    m_debt_acknowledged = false;
+    SHAPE_LOG_INFO("Debt reset.");
+}
+
+SimulationScheduler::DebtSnapshot SimulationScheduler::debt_snapshot() const noexcept {
+    return {
+        m_dropped_ticks_total,
+        m_owed_ticks_unrun,
+        m_debt_acknowledged
+    };
+}
+
+void SimulationScheduler::restore_debt(const DebtSnapshot& snap) noexcept {
+    m_dropped_ticks_total = snap.dropped_ticks_total;
+    m_owed_ticks_unrun    = snap.owed_ticks_unrun;
+    m_debt_acknowledged   = snap.debt_acknowledged;
 }
 
 } // namespace Shape

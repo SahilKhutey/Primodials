@@ -1,1 +1,0 @@
-// WorleyNoise stub

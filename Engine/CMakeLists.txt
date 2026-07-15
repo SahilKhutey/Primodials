@@ -101,13 +101,7 @@ else()
     )
 endif()
 
-# DISABLED for build-verification pass: These modules have broken #includes to missing files
-# like Shape/Math/Color.hpp, Shape/Rendering/IRenderer.hpp, etc. They are missing implementation.
-# add_subdirectory(UI)
-# add_subdirectory(Editor)
-# add_subdirectory(Replay)
-# add_subdirectory(Procedural)
-# add_subdirectory(Rendering)
+add_subdirectory(Replay)
 add_subdirectory(Network)
 add_subdirectory(Scripting)
 add_subdirectory(Compute)

@@ -26,6 +26,14 @@ void CommandBuffer2::flush(World2& world) {
     std::vector<EntityId> created_ids;
     created_ids.reserve(m_pending_creates);
 
+    auto resolve = [&](EntityId e) -> EntityId {
+        if (e.index >= 0x80000000u) {
+            u32 idx = e.index - 0x80000000u;
+            if (idx < created_ids.size()) return created_ids[idx];
+        }
+        return e;
+    };
+
     for (auto& cmd : m_commands) {
         switch (cmd.type) {
             case CommandType::CreateEntity: {
@@ -34,17 +42,17 @@ void CommandBuffer2::flush(World2& world) {
                 break;
             }
             case CommandType::DestroyEntity:
-                world.cmd_destroy(cmd.entity);
+                world.cmd_destroy(resolve(cmd.entity));
                 break;
             case CommandType::AddComponent:
-                world.cmd_add_raw(cmd.entity, cmd.cid,
+                world.cmd_add_raw(resolve(cmd.entity), cmd.cid,
                                    cmd.data.data(), cmd.size, cmd.ops);
                 // Destruct the captured copy after use
                 cmd.ops.destruct(cmd.data.data());
                 cmd.data.clear();
                 break;
             case CommandType::RemoveComponent:
-                world.cmd_remove_raw(cmd.entity, cmd.cid);
+                world.cmd_remove_raw(resolve(cmd.entity), cmd.cid);
                 break;
         }
     }
