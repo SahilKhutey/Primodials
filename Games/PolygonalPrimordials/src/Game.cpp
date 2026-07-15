@@ -241,7 +241,11 @@ bool Game::initialize() {
         Achievements::instance().unlock("FIRST_LAUNCH");
     }
 
-    set_state(GameState::MainMenu);
+    if (!new_game("42")) {
+        SHAPE_LOG_ERROR("Game: Failed to create initial world");
+        return false;
+    }
+
     SHAPE_LOG_INFO("Game: Initialized successfully");
     return true;
 }
