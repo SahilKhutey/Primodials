@@ -59,11 +59,26 @@ public:
     }
 
     template <typename T>
+    const ComponentStore<T>* FindComponentStore() const {
+        u32 type_id = T::TypeId;
+        auto it = m_StoresByTypeId.find(type_id);
+        if (it != m_StoresByTypeId.end()) {
+            return static_cast<const ComponentStore<T>*>(it->second);
+        }
+        auto typeIdx = std::type_index(typeid(T));
+        auto it2 = m_ComponentStores.find(typeIdx);
+        if (it2 != m_ComponentStores.end()) {
+            return static_cast<const ComponentStore<T>*>(it2->second.get());
+        }
+        return nullptr;
+    }
+
+    template <typename T>
     bool HasComponent(Entity entity) const {
         if (!IsEntityValid(entity)) return false;
-        auto it = m_ComponentStores.find(std::type_index(typeid(T)));
-        if (it == m_ComponentStores.end()) return false;
-        return it->second->Has(entity);
+        const auto* store = FindComponentStore<T>();
+        if (!store) return false;
+        return store->Has(entity);
     }
 
     // Queries: Returns a list of entities containing all specified components
@@ -83,23 +98,24 @@ public:
 
     template <typename T>
     ComponentStore<T>& GetComponentStore() {
-        auto typeIdx = std::type_index(typeid(T));
-        auto it = m_ComponentStores.find(typeIdx);
-        if (it == m_ComponentStores.end()) {
+        u32 type_id = T::TypeId;
+        auto it = m_StoresByTypeId.find(type_id);
+        if (it == m_StoresByTypeId.end()) {
             auto store = std::make_unique<ComponentStore<T>>();
             auto* rawStore = store.get();
+            auto typeIdx = std::type_index(typeid(T));
+            m_StoresByTypeId[type_id] = rawStore;
             m_ComponentStores[typeIdx] = std::move(store);
             return *rawStore;
         }
-        return *static_cast<ComponentStore<T>*>(it->second.get());
+        return *static_cast<ComponentStore<T>*>(it->second);
     }
 
     template <typename T>
     const ComponentStore<T>& GetComponentStore() const {
-        auto typeIdx = std::type_index(typeid(T));
-        auto it = m_ComponentStores.find(typeIdx);
-        SHAPE_ASSERT_MSG(it != m_ComponentStores.end(), "Component store not found!");
-        return *static_cast<const ComponentStore<T>*>(it->second.get());
+        const auto* store = FindComponentStore<T>();
+        SHAPE_ASSERT_MSG(store != nullptr, "Component store not found!");
+        return *store;
     }
 
     const std::unordered_map<std::type_index, std::unique_ptr<IComponentStore>>& GetComponentStores() const {
@@ -120,6 +136,7 @@ private:
 
     // Component Registry
     std::unordered_map<std::type_index, std::unique_ptr<IComponentStore>> m_ComponentStores;
+    std::unordered_map<u32, IComponentStore*> m_StoresByTypeId;
     
     // Systems
     std::unique_ptr<PhysicsSystem> m_PhysicsSystem;

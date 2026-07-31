@@ -17,5 +17,7 @@ namespace Shape {
         TransformComponent = 12,
         ColliderComponent = 13,
         RigidBodyComponent = 14,
+        BuildingComponent = 15,
+        FlockComponent = 16,
     };
 } // namespace Shape

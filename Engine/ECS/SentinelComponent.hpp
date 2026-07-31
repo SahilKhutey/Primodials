@@ -23,7 +23,9 @@ struct SentinelComponent {
     
     explicit SentinelComponent(SentinelType t, f32 radius = 60.0f)
         : type(t)
-        , commandRadius(radius) {}
+        , commandRadius(radius)
+        , syncTimer(0.0f)
+        , syncInterval(0.5f) {}
 };
 
 } // namespace Shape
