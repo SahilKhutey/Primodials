@@ -21,6 +21,8 @@ add_executable(ShapeEngineTests
     Biology/BiologyTests.cpp
     AI/CognitiveTests.cpp
     AI/CareerTests.cpp
+    AI/test_neural_network.cpp
+    AI/test_qlearning.cpp
     Civilization/CivilizationSystemTests.cpp
     Networking/NetworkingTests.cpp
     Serialization/SerializationTests.cpp
@@ -45,6 +47,13 @@ add_executable(ShapeEngineTests
     PhaseETests/test_procedural.cpp
     PhaseETests/test_tech_tree.cpp
     PhaseETests/test_diplomacy.cpp
+    PhaseETests/test_group_behavior.cpp
+    PhaseETests/test_weather.cpp
+    PhaseETests/test_building.cpp
+    PhaseETests/test_biome.cpp
+    PhaseETests/test_simulation_controller.cpp
+    PhaseETests/test_camera_controller.cpp
+    PhaseETests/test_end_to_end_user_scenarios.cpp
 
     # Phase F — Vulkan, Multiplayer, Scripting, Assets
     NetworkTests/test_network.cpp

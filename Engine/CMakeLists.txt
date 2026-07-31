@@ -57,8 +57,22 @@ add_library(ShapeEngine STATIC
     Networking/DesyncVerifier.cpp
     Serialization/Serializer.cpp
     Simulation/ReplaySystem.cpp
+    # Phase E — Expanded Simulation Systems
+    Simulation/src/Systems/DiplomacySystem.cpp
+    Simulation/src/Systems/GroupBehaviorSystem.cpp
+    Simulation/src/Systems/ProceduralWorldSystem.cpp
+    Simulation/src/Systems/TechnologySystem.cpp
+    Simulation/src/Systems/WeatherSystem.cpp
+    Simulation/src/Systems/BuildingSystem.cpp
+    Simulation/src/Systems/NeuralControlSystem.cpp
+    Simulation/src/Systems/QLearningSystem.cpp
+    Simulation/src/Systems/BiomeSystem.cpp
+    Simulation/src/SimulationController.cpp
+
     Rendering/SDL3Renderer.cpp
     Rendering/RenderingSystem.cpp
+    Rendering/CameraController.cpp
+    Rendering/GameInputController.cpp
 )
 
 # Win32Window.cpp uses <windows.h> and only makes sense on Windows; the cross-platform
@@ -71,6 +85,7 @@ target_include_directories(ShapeEngine PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Platform/Include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Math/Include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Simulation/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Containers>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/ECS2>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Reflection>
