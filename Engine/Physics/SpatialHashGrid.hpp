@@ -2,7 +2,7 @@
 
 #include "ECS/Entity.hpp"
 #include "ShapeEngine/Math/Vector2.hpp"
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 namespace Shape {
@@ -25,11 +25,11 @@ public:
 private:
     // Helper to pack 2D grid coordinates (x, y) into a single 64-bit key
     SHAPE_INLINE u64 GetCellKey(i32 x, i32 y) const {
-        return (static_cast<u64>(x) << 32) | (static_cast<u64>(y) & 0xFFFFFFFFULL);
+        return (static_cast<u64>(static_cast<u32>(x)) << 32) | static_cast<u64>(static_cast<u32>(y));
     }
 
     f32 m_CellSize;
-    std::unordered_map<u64, std::vector<Entity>> m_Grid;
+    std::map<u64, std::vector<Entity>> m_Grid;
 };
 
 } // namespace Shape

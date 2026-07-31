@@ -7,7 +7,7 @@
 #include "Math/Include/ShapeEngine/Math/Vector2.hpp"
 #include "Simulation/SimulationState.hpp"
 #include <vector>
-#include <unordered_map>
+#include <map>
 #include <cstdint>
 
 namespace Shape {
@@ -19,6 +19,10 @@ struct CellCoord {
     i32 y = 0;
 
     bool operator==(const CellCoord& o) const noexcept { return x == o.x && y == o.y; }
+    bool operator<(const CellCoord& o) const noexcept {
+        if (x != o.x) return x < o.x;
+        return y < o.y;
+    }
 };
 
 struct CellCoordHash {
@@ -81,9 +85,9 @@ private:
     i32    m_grid_w = 0;
     i32    m_grid_h = 0;
 
-    using CellMap = std::unordered_map<CellCoord, std::vector<u32>, CellCoordHash>;
+    using CellMap = std::map<CellCoord, std::vector<u32>>;
     CellMap m_cells;
-    std::unordered_map<u32, CellCoord> m_entity_cell;
+    std::map<u32, CellCoord> m_entity_cell;
 };
 
 } // namespace Shape
