@@ -85,6 +85,8 @@ namespace PolygonalPrimordials::Steam {
         if (SteamFriends() && SteamUtils() && SteamUtils()->IsOverlayEnabled()) {
             SteamFriends()->ActivateGameOverlay(dialog.c_str());
         }
+#else
+        (void)dialog; // No-op without Steamworks SDK
 #endif
     }
 

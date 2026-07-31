@@ -144,7 +144,7 @@ namespace Shape::Replay {
 
     void ReplayPlayer::update(double real_delta) {
         if (m_state != PlayerState::Playing) return;
-        const double ticks_per_sec = 60.0 * m_playback_speed;
+        const double ticks_per_sec = 60.0 * static_cast<double>(m_playback_speed);
         const double advance = real_delta * ticks_per_sec;
         const uint64_t ticks_to_advance = static_cast<uint64_t>(advance);
         for (uint64_t i = 0; i < ticks_to_advance; ++i) {

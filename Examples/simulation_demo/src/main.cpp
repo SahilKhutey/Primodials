@@ -118,12 +118,12 @@ static void seed_creatures(ECS2::World2& world,
                             u32 count) {
     // 4 species, roughly equal split
     const SpeciesId species_ids[] = {1, 2, 3, 4}; // Triangle/Quad/Pentagon/Hexagon
-    const int sides[] = {3, 4, 5, 6};
-    const float radii[] = {6.0f, 9.0f, 12.0f, 15.0f};
+    [[maybe_unused]] const int sides[]   = {3, 4, 5, 6};             // Reserved: polygon shape rendering
+    [[maybe_unused]] const float radii[]  = {6.0f, 9.0f, 12.0f, 15.0f}; // Reserved: collision radius per species
     const float max_speeds[] = {90.0f, 55.0f, 40.0f, 28.0f};
-    const float r_cols[] = {1.0f, 0.2f, 0.25f, 1.0f};
-    const float g_cols[] = {0.35f, 0.7f, 0.45f, 0.85f};
-    const float b_cols[] = {0.15f, 0.3f, 0.95f, 0.1f};
+    [[maybe_unused]] const float r_cols[] = {1.0f, 0.2f, 0.25f, 1.0f};  // Reserved: species colour R
+    [[maybe_unused]] const float g_cols[] = {0.35f, 0.7f, 0.45f, 0.85f}; // Reserved: species colour G
+    [[maybe_unused]] const float b_cols[] = {0.15f, 0.3f, 0.95f, 0.1f};  // Reserved: species colour B
 
     for (u32 i = 0; i < count; ++i) {
         const u32 sp = i % 4;

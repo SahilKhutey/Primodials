@@ -1,7 +1,7 @@
 #include <iostream>
 #include "Shape/Scripting/LuaEngine.h"
 
-int main(int argc, char* argv[]) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::cout << "Starting Scripted Demo...\n";
     Shape::Scripting::LuaEngine engine;
     engine.initialize();
