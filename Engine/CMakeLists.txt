@@ -67,6 +67,7 @@ add_library(ShapeEngine STATIC
     Simulation/src/Systems/NeuralControlSystem.cpp
     Simulation/src/Systems/QLearningSystem.cpp
     Simulation/src/Systems/BiomeSystem.cpp
+    Simulation/src/Systems/EnvironmentAdaptationSystem.cpp
     Simulation/src/SimulationController.cpp
 
     Rendering/SDL3Renderer.cpp

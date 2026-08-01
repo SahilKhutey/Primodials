@@ -14,6 +14,7 @@
 ///   - Two species with identical attribute values are functionally identical.
 
 #include "Core/Platform.hpp"
+#include "ECS/ComponentTypes.hpp"
 #include "ShapeTaxonomy.hpp"
 #include <array>
 #include <span>
@@ -486,6 +487,7 @@ struct Species {
 /// Lightweight ECS component linking an entity to its species template.
 /// All entities of the same species share one Species record.
 struct SpeciesIdComponent {
+    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::SpeciesIdComponent);
     SpeciesId id = INVALID_SPECIES_ID;
 };
 

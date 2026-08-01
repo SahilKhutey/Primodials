@@ -19,5 +19,7 @@ namespace Shape {
         RigidBodyComponent = 14,
         BuildingComponent = 15,
         FlockComponent = 16,
+        AdaptationStatusComponent = 17,
+        SpeciesIdComponent = 18,
     };
 } // namespace Shape
