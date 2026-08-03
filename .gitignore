@@ -21,3 +21,54 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# CMake build artifacts
+build/
+out/
+bin/
+lib/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# IDE and Editor files
+.vs/
+*.user
+*.swp
+.cache/
+
+# Agent configuration
+.gemini/
+.agents/
+
+# Output and temporary files
+*.txt
+!CMakeLists.txt
+test_out*.txt
+test_output*.txt
+test_results.txt
+all_tests.txt
+
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.lib
+*.a
+*.o
+*.obj
+*.pdb
+*.exp
+*.ilk
+
+# Patch files
+*.patch
+*.diff
+
+# Build outputs
+cmake-build-*/
+
+# OS generated files
+Thumbs.db

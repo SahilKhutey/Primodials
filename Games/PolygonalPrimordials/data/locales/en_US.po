@@ -1,0 +1,19 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Polygonal Primordials 1.0\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "MAIN_MENU_NEW_GAME"
+msgstr "New Simulation"
+
+msgid "MAIN_MENU_LOAD_GAME"
+msgstr "Load Simulation"
+
+msgid "MAIN_MENU_OPTIONS"
+msgstr "Options"
+
+msgid "MAIN_MENU_QUIT"
+msgstr "Quit"
