@@ -38,11 +38,13 @@ add_library(ShapeEngine STATIC
     Wallpaper/WallpaperSettings.cpp
 
     UI/SettingsState.cpp
-    UI/SettingsWindow.cpp
     UI/Loading/LoadingScreen.cpp
     UI/Menus/MainMenu.cpp
     UI/Menus/PauseMenu.cpp
     UI/HUD/GameHUD.cpp
+    UI/ThemeSystem/ThemeSelector.cpp
+    UI/Settings/SettingsWindow.cpp
+    Wallpaper/WallpaperTrayMenu.cpp
     Renderer/BackgroundRenderer.cpp
     Renderer/Renderers/ParticleRenderer.cpp
 
