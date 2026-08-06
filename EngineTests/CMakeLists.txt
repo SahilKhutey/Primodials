@@ -82,6 +82,7 @@ add_executable(ShapeEngineTests
     PhaseETests/test_environment_adaptation.cpp
     PhaseETests/test_ui_system.cpp
     PhaseETests/test_phase8_ui.cpp
+    PhaseETests/test_phase9_hud.cpp
 
     # Phase F — Vulkan, Multiplayer, Scripting, Assets
     NetworkTests/test_network.cpp

@@ -44,6 +44,12 @@ add_library(ShapeEngine STATIC
     UI/HUD/GameHUD.cpp
     UI/ThemeSystem/ThemeSelector.cpp
     UI/Settings/SettingsWindow.cpp
+    UI/HUD/EntityInspector.cpp
+    UI/Widgets/NotificationToast.cpp
+    UI/Widgets/ColorPicker.cpp
+    UI/Profiles/ProfileManager.cpp
+    GameView/GameViewWindow.cpp
+    GameView/SharedStateSync.cpp
     Wallpaper/WallpaperTrayMenu.cpp
     Renderer/BackgroundRenderer.cpp
     Renderer/Renderers/ParticleRenderer.cpp
