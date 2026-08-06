@@ -1,6 +1,7 @@
 // Engine/Rendering/CameraController.cpp
 #include "Rendering/CameraController.h"
 #include "ECS/TransformComponent.hpp"
+#include "Math/Matrix4.hpp"
 #include <algorithm>
 #include <cmath>
 
@@ -14,6 +15,16 @@ Math::Vector2f CameraController::WorldToScreen(const Math::Vector2f& world_pos, 
 Math::Vector2f CameraController::ScreenToWorld(const Math::Vector2f& screen_pos, const Math::Vector2f& screen_size) const {
     Math::Vector2f center = screen_size * 0.5f;
     return (screen_pos - center) / (m_zoom > 0.0001f ? m_zoom : 1.0f) + m_position;
+}
+
+Math::Matrix4 CameraController::GetProjectionMatrix(f32 viewportWidth, f32 viewportHeight) const {
+    f32 halfW = (viewportWidth * 0.5f) / (m_zoom > 0.0001f ? m_zoom : 1.0f);
+    f32 halfH = (viewportHeight * 0.5f) / (m_zoom > 0.0001f ? m_zoom : 1.0f);
+    return Math::Matrix4::Ortho(-halfW, halfW, -halfH, halfH, -1.0f, 1.0f);
+}
+
+Math::Matrix4 CameraController::GetViewMatrix() const {
+    return Math::Matrix4::Translation(Math::Vector3(-m_position.x, -m_position.y, 0.0f));
 }
 
 void CameraController::Pan(const Math::Vector2f& delta_world) {

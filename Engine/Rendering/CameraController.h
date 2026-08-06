@@ -2,6 +2,7 @@
 #pragma once
 
 #include "ShapeEngine/Math/Vector2.hpp"
+#include "Math/Matrix4.hpp"
 #include "ECS/Entity.hpp"
 #include "ECS/World.hpp"
 #include "Core/Platform.hpp"
@@ -16,6 +17,9 @@ public:
     // ── Camera Transformations ──────────────────────────────────────────────
     Math::Vector2f WorldToScreen(const Math::Vector2f& world_pos, const Math::Vector2f& screen_size) const;
     Math::Vector2f ScreenToWorld(const Math::Vector2f& screen_pos, const Math::Vector2f& screen_size) const;
+
+    Math::Matrix4 GetProjectionMatrix(f32 viewportWidth, f32 viewportHeight) const;
+    Math::Matrix4 GetViewMatrix() const;
 
     // ── Pan & Zoom Controls ────────────────────────────────────────────────
     void Pan(const Math::Vector2f& delta_world);

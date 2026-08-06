@@ -45,10 +45,16 @@ Makefile
 # Output and temporary files
 *.txt
 !CMakeLists.txt
+!steam_appid.txt
+!INSTALL.txt
 test_out*.txt
 test_output*.txt
 test_results.txt
 all_tests.txt
+test_diary.json
+test_settings_state.json
+Content/_user/
+release/itch/*/
 
 # Binaries
 *.exe

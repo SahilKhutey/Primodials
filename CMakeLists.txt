@@ -85,3 +85,14 @@ add_subdirectory(Tools/cooker)
 add_subdirectory(Tools/documentation)
 add_subdirectory(Tools/trailer)
 add_subdirectory(Tools/localization)
+
+# ─── CPack Release Packaging ──────────────────────────────────────────────────
+set(CPACK_PACKAGE_NAME "ShapeEngine")
+set(CPACK_PACKAGE_VENDOR "SahilKhutey")
+set(CPACK_PACKAGE_VERSION_MAJOR "2")
+set(CPACK_PACKAGE_VERSION_MINOR "0")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "ShapeEngine & Polygonal Primordials artificial life engine")
+set(CPACK_GENERATOR "ZIP;NSIS")
+include(CPack)
+

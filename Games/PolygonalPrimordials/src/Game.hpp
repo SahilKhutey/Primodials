@@ -15,6 +15,14 @@
 #include "Simulation/Evolution/SpeciationSystem.hpp"
 #include "Simulation/Analytics/PopulationGraph.hpp"
 
+#include "Platform/SystemTray.hpp"
+#include "Platform/WallpaperWindow.hpp"
+#include "Platform/PowerManager.hpp"
+#include "Themes/ThemeManager.hpp"
+#include "Particles/AmbientParticleSystem.hpp"
+#include "Wallpaper/CameraDirector.hpp"
+#include "Wallpaper/GameViewWindow.hpp"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -121,6 +129,15 @@ namespace PolygonalPrimordials {
         // Game state
         std::string m_current_seed = "2024";
         std::string m_current_slot = "quicksave";
+
+        // Wallpaper & Live Simulation Subsystems
+        Shape::Platform::SystemTray m_tray;
+        Shape::Platform::WallpaperWindow m_wallpaperWindow;
+        Shape::Platform::PowerManager m_powerMgr;
+        Shape::Themes::ThemeManager m_themeMgr;
+        Shape::Particles::AmbientParticleSystem m_particleSys;
+        Shape::Wallpaper::CameraDirector m_cameraDirector;
+        Shape::Wallpaper::GameViewWindow m_gameViewWindow;
     };
 
 } // namespace PolygonalPrimordials

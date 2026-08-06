@@ -7,6 +7,7 @@
 #include <sstream>
 
 using namespace Shape;
+using namespace Shape::Simulation;
 
 TEST_CASE("Serialization System - Save/Load Maintains Determinism", "[Serialization]") {
     World originalWorld;

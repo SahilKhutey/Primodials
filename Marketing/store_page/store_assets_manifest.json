@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "steam_app_id_target": 1234560,
+  "store_page_assets": {
+    "header_capsule": {
+      "dimensions": "460x215",
+      "path": "Marketing/launch_assets/store_page/header_capsule.jpg"
+    },
+    "main_capsule": {
+      "dimensions": "616x353",
+      "path": "Marketing/launch_assets/store_page/main_capsule.jpg"
+    },
+    "screenshots": [
+      "Marketing/launch_assets/screenshots/deep-sea_1920x1080.png",
+      "Marketing/launch_assets/screenshots/coral-reef_1920x1080.png",
+      "Marketing/launch_assets/screenshots/aurora_1920x1080.png"
+    ]
+  }
+}

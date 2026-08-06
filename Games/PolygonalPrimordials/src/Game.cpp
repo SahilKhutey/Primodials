@@ -246,7 +246,35 @@ bool Game::initialize() {
         return false;
     }
 
-    SHAPE_LOG_INFO("Game: Initialized successfully");
+    // Wallpaper & Live Simulation Subsystems Initialization
+    m_tray.Initialize("Polygonal Primordials Wallpaper", "");
+    m_powerMgr.Initialize(60.0f);
+    m_themeMgr.Initialize("Content/Themes");
+    m_particleSys.Initialize(1000);
+    m_cameraDirector.Initialize(15.0f, 0.4f, 1.5f);
+
+    m_tray.UpdateThemeList(m_themeMgr.GetAvailableThemeDisplayNames(), m_themeMgr.GetActiveTheme().displayName);
+    m_tray.SetActionCallback([this](Shape::Platform::TrayMenuItem item, const std::string& extra) {
+        switch (item) {
+            case Shape::Platform::TrayMenuItem::OpenGameView:
+                m_gameViewWindow.Toggle();
+                break;
+            case Shape::Platform::TrayMenuItem::TogglePause:
+                m_powerMgr.SetUserPaused(!m_powerMgr.IsUserPaused());
+                m_tray.SetPaused(m_powerMgr.IsUserPaused());
+                break;
+            case Shape::Platform::TrayMenuItem::ThemeSelect:
+                m_themeMgr.SetActiveTheme(extra, 5.0f);
+                break;
+            case Shape::Platform::TrayMenuItem::Quit:
+                m_quit_requested = true;
+                break;
+            default:
+                break;
+        }
+    });
+
+    SHAPE_LOG_INFO("Game: Initialized successfully with Live Wallpaper subsystems");
     return true;
 }
 
@@ -261,19 +289,36 @@ int Game::run() {
             m_quit_requested = true;
         }
 
-        // Game state machine
-        switch (m_state) {
-            case GameState::MainMenu:   tick_menu();    break;
-            case GameState::Loading:    /* loading screen */ break;
-            case GameState::Playing:    tick_playing(); break;
-            case GameState::Paused:     tick_paused();  break;
-            case GameState::Options:    tick_menu();    break;
-            case GameState::GameOver:   tick_menu();    break;
-            case GameState::Boot:
-            case GameState::Quit:       m_quit_requested = true; break;
+        // Tick wallpaper subsystems
+        f32 dtF32 = static_cast<f32>(m_dt);
+        m_powerMgr.Update(dtF32, false);
+        m_themeMgr.Update(dtF32);
+        m_particleSys.Update(dtF32, 1600.0f, 1000.0f, m_themeMgr.GetActiveTheme().accentColor, m_themeMgr.GetActiveTheme().particleDensity);
+
+        if (!m_powerMgr.ShouldPauseSimulation()) {
+            // Game state machine
+            switch (m_state) {
+                case GameState::MainMenu:   tick_menu();    break;
+                case GameState::Loading:    /* loading screen */ break;
+                case GameState::Playing:    tick_playing(); break;
+                case GameState::Paused:     tick_paused();  break;
+                case GameState::Options:    tick_menu();    break;
+                case GameState::GameOver:   tick_menu();    break;
+                case GameState::Boot:
+                case GameState::Quit:       m_quit_requested = true; break;
+            }
         }
 
         render();
+
+        // Render GameView Window overlay if visible
+        Shape::Wallpaper::GameViewStats stats;
+        stats.populationCount = static_cast<u32>(m_world.entity_count());
+        stats.fps = m_dt > 0.0001 ? static_cast<f32>(1.0 / m_dt) : 30.0f;
+        stats.simTimeSeconds = static_cast<f32>(m_total_time);
+        stats.activeThemeName = m_themeMgr.GetActiveTheme().displayName;
+        stats.isPaused = m_powerMgr.IsUserPaused();
+        m_gameViewWindow.RenderUI(stats, m_themeMgr.GetAvailableThemeDisplayNames());
 
         m_window.SwapBuffers();
         ++m_frame_count;

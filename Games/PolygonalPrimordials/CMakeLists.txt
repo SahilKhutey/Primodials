@@ -18,3 +18,24 @@ if(NOT MSVC)
 else()
     target_compile_options(PolygonalPrimordials PRIVATE /W3 /EHsc)
 endif()
+
+# Standalone PolygonalPrimordialsWallpaper executable
+add_executable(PolygonalPrimordialsWallpaper
+    WallpaperMain.cpp
+    src/Achievements.cpp
+    src/Telemetry.cpp
+    src/CrashReporter.cpp
+)
+
+target_include_directories(PolygonalPrimordialsWallpaper PRIVATE src)
+target_link_libraries(PolygonalPrimordialsWallpaper PRIVATE ShapeEngine SDL3::SDL3)
+
+if(WIN32)
+    target_link_libraries(PolygonalPrimordialsWallpaper PRIVATE shell32 gdi32 user32 dwmapi powrprof)
+endif()
+
+add_custom_command(TARGET PolygonalPrimordialsWallpaper POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/Content/Themes
+        $<TARGET_FILE_DIR:PolygonalPrimordialsWallpaper>/Content/Themes
+)

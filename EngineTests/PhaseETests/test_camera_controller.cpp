@@ -45,4 +45,20 @@ TEST_CASE("CameraController & GameInputController - Viewport & Action Mapping", 
         REQUIRE(camera.GetPosition().x == 0.0f);
         REQUIRE(camera.GetZoom() == 1.0f);
     }
+
+    SECTION("Projection and View Matrix Generation") {
+        camera.SetPosition({50.0f, -25.0f});
+        camera.SetZoom(2.0f);
+
+        auto viewMat = camera.GetViewMatrix();
+        auto projMat = camera.GetProjectionMatrix(1920.0f, 1080.0f);
+
+        // View matrix translation should invert camera position
+        REQUIRE(viewMat[3][0] == -50.0f);
+        REQUIRE(viewMat[3][1] == 25.0f);
+
+        // Ortho matrix diagonal terms
+        REQUIRE(projMat[0][0] > 0.0f);
+        REQUIRE(projMat[1][1] > 0.0f);
+    }
 }

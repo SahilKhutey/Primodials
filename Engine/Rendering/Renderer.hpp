@@ -2,7 +2,7 @@
 
 #include "Core/Platform.hpp"
 #include "ShapeEngine/Math/Vector2.hpp"
-#include "ShapeEngine/Math/Vector3.hpp"
+#include "Math/Vector3.hpp"
 
 namespace Shape {
 

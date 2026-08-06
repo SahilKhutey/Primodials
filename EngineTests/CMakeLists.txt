@@ -27,6 +27,16 @@ add_executable(ShapeEngineTests
     Networking/NetworkingTests.cpp
     Serialization/SerializationTests.cpp
     ContainerTests.cpp
+    WallpaperTests/test_wallpaper_foundation.cpp
+    WallpaperTests/test_game_view.cpp
+    WallpaperTests/test_wallpaper_settings.cpp
+    WallpaperTests/test_wallpaper_standalone.cpp
+    WallpaperTests/test_wallpaper_sprint2.cpp
+    WallpaperTests/test_wallpaper_sprint3.cpp
+    WallpaperTests/test_wallpaper_sprint4.cpp
+    WallpaperTests/test_wallpaper_sprint5.cpp
+    WallpaperTests/test_final_qa.cpp
+    WallpaperTests/test_full_suite.cpp
 
     # Phase C — Simulation Tests
     SimulationTests/test_simulation_time.cpp
@@ -53,6 +63,21 @@ add_executable(ShapeEngineTests
     PhaseETests/test_biome.cpp
     PhaseETests/test_simulation_controller.cpp
     PhaseETests/test_camera_controller.cpp
+    PhaseETests/test_opengl_renderer.cpp
+    PhaseETests/test_imgui_panels.cpp
+    PhaseETests/test_spatial_hash_system.cpp
+    PhaseETests/test_lua_sandbox.cpp
+    PhaseETests/test_replay_system.cpp
+    PhaseETests/test_final_release_features.cpp
+    PhaseETests/test_vulkan_renderer.cpp
+    PhaseETests/test_network_multiplayer.cpp
+    PhaseETests/test_visual_scripting.cpp
+    PhaseETests/test_steam_and_distribution.cpp
+    PhaseETests/test_community_polish.cpp
+    PhaseETests/FullPipelineTests.cpp
+    PhaseETests/SaveLoadRoundTrip.cpp
+    PhaseETests/MultiplayerDeterminismTests.cpp
+    PhaseETests/LongRunTest.cpp
     PhaseETests/test_end_to_end_user_scenarios.cpp
     PhaseETests/test_environment_adaptation.cpp
 

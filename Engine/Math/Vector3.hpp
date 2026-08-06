@@ -100,6 +100,8 @@ struct Vector3 {
     static const Vector3 Back;
 };
 
+using Vector3f = Vector3;
+
 // Inline definitions of static constants
 inline constexpr Vector3 Vector3::Zero(0.0f, 0.0f, 0.0f);
 inline constexpr Vector3 Vector3::One(1.0f, 1.0f, 1.0f);
