@@ -23,6 +23,8 @@ public:
     void DrawPolygon(const Math::Vector2f* vertices, usize vertexCount, const Math::Vector3f& color, bool filled = true) override;
     void DrawCircle(const Math::Vector2f& center, f32 radius, const Math::Vector3f& color, bool filled = true) override;
 
+    SDL_Renderer* GetSDLRenderer() const { return m_renderer; }
+
 private:
     SDL_Window* m_sdlWindow = nullptr;
     SDL_Renderer* m_renderer = nullptr;

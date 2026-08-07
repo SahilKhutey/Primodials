@@ -15,9 +15,13 @@
 #include "Simulation/Evolution/SpeciationSystem.hpp"
 #include "Simulation/Analytics/PopulationGraph.hpp"
 
-#include <memory>
-#include <string>
-#include <vector>
+namespace ShapeEngine::UI {
+    class MainMenu;
+    class GameHUD;
+    class PauseMenu;
+    class ThemeSelector;
+    class SettingsWindow;
+}
 
 namespace PolygonalPrimordials {
 
@@ -117,6 +121,13 @@ namespace PolygonalPrimordials {
         std::unique_ptr<Shape::ReproductionSystem> m_repro_sys;
         std::unique_ptr<Shape::CombatSystem> m_combat_sys;
         std::unique_ptr<Shape::SpeciationSystem> m_spec_sys;
+
+        // UI Systems
+        std::unique_ptr<ShapeEngine::UI::MainMenu> m_main_menu;
+        std::unique_ptr<ShapeEngine::UI::GameHUD> m_game_hud;
+        std::unique_ptr<ShapeEngine::UI::PauseMenu> m_pause_menu;
+        std::unique_ptr<ShapeEngine::UI::ThemeSelector> m_theme_selector;
+        std::unique_ptr<ShapeEngine::UI::SettingsWindow> m_settings_window;
 
         // Game state
         std::string m_current_seed = "2024";

@@ -21,6 +21,14 @@
 #include "Input/InputSystem.hpp"
 #include "Core/Logger.hpp"
 
+#include "UI/Loading/LoadingScreen.h"
+#include "UI/Menus/MainMenu.h"
+#include "UI/Menus/PauseMenu.h"
+#include "UI/HUD/GameHUD.h"
+#include "UI/HUD/EntityInspector.h"
+#include "UI/ThemeSystem/ThemeSelector.h"
+#include "UI/Settings/SettingsWindow.h"
+
 #include <cstdio>
 #include <cmath>
 
@@ -225,6 +233,29 @@ bool Game::initialize() {
     }
     SHAPE_LOG_INFO("Game: Renderer: SDL3");
 
+    SDL_Window* sdl_win = reinterpret_cast<SDL_Window*>(m_window.GetNativeWindow());
+    SDL_Renderer* sdl_ren = static_cast<Shape::SDL3Renderer*>(m_renderer.get())->GetSDLRenderer();
+
+    // UI Systems Initialization
+    ShapeEngine::UI::MainMenu::Config menu_cfg;
+    menu_cfg.window = sdl_win;
+    menu_cfg.renderer = sdl_ren;
+    menu_cfg.versionText = "v" + m_cfg.version;
+    m_main_menu = std::make_unique<ShapeEngine::UI::MainMenu>(menu_cfg);
+
+    m_game_hud = std::make_unique<ShapeEngine::UI::GameHUD>(sdl_win, sdl_ren);
+    m_pause_menu = std::make_unique<ShapeEngine::UI::PauseMenu>(sdl_win, sdl_ren);
+
+    ShapeEngine::UI::ThemeSelector::Config theme_cfg;
+    theme_cfg.window = sdl_win;
+    theme_cfg.renderer = sdl_ren;
+    m_theme_selector = std::make_unique<ShapeEngine::UI::ThemeSelector>(theme_cfg);
+
+    ShapeEngine::UI::SettingsWindow::Config settings_cfg;
+    settings_cfg.window = sdl_win;
+    settings_cfg.renderer = sdl_ren;
+    m_settings_window = std::make_unique<ShapeEngine::UI::SettingsWindow>(settings_cfg);
+
     // Steam
     if (m_cfg.enable_steam) {
         Steam::SteamIntegration::instance().initialize();
@@ -241,11 +272,7 @@ bool Game::initialize() {
         Achievements::instance().unlock("FIRST_LAUNCH");
     }
 
-    if (!new_game("42")) {
-        SHAPE_LOG_ERROR("Game: Failed to create initial world");
-        return false;
-    }
-
+    set_state(GameState::MainMenu);
     SHAPE_LOG_INFO("Game: Initialized successfully");
     return true;
 }
@@ -310,6 +337,16 @@ void Game::tick_main() {
 void Game::tick_playing() {
     tick_main();
 
+    if (m_game_hud) {
+        auto hud_act = m_game_hud->handleInput();
+        if (hud_act == ShapeEngine::UI::GameHUD::HUDAction::PauseToggle) {
+            set_state(GameState::Paused);
+            if (m_pause_menu) m_pause_menu->show();
+        } else if (hud_act == ShapeEngine::UI::GameHUD::HUDAction::Settings) {
+            if (m_settings_window) m_settings_window->show();
+        }
+    }
+
     auto& input = Shape::InputSystem::Get();
     const float pan_speed = 500.0f * static_cast<float>(m_dt) / m_camera.zoom;
     if (input.IsKeyHeld(Shape::KeyCode::Left))  m_camera.x -= pan_speed;
@@ -338,12 +375,64 @@ void Game::tick_playing() {
 
 void Game::tick_paused() {
     tick_main();
+    if (m_pause_menu && m_pause_menu->isVisible()) {
+        auto action = m_pause_menu->handleInput();
+        switch (action) {
+            case ShapeEngine::UI::PauseMenu::PauseAction::Resume:
+                set_state(GameState::Playing);
+                m_pause_menu->hide();
+                break;
+            case ShapeEngine::UI::PauseMenu::PauseAction::Settings:
+                if (m_settings_window) m_settings_window->show();
+                break;
+            case ShapeEngine::UI::PauseMenu::PauseAction::MainMenu:
+                set_state(GameState::MainMenu);
+                m_pause_menu->hide();
+                break;
+            case ShapeEngine::UI::PauseMenu::PauseAction::Quit:
+                request_quit();
+                break;
+            default:
+                break;
+        }
+    }
 }
 
 void Game::tick_menu() {
     tick_main();
-    if (Shape::InputSystem::Get().IsKeyPressed(Shape::KeyCode::Space)) {
-        new_game("42");
+    if (m_theme_selector && m_theme_selector->isVisible()) {
+        m_theme_selector->handleInput();
+        return;
+    }
+    if (m_settings_window && m_settings_window->isVisible()) {
+        m_settings_window->handleInput();
+        return;
+    }
+    if (m_main_menu && m_main_menu->isVisible()) {
+        m_main_menu->update(static_cast<float>(m_dt));
+        auto action = m_main_menu->handleInput();
+        switch (action) {
+            case ShapeEngine::UI::MainMenu::MenuAction::NewGame:
+                new_game("42");
+                set_state(GameState::Playing);
+                break;
+            case ShapeEngine::UI::MainMenu::MenuAction::Continue:
+                if (m_world.entity_count() > 0) {
+                    set_state(GameState::Playing);
+                } else {
+                    new_game("42");
+                    set_state(GameState::Playing);
+                }
+                break;
+            case ShapeEngine::UI::MainMenu::MenuAction::OpenSettings:
+                if (m_settings_window) m_settings_window->show();
+                break;
+            case ShapeEngine::UI::MainMenu::MenuAction::Quit:
+                request_quit();
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -368,6 +457,16 @@ void Game::render() {
         float ox2 = cx - 150.0f * std::cos(static_cast<float>(m_total_time));
         float oy2 = cy - 150.0f * std::sin(static_cast<float>(m_total_time));
         draw_polygon(*m_renderer, ox2, oy2, 30.0f, 4, {0.3f, 1.0f, 0.3f}, -static_cast<float>(m_total_time) * 1.5f);
+
+        if (m_main_menu && m_main_menu->isVisible()) {
+            m_main_menu->render();
+        }
+        if (m_theme_selector && m_theme_selector->isVisible()) {
+            m_theme_selector->render();
+        }
+        if (m_settings_window && m_settings_window->isVisible()) {
+            m_settings_window->render();
+        }
     } else if (m_state == GameState::Playing || m_state == GameState::Paused) {
         const float SW = static_cast<float>(m_window.GetWidth());
         const float SH = static_cast<float>(m_window.GetHeight());
@@ -405,6 +504,25 @@ void Game::render() {
                 draw_polygon(*m_renderer, sx, sy, screen_radius,
                              sp_sides[species_idx], {final_r, final_g, final_b}, rot.radians);
             });
+
+        if (m_game_hud && m_game_hud->isVisible()) {
+            m_game_hud->setFPS(1.0f / static_cast<float>(m_dt > 0.0001 ? m_dt : 0.016));
+            m_game_hud->setEntityCount(static_cast<int>(m_world.entity_count()));
+            m_game_hud->setCurrentTick(m_scheduler.current_tick());
+            m_game_hud->setSimulationSpeed(m_scheduler.speed());
+            m_game_hud->setPaused(m_state == GameState::Paused);
+            m_game_hud->render();
+        }
+
+        if (m_state == GameState::Paused && m_pause_menu && m_pause_menu->isVisible()) {
+            m_pause_menu->render();
+        }
+        if (m_settings_window && m_settings_window->isVisible()) {
+            m_settings_window->render();
+        }
+        if (m_theme_selector && m_theme_selector->isVisible()) {
+            m_theme_selector->render();
+        }
     }
 
     m_renderer->EndFrame();
