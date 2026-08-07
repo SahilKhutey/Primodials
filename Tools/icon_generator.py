@@ -173,16 +173,89 @@ def generate_icon_set(output_dir, theme='dark', size=64):
     print(f"\n[+] Generated {len(ICONS)} icons in {output_path}")
 
 
+def generate_theme_thumbnails(themes_dir, output_dir):
+    """Generate thumbnail images for each theme."""
+    import json
+    import math
+    
+    themes_path = Path(themes_dir)
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    
+    has_pil = False
+    try:
+        from PIL import Image, ImageDraw
+        has_pil = True
+    except ImportError:
+        pass
+
+    for theme_dir in themes_path.iterdir():
+        if not theme_dir.is_dir():
+            continue
+        
+        theme_json = theme_dir / "theme.json"
+        if not theme_json.exists():
+            continue
+        
+        try:
+            with open(theme_json, 'r', encoding='utf-8') as f:
+                theme_data = json.load(f)
+            
+            thumb_size = 256
+            if has_pil:
+                img = Image.new('RGB', (thumb_size, thumb_size))
+                draw = ImageDraw.Draw(img)
+                
+                top_color = tuple(int(c * 255) for c in theme_data.get('backgroundTopColor', [0.1, 0.1, 0.2, 1.0])[:3])
+                bot_color = tuple(int(c * 255) for c in theme_data.get('backgroundBottomColor', [0.05, 0.05, 0.1, 1.0])[:3])
+                
+                for y in range(thumb_size):
+                    t = y / float(thumb_size)
+                    color = tuple(int(top_color[i] * (1.0 - t) + bot_color[i] * t) for i in range(3))
+                    draw.line([(0, y), (thumb_size, y)], fill=color)
+                
+                palette = theme_data.get('speciesPalette', [])
+                if palette:
+                    for i, color_rgba in enumerate(palette[:8]):
+                        color = tuple(int(c * 255) for c in color_rgba[:3])
+                        angle = (i / 8.0) * 2.0 * math.pi
+                        x = thumb_size // 2 + int(math.cos(angle) * thumb_size * 0.25)
+                        y = thumb_size // 2 + int(math.sin(angle) * thumb_size * 0.25)
+                        draw.ellipse([x - 12, y - 12, x + 12, y + 12], fill=color)
+                
+                output_file = output_path / f"{theme_dir.name}.png"
+                img.save(output_file)
+                # Also save directly into theme directory as preview.png
+                img.save(theme_dir / "preview.png")
+                print(f"  [+] Generated theme thumbnail: {theme_dir.name}.png & preview.png")
+            else:
+                print(f"  [-] PIL not installed, skipping theme thumbnail for {theme_dir.name}")
+        except Exception as e:
+            print(f"  [-] Failed theme thumbnail {theme_dir.name}: {e}")
+
+
 def main():
     parser = argparse.ArgumentParser(description='Generate UI assets')
     parser.add_argument('--output', default='assets/ui/icons/',
                        help='Output directory')
     parser.add_argument('--size', type=int, default=64,
                        help='Icon size in pixels')
+    parser.add_argument('--theme-thumbs', action='store_true',
+                       help='Generate theme thumbnails')
+    parser.add_argument('--themes-dir', default='Content/Themes',
+                       help='Themes directory')
     args = parser.parse_args()
     
     print("=== UI Asset Generator ===\n")
+    print("Generating UI icons...")
     generate_icon_set(args.output, size=args.size)
+    
+    if args.theme_thumbs:
+        print("\nGenerating theme thumbnails...")
+        thumb_output = Path(args.output) / "themes"
+        generate_theme_thumbnails(args.themes_dir, thumb_output)
+    
+    print("\n[+] Asset generation complete!")
 
 
 if __name__ == "__main__":
