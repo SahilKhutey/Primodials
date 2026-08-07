@@ -22,7 +22,27 @@ static constexpr u16 MAX_SPECIES = 1024;
 
 class SpeciesRegistry {
 public:
-    SpeciesRegistry() noexcept { m_Records.fill({}); }
+    SpeciesRegistry() : m_Records(std::make_unique<std::array<Species, MAX_SPECIES>>()) {
+        m_Records->fill({});
+    }
+
+    SpeciesRegistry(SpeciesRegistry&&) noexcept = default;
+    SpeciesRegistry& operator=(SpeciesRegistry&&) noexcept = default;
+    SpeciesRegistry(const SpeciesRegistry& other) {
+        if (other.m_Records) {
+            m_Records = std::make_unique<std::array<Species, MAX_SPECIES>>(*other.m_Records);
+        }
+        m_Count = other.m_Count;
+    }
+    SpeciesRegistry& operator=(const SpeciesRegistry& other) {
+        if (this != &other) {
+            if (other.m_Records) {
+                m_Records = std::make_unique<std::array<Species, MAX_SPECIES>>(*other.m_Records);
+            }
+            m_Count = other.m_Count;
+        }
+        return *this;
+    }
 
     bool load_from_json(const std::string& path) {
         Species s{};
@@ -59,12 +79,12 @@ public:
     /// Register a species. Returns its assigned SpeciesId.
     /// Returns INVALID_SPECIES_ID if the registry is full.
     SpeciesId Register(Species species) noexcept {
-        if (m_Count >= MAX_SPECIES) return INVALID_SPECIES_ID;
+        if (m_Count >= MAX_SPECIES || !m_Records) return INVALID_SPECIES_ID;
         SpeciesId id = static_cast<SpeciesId>(m_Count + 1); // IDs start at 1
         species.id   = id;
         species.taxonomyTier = ClassifyTaxonomy(species.geometry.vertexCount);
         species.RecomputeDerived();
-        m_Records[m_Count] = species;
+        (*m_Records)[m_Count] = species;
         ++m_Count;
         return id;
     }
@@ -74,11 +94,11 @@ public:
     /// Returns the Species for a given id. Crashes in debug if id is invalid.
     SHAPE_NODISCARD const Species& Get(SpeciesId id) const noexcept {
         // IDs are 1-based; index = id - 1
-        return m_Records[id - 1];
+        return (*m_Records)[id - 1];
     }
 
     SHAPE_NODISCARD Species& Get(SpeciesId id) noexcept {
-        return m_Records[id - 1];
+        return (*m_Records)[id - 1];
     }
 
     SHAPE_NODISCARD bool IsValid(SpeciesId id) const noexcept {
@@ -90,19 +110,20 @@ public:
     SHAPE_NODISCARD u16 Count() const noexcept { return m_Count; }
 
     /// Iterate over all registered species (deterministic insertion order).
-    SHAPE_NODISCARD const Species* begin() const noexcept { return m_Records.data(); }
-    SHAPE_NODISCARD const Species* end()   const noexcept { return m_Records.data() + m_Count; }
-    SHAPE_NODISCARD Species*       begin()       noexcept { return m_Records.data(); }
-    SHAPE_NODISCARD Species*       end()         noexcept { return m_Records.data() + m_Count; }
+    SHAPE_NODISCARD const Species* begin() const noexcept { return m_Records ? m_Records->data() : nullptr; }
+    SHAPE_NODISCARD const Species* end()   const noexcept { return m_Records ? m_Records->data() + m_Count : nullptr; }
+    SHAPE_NODISCARD Species*       begin()       noexcept { return m_Records ? m_Records->data() : nullptr; }
+    SHAPE_NODISCARD Species*       end()         noexcept { return m_Records ? m_Records->data() + m_Count : nullptr; }
 
     // ── Lookup by vertex count ────────────────────────────────────────────────
 
     /// Find the first registered species with the given vertex count.
     /// Returns nullptr if none found.
     SHAPE_NODISCARD const Species* FindByVertexCount(u16 vertexCount) const noexcept {
+        if (!m_Records) return nullptr;
         for (u16 i = 0; i < m_Count; ++i) {
-            if (m_Records[i].geometry.vertexCount == vertexCount) {
-                return &m_Records[i];
+            if ((*m_Records)[i].geometry.vertexCount == vertexCount) {
+                return &(*m_Records)[i];
             }
         }
         return nullptr;
@@ -111,12 +132,12 @@ public:
     // ── Stats ─────────────────────────────────────────────────────────────────
 
     void Clear() noexcept {
-        m_Records.fill({});
+        if (m_Records) m_Records->fill({});
         m_Count = 0;
     }
 
 private:
-    std::array<Species, MAX_SPECIES> m_Records{};
+    std::unique_ptr<std::array<Species, MAX_SPECIES>> m_Records;
     u16 m_Count = 0;
 };
 
