@@ -80,6 +80,7 @@ public:
 
     // Diagnostics
     usize GetActiveEntityCount() const { return m_ActiveEntities.size(); }
+    u32 GetTickCount() const { return m_TickCount; }
 
     template <typename T>
     ComponentStore<T>& GetComponentStore() {

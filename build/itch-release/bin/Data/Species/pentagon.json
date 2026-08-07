@@ -1,0 +1,89 @@
+{
+  "_comment": "Pentagon — The Social Builder. 5 sides, high social need, cooperative, slower, more durable.",
+  "meta": {
+    "name": "Pentagon",
+    "vertex_count": 5,
+    "schema_version": "1.0"
+  },
+  "geometry": {
+    "vertex_count": 5,
+    "circumradius": 12.0,
+    "turning_radius": 10.0,
+    "visual_complexity": 0.55,
+    "primary_color":    [0.25, 0.45, 0.95, 1.0],
+    "secondary_color":  [0.1,  0.2,  0.7,  1.0],
+    "glow_intensity": 0.15,
+    "trail_strength": 0.1
+  },
+  "biology": {
+    "max_health": 140.0,
+    "max_energy": 120.0,
+    "metabolism_rate": 0.75,
+    "digestion_efficiency": 0.78,
+    "growth_rate": 0.8,
+    "maturation_period": 900.0,
+    "lifespan": 8400.0,
+    "regeneration_rate": 0.18,
+    "disease_resistance": 0.65,
+    "immune_strength": 0.7,
+    "temperature_tolerance_min": -15.0,
+    "temperature_tolerance_max": 38.0
+  },
+  "intelligence": {
+    "raw_iq": 70.0,
+    "spatial_reasoning": 0.55,
+    "pattern_recognition": 0.6,
+    "language_ability": 0.4,
+    "planning_depth": 3.0,
+    "learning_rate": 0.15
+  },
+  "psychology": {
+    "aggression": 0.25,
+    "fear": 0.55,
+    "curiosity": 0.6,
+    "empathy": 0.7,
+    "loyalty": 0.8,
+    "patience": 0.7,
+    "impulsiveness": 0.2,
+    "risk_tolerance": 0.35
+  },
+  "society": {
+    "social_need": 0.85,
+    "collectivism": 0.75,
+    "family_bonding": 0.9,
+    "cooperation_skill": 0.75,
+    "hierarchy_acceptance": 0.6
+  },
+  "physics": {
+    "mass": 1.5,
+    "density": 1.0,
+    "max_speed": 40.0,
+    "acceleration": 55.0,
+    "drag_coefficient": 0.35
+  },
+  "genetics": {
+    "mutation_rate": 0.018,
+    "recombination_rate": 0.55,
+    "genome_size": 16
+  },
+  "evolution": {
+    "selection_pressure": 0.4,
+    "adaptive_radius": 0.25,
+    "speciation_threshold": 0.35,
+    "evolvability": 0.4
+  },
+  "reproduction": {
+    "fertility_baseline": 0.45,
+    "gestation_period": 280.0,
+    "offspring_count_mean": 2.0,
+    "reproductive_age_min": 900.0,
+    "reproductive_age_max": 6000.0,
+    "reproductive_cost_energy": 35.0,
+    "parental_investment": 0.6
+  },
+  "resources": {
+    "territory_need": 160.0,
+    "carrying_capacity_self": 70.0,
+    "resource_conservation": 0.5
+  }
+}

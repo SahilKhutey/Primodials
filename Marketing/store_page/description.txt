@@ -1,0 +1,3 @@
+Polygonal Primordials is a data-oriented artificial life simulation engine and game.
+Simulate up to 250,000+ entities at 60 FPS using an archetype-based Entity-Component System (ECS).
+Features OpenGL 4.6 and Vulkan renderer backends, lockstep multiplayer, sandboxed Lua modding, and a visual node graph editor.

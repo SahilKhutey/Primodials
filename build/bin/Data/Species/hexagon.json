@@ -1,0 +1,98 @@
+{
+  "_comment": "Hexagon — The Wise Elder. 6 sides, highest intelligence, lowest metabolism, longest lifespan, yellow-gold.",
+  "meta": {
+    "name": "Hexagon",
+    "vertex_count": 6,
+    "schema_version": "1.0"
+  },
+  "geometry": {
+    "vertex_count": 6,
+    "circumradius": 15.0,
+    "turning_radius": 14.0,
+    "visual_complexity": 0.75,
+    "primary_color":    [1.0, 0.85, 0.1, 1.0],
+    "secondary_color":  [0.8, 0.6,  0.0, 1.0],
+    "glow_intensity": 0.35,
+    "trail_strength": 0.05
+  },
+  "biology": {
+    "max_health": 200.0,
+    "max_energy": 160.0,
+    "metabolism_rate": 0.45,
+    "digestion_efficiency": 0.9,
+    "growth_rate": 0.55,
+    "maturation_period": 1800.0,
+    "lifespan": 24000.0,
+    "regeneration_rate": 0.25,
+    "disease_resistance": 0.8,
+    "immune_strength": 0.85,
+    "temperature_tolerance_min": -20.0,
+    "temperature_tolerance_max": 50.0
+  },
+  "intelligence": {
+    "raw_iq": 120.0,
+    "abstract_reasoning": 0.7,
+    "spatial_reasoning": 0.8,
+    "pattern_recognition": 0.85,
+    "memory_capacity": 20.0,
+    "problem_solving_speed": 0.8,
+    "creativity": 0.7,
+    "language_ability": 0.65,
+    "planning_depth": 6.0,
+    "learning_rate": 0.25
+  },
+  "psychology": {
+    "aggression": 0.15,
+    "fear": 0.35,
+    "curiosity": 0.9,
+    "empathy": 0.7,
+    "patience": 0.9,
+    "ambition": 0.65,
+    "impulsiveness": 0.1,
+    "risk_tolerance": 0.3
+  },
+  "society": {
+    "social_need": 0.7,
+    "collectivism": 0.6,
+    "family_bonding": 0.75,
+    "cooperation_skill": 0.8,
+    "hierarchy_acceptance": 0.5,
+    "social_memory": 0.85
+  },
+  "physics": {
+    "mass": 2.5,
+    "density": 1.0,
+    "max_speed": 28.0,
+    "acceleration": 35.0,
+    "drag_coefficient": 0.45
+  },
+  "genetics": {
+    "mutation_rate": 0.01,
+    "recombination_rate": 0.45,
+    "heritability_strength": 0.8,
+    "genome_size": 16
+  },
+  "evolution": {
+    "selection_pressure": 0.3,
+    "adaptive_radius": 0.15,
+    "speciation_threshold": 0.3,
+    "extinction_resistance": 0.8,
+    "evolvability": 0.3
+  },
+  "reproduction": {
+    "fertility_baseline": 0.3,
+    "gestation_period": 600.0,
+    "offspring_count_mean": 1.5,
+    "offspring_count_variance": 0.3,
+    "reproductive_age_min": 1800.0,
+    "reproductive_age_max": 18000.0,
+    "reproductive_cost_energy": 50.0,
+    "parental_investment": 0.85
+  },
+  "resources": {
+    "territory_need": 250.0,
+    "carrying_capacity_self": 120.0,
+    "resource_conservation": 0.7,
+    "stockpile_tendency": 0.6
+  }
+}

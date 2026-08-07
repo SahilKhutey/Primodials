@@ -1,0 +1,28 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/ASUS/Documents/Primodilas/build/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/_deps/catch2-build/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/_deps/catch2-build/src/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/_deps/sdl3-build/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Engine/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Engine/Replay/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Engine/Network/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Engine/Scripting/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Engine/Compute/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Engine/AssetPipeline/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Engine/Optimization/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/EngineTests/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Examples/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Examples/multiplayer_demo/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Examples/scripted_demo/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Benchmarks/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Games/PolygonalPrimordials/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Launcher/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Tools/cooker/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Tools/documentation/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Tools/trailer/cmake_install.cmake",
+		"C:/Users/ASUS/Documents/Primodilas/build/Tools/localization/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

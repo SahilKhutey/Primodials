@@ -1,0 +1,10 @@
+Store Page Copy:
+
+Title: Polygonal Primordials
+Description: Watch geometry come to life, mutate, evolve, and wage war in a truly emergent artificial life simulation.
+
+Features:
+- Deterministic 60Hz simulation
+- Emergent behaviors (no scripted AI)
+- Fully simulated biology, combat, and evolution
+- Integrated Steam Workshop for mods

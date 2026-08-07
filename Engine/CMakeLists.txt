@@ -1,4 +1,24 @@
 add_library(ShapeEngine STATIC
+    # UI & Wallpaper Systems (Phases 7, 8, 9, 10)
+    UI/Loading/LoadingScreen.cpp
+    UI/Menus/MainMenu.cpp
+    UI/Menus/PauseMenu.cpp
+    UI/HUD/GameHUD.cpp
+    UI/ThemeSystem/ThemeSelector.cpp
+    UI/Settings/SettingsWindow.cpp
+    UI/HUD/EntityInspector.cpp
+    UI/Widgets/NotificationToast.cpp
+    UI/Widgets/ColorPicker.cpp
+    UI/Profiles/ProfileManager.cpp
+    UI/Achievements/AchievementPanel.cpp
+    UI/Onboarding/TutorialOverlay.cpp
+    UI/Performance/PerformanceOverlay.cpp
+    UI/Heatmap/HeatmapToggle.cpp
+    GameView/GameViewWindow.cpp
+    GameView/SharedStateSync.cpp
+    Wallpaper/WallpaperTrayMenu.cpp
+    Themes/ThemeManager.cpp
+    Themes/ThemeApplier.cpp
     Core/Logger.cpp
     Core/Bootstrap.cpp
     Core/Time.cpp

@@ -1,0 +1,188 @@
+Randomness seeded to: 92504328
+
+[BENCHMARK] Creating 1000000 entities with BPos and BVel...
+[BENCHMARK] Successfully created in 725 ms.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ShapeEngineTests.exe is a Catch2 v3.4.0 host application.
+Run with -? for options
+
+-------------------------------------------------------------------------------
+1M Entities Performance Benchmark
+-------------------------------------------------------------------------------
+C:/Users/ASUS/Documents/Primodilas/EngineTests/PerformanceTests/test_baseline.cpp:22
+...............................................................................
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/PerformanceTests/test_baseline.cpp:37: PASSED:
+  REQUIRE( world.entity_count() == N )
+with expansion:
+  1000000 (0xf4240) == 1000000 (0xf4240)
+
+[BENCHMARK] Simulating 100 frames of physics iteration...
+[BENCHMARK] Completed 100 frames in 236 ms.
+[BENCHMARK] Average frame time: 2.36 ms (423.729 FPS)
+[BENCHMARK] Destroyed all entities in 2 ms.
+C:/Users/ASUS/Documents/Primodilas/EngineTests/PerformanceTests/test_baseline.cpp:63: PASSED:
+  REQUIRE( world.entity_count() == 0 )
+with expansion:
+  0 == 0
+
+[2026-08-05 10:53:08] [33mWARN [0m [Achievements.cpp:99] Achievements: Definitions file not found: data/achievements.json (using built-in defaults)
+[2026-08-05 10:53:08] [32mINFO [0m [Achievements.cpp:34] Achievements: Loaded 25 achievement definitions
+-------------------------------------------------------------------------------
+Achievements Roundtrip — initialize and unlock
+-------------------------------------------------------------------------------
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:8
+...............................................................................
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:11: PASSED:
+  REQUIRE( a.count() >= 25 )
+with expansion:
+  25 >= 25
+
+[2026-08-05 10:53:08] [32mINFO [0m [Achievements.cpp:184] Achievements: Unlocked: FIRST_LAUNCH (at t=1785907388734980us)
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:17: PASSED:
+  REQUIRE( a.unlock("FIRST_LAUNCH") )
+with expansion:
+  true
+
+[2026-08-05 10:53:08] [32mINFO [0m [Achievements.cpp:184] Achievements: Unlocked: NEW_GAME (at t=1785907388735002us)
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:18: PASSED:
+  REQUIRE( a.unlock("NEW_GAME") )
+with expansion:
+  true
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:19: PASSED:
+  REQUIRE_FALSE( a.add_progress("POPULATION_100", 50) )
+with expansion:
+  !false
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:20: PASSED:
+  REQUIRE( !a.get_progress("POPULATION_100")->unlocked )
+with expansion:
+  true
+
+[2026-08-05 10:53:08] [32mINFO [0m [Achievements.cpp:184] Achievements: Unlocked: POPULATION_100 (at t=1785907388735050us)
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:21: PASSED:
+  REQUIRE( a.add_progress("POPULATION_100", 60) )
+with expansion:
+  true
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:22: PASSED:
+  REQUIRE( a.get_progress("POPULATION_100")->unlocked )
+with expansion:
+  true
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:27: PASSED:
+  REQUIRE( blob.size() > 0 )
+with expansion:
+  844 (0x34c) > 0
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:31: PASSED:
+  REQUIRE( a.get_progress("FIRST_LAUNCH")->unlocked == false )
+with expansion:
+  false == false
+
+[2026-08-05 10:53:08] [32mINFO [0m [Achievements.cpp:363] Achievements: load_state: restored 25 progress records
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:33: PASSED:
+  REQUIRE( a.load_state(blob) )
+with expansion:
+  true
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:34: PASSED:
+  REQUIRE( a.get_progress("FIRST_LAUNCH")->unlocked == true )
+with expansion:
+  true == true
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:35: PASSED:
+  REQUIRE( a.get_progress("NEW_GAME")->unlocked == true )
+with expansion:
+  true == true
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:36: PASSED:
+  REQUIRE( a.get_progress("POPULATION_100")->unlocked == true )
+with expansion:
+  true == true
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:37: PASSED:
+  REQUIRE( a.get_progress("POPULATION_100")->current == 100 )
+with expansion:
+  100 == 100
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:38: PASSED:
+  REQUIRE( a.get_progress("POPULATION_100")->target == 100 )
+with expansion:
+  100 == 100
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:41: PASSED:
+  REQUIRE( a.get_progress("POPULATION_10000") != nullptr )
+with expansion:
+  0x0000019d192fd3d8 != nullptr
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:42: PASSED:
+  REQUIRE( a.get_progress("EVOLUTION_GOAL") != nullptr )
+with expansion:
+  0x0000019d192fd438 != nullptr
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:46: PASSED:
+  REQUIRE( a.get_progress("FIRST_LAUNCH")->unlocked == false )
+with expansion:
+  false == false
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:47: PASSED:
+  REQUIRE( a.get_progress("FIRST_LAUNCH")->unlock_time_us == 0 )
+with expansion:
+  0 == 0
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_achievements_roundtrip.cpp:48: PASSED:
+  REQUIRE( a.get_progress("POPULATION_100")->target == 100 )
+with expansion:
+  100 == 100
+
+-------------------------------------------------------------------------------
+SteamStub Initialization
+-------------------------------------------------------------------------------
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_steam_stub.cpp:5
+...............................................................................
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/GameTests/test_steam_stub.cpp:6: PASSED:
+  REQUIRE( SteamAPI_Init() == true )
+with expansion:
+  true == true
+
+-------------------------------------------------------------------------------
+Vulkan test placeholder
+-------------------------------------------------------------------------------
+C:/Users/ASUS/Documents/Primodilas/EngineTests/VulkanTests/test_vulkan.cpp:3
+...............................................................................
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/VulkanTests/test_vulkan.cpp:4: PASSED:
+  REQUIRE( true )
+
+-------------------------------------------------------------------------------
+Asset Pipeline
+-------------------------------------------------------------------------------
+C:/Users/ASUS/Documents/Primodilas/EngineTests/AssetTests/test_asset.cpp:2
+...............................................................................
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/AssetTests/test_asset.cpp:3: PASSED:
+  REQUIRE( true )
+
+-------------------------------------------------------------------------------
+Lua Scripting
+-------------------------------------------------------------------------------
+C:/Users/ASUS/Documents/Primodilas/EngineTests/ScriptingTests/test_scripting.cpp:2
+...............................................................................
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/ScriptingTests/test_scripting.cpp:3: PASSED:
+  REQUIRE( true )
+
+-------------------------------------------------------------------------------
+Network Lockstep
+-------------------------------------------------------------------------------
+C:/Users/ASUS/Documents/Primodilas/EngineTests/NetworkTests/test_network.cpp:2
+...............................................................................
+
+C:/Users/ASUS/Documents/Primodilas/EngineTests/NetworkTests/test_network.cpp:3: PASSED:
+  REQUIRE( true )
+

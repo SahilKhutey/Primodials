@@ -1,0 +1,24 @@
+{
+    "id": "microorganisms",
+    "displayName": "Microorganisms",
+    "description": "Scientific microscope view of bioluminescent microbes",
+    "author": "Polygonal Primordials Team",
+    "version": "1.0.0",
+    "backgroundTopColor": [0.01, 0.01, 0.02, 1.0],
+    "backgroundBottomColor": [0.0, 0.0, 0.01, 1.0],
+    "vignetteColor": [0.0, 0.0, 0.0, 0.9],
+    "vignetteIntensity": 0.85,
+    "speciesPalette": [
+        [0.1, 0.9, 0.4, 1.0],
+        [0.8, 0.2, 0.9, 1.0],
+        [0.9, 0.9, 0.2, 1.0],
+        [0.2, 0.5, 0.9, 1.0]
+    ],
+    "accentColor": [0.4, 1.0, 0.5, 1.0],
+    "glowIntensity": 0.9,
+    "particleDensity": 0.4,
+    "motionSpeed": 0.6,
+    "populationDensity": 0.5,
+    "ambientAudio": "audio/microscope-ambient.ogg",
+    "audioVolume": 0.2
+}

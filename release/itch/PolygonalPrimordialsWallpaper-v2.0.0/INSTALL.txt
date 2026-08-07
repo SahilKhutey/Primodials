@@ -1,0 +1,13 @@
+POLYGONAL PRIMORDIALS v2.0.0
+
+INSTALLATION
+============
+1. Extract this archive
+2. Run PolygonalPrimordialsWallpaper.exe
+3. Enjoy your living ecosystem!
+
+REQUIREMENTS
+============
+- Windows 10+, Ubuntu 20.04+, or macOS 11+
+- 2GB RAM minimum, 4GB recommended
+- OpenGL 4.6 compatible GPU
