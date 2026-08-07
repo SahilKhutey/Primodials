@@ -1,0 +1,28 @@
+{
+  "files.associations": {
+    "*.h": "cpp",
+    "*.hpp": "cpp",
+    "*.cpp": "cpp",
+    "*.inl": "cpp"
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/build": true,
+    "**/dist": true,
+    "**/.venv": true,
+    "**/node_modules": true
+  },
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "C_Cpp.default.cppStandard": "c++23",
+  "C_Cpp.default.cStandard": "c11",
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/Engine",
+    "${workspaceFolder}/Engine/Platform/Include",
+    "${workspaceFolder}/Engine/Math/Include"
+  ],
+  "cmake.sourceDirectory": "${workspaceFolder}",
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "clang-format.style": "file",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
+}

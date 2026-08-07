@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Game",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/bin/PolygonalPrimordials.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "preLaunchTask": "Build Debug"
+    },
+    {
+      "name": "Launch Wallpaper",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/bin/PolygonalPrimordialsWallpaper.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Build Debug"
+    }
+  ]
+}

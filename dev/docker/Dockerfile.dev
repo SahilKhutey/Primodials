@@ -1,0 +1,53 @@
+# PolygonalPrimordials Development Environment
+FROM ubuntu:24.04
+LABEL maintainer="contact@primordials.game"
+LABEL description="Polygonal Primordials development environment"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    cmake-gui \
+    git \
+    ninja-build \
+    pkg-config \
+    curl \
+    wget \
+    g++ \
+    clang \
+    libsdl3-dev \
+    libsdl3-ttf-dev \
+    libsdl3-mixer-dev \
+    libsdl3-image-dev \
+    libfreetype6-dev \
+    libgl1-mesa-dev \
+    libglu1-mesa-dev \
+    libvulkan-dev \
+    valgrind \
+    gdb \
+    cppcheck \
+    doxygen \
+    graphviz \
+    python3 \
+    python3-pip \
+    python3-venv \
+    python3-dev \
+    sudo \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip3 install --break-system-packages \
+    Pillow \
+    numpy \
+    requests \
+    pyyaml \
+    markdown
+
+RUN useradd -m -s /bin/bash developer && \
+    echo "developer ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+WORKDIR /workspace
+RUN chown developer:developer /workspace
+USER developer
+
+CMD ["/bin/bash"]

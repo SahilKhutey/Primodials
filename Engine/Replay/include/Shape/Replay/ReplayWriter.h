@@ -2,7 +2,7 @@
 #pragma once
 
 #include "Shape/Replay/ReplayFormat.h"
-#include "Shape/Simulation/SimulationState.hpp" // Use SimulationClock or primitive
+#include "Simulation/SimulationState.hpp"
 #include <cstdint>
 #include <fstream>
 #include <vector>

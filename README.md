@@ -1,59 +1,80 @@
 # Polygonal Primordials
 
-An artificial life and evolution sandbox. Watch digital organisms eat, mutate, form colonies, build structures, and evolve neural brains in real time — all in your browser.
+> A living ecosystem simulation for your desktop
 
-## What's Built
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]() 
+[![Version](https://img.shields.io/badge/version-2.0.0-blue)]() 
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE) 
+[![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)]()
 
-The **live web application** is the working product. It runs entirely in the browser with no backend required:
+---
 
-- **Real-time canvas simulation** — Hundreds of polygonal organisms rendered as colored shapes with pan/zoom camera, movement trails, and biome backgrounds
-- **Emergent evolution** — Organisms reproduce, mutate, compete, and speciate. Traits like intelligence, build skill, curiosity, and adaptability evolve over generations via a neural brain system
-- **Ecosystem dynamics** — Predator-prey relationships, herbivore/carnivore diets, resource scarcity, spatial clustering, altruism, dominance hierarchies, and niche breadth
-- **Microbial layer** — Biofilm formation, quorum sensing, chemotaxis, sporulation, horizontal gene transfer (HGT), photosynthesis, symbiosis, parasitism, and disease
-- **Social behavior** — Colony formation, structure building (nests, caches, workshops), knowledge discovery, alpha hierarchies, and competition events
-- **Live data panels** — Real-time stats (population, species count, fitness, births/deaths/kills), species rankings with tier labels, entity inspector (click any organism to see its genome and traits), and an evolution timeline chart plotting 26+ metrics over time
-- **Experiment system** — Save and load simulation snapshots to Supabase, replay experiments, compare runs
-- **Full simulation controls** — Pause, step, speed control (0.25x–4x), reset, and live-editable parameters (mutation rate, food density, world size, chemical fields, boundary mode, and more)
+## 🎮 For End Users
 
-## Tech Stack
+### Quick Install
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Styling**: Tailwind CSS
-- **Icons**: Lucide React
-- **Backend**: Supabase (experiment save/load, snapshot storage)
-- **Simulation**: Custom TypeScript engine — deterministic RNG (SplitMix64/Xoshiro256), spatial hash grid for neighbor queries, neural-network-driven behavior, genome decoding, chemical diffusion field
+| Platform | Download / Installer |
+| :--- | :--- |
+| **Windows** | [PolygonalPrimordials-Setup-2.0.0.exe](https://github.com/SahilKhutey/Primodials/releases) |
+| **Linux (.deb)** | [polygonal-primordials_2.0.0_amd64.deb](https://github.com/SahilKhutey/Primodials/releases) |
+| **Linux (Universal)** | [PolygonalPrimordials-2.0.0-x86_64.AppImage](https://github.com/SahilKhutey/Primodials/releases) |
+| **macOS** | [PolygonalPrimordials-2.0.0.pkg](https://github.com/SahilKhutey/Primodials/releases) |
 
-## Getting Started
+### System Requirements
+
+- **OS**: Windows 10/11 (64-bit), Ubuntu 22.04+, macOS 12+
+- **CPU**: Dual-core 2.0 GHz or faster
+- **RAM**: 2 GB RAM (4 GB recommended for 250,000+ entities)
+- **GPU**: OpenGL 3.3+ / Vulkan 1.2+ capable
+- **Storage**: 200 MB available space
+
+---
+
+## 🛠️ For Developers
+
+### Quick Start (One Command Setup)
 
 ```bash
-npm install
-npm run dev
+git clone https://github.com/SahilKhutey/Primodials.git
+cd Primodials
+./dev/setup_dev.sh
 ```
 
-The app runs at `http://localhost:5173`.
+This single command will:
+1. Detect your platform and install system build dependencies
+2. Create Python virtual environment for asset tools
+3. Configure Git pre-commit & pre-push hooks
+4. Set up VS Code configuration tasks & debug targets
+5. Run the master build system & Catch2 test suite (190 test cases, 1,311 assertions)
 
-To build for production:
+### Build Commands
 
 ```bash
-npm run build
+# Build everything for current platform
+./build_all.sh all
+
+# Build specific components
+./build_all.sh engine     # ShapeEngine static library
+./build_all.sh game       # Main simulation game binary
+./build_all.sh wallpaper  # Live desktop wallpaper background mode
+./build_all.sh package    # Build standalone tarball
+./build_all.sh installer  # Build platform installer package (.exe / .deb / .pkg)
 ```
 
-## How It Works
+---
 
-Each organism has a genome that encodes its traits — size, speed, diet, sense range, intelligence, build skill, curiosity, adaptability, and more. Organisms wander, forage, hunt, reproduce (with crossover + mutation), and die. Over thousands of ticks, species emerge, compete, go extinct, and evolve.
+## 📄 Release Generation
 
-The simulation uses a spatial hash grid for O(1) neighbor queries, a deterministic RNG for reproducibility, and an optional chemical diffusion field that models nutrient gradients in the environment.
+To produce a full distributable release package with checksums:
 
-## C++ Engine (Architecture Scaffolding)
+```bash
+./create_release.sh
+```
 
-The repository also contains `Engine/` — a C++23 architecture design for a high-performance game engine with archetype ECS, custom allocators, deterministic math, lockstep netcode, and Lua scripting. This is **design scaffolding and documentation**, not a shipping product. It is not built or run as part of the web application.
+---
 
-## License
+## 📜 License & Community
 
-Proprietary — see [LICENSE](LICENSE). All rights reserved by the author.
-
-## Architecture Guidelines
-
-- **Determinism**: The simulation uses deterministic RNG (SplitMix64/Xoshiro256). The C++ engine design mandates `Shape::Math` instead of `<cmath>` for cross-platform bit-exact determinism.
-- **Memory**: The C++ engine design uses custom allocators (Linear, Pool, Arena, Frame) to avoid heap fragmentation at scale.
-- **Testing**: The C++ engine has a test suite in `EngineTests/`. The web app is verified via production builds.
+- **Engine & Application**: MIT License — see [LICENSE](LICENSE).
+- **GitHub Repository**: [`https://github.com/SahilKhutey/Primodials`](https://github.com/SahilKhutey/Primodials)
+- **itch.io Store**: [`https://gensoulslab.itch.io/polygonal-primordials`](https://gensoulslab.itch.io/polygonal-primordials)

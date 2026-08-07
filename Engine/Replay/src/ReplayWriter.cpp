@@ -1,6 +1,6 @@
 // Shape/Replay/ReplayWriter.cpp
 #include "Shape/Replay/ReplayWriter.h"
-#include "Shape/Core/Logger.hpp"
+#include "Core/Logger.hpp"
 
 #include <iostream>
 

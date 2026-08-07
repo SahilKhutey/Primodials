@@ -1,6 +1,6 @@
 // Shape/Replay/ReplayPlayer.cpp
 #include "Shape/Replay/ReplayPlayer.h"
-#include "Shape/Core/Logger.hpp"
+#include "Core/Logger.hpp"
 
 #include <algorithm>
 #include <cstring>

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  dev:
+    build:
+      context: ../..
+      dockerfile: dev/docker/Dockerfile.dev
+    image: polygonal-primordials-dev:latest
+    container_name: pp_dev
+    volumes:
+      - ../..:/workspace
+      - pp_build_cache:/workspace/build
+    environment:
+      - DISPLAY=${DISPLAY}
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    command: /bin/bash
+
+volumes:
+  pp_build_cache:
