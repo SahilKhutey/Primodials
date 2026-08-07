@@ -1,0 +1,18 @@
+{
+  "id": "my_custom_theme",
+  "name": "Custom Glow Theme",
+  "author": "Creator",
+  "description": "Vibrant bioluminescent theme template for Primordials.",
+  "version": "1.0",
+  "backgroundTopColor": [0.02, 0.04, 0.10, 1.0],
+  "backgroundBottomColor": [0.01, 0.02, 0.05, 1.0],
+  "gridColor": [0.10, 0.25, 0.40, 0.3],
+  "uiAccentColor": [0.20, 0.85, 1.00, 1.0],
+  "speciesPalette": [
+    [0.2, 0.9, 1.0, 1.0],
+    [0.9, 0.3, 0.4, 1.0],
+    [0.4, 0.9, 0.3, 1.0],
+    [0.9, 0.8, 0.2, 1.0],
+    [0.8, 0.4, 0.9, 1.0]
+  ]
+}

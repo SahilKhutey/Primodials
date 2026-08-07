@@ -1,0 +1,21 @@
+{
+  "id": "my_custom_mod",
+  "name": "My Custom Primordials Mod",
+  "author": "Developer",
+  "version": "1.0.0",
+  "description": "A template mod for Primordials demonstrating custom species traits and world parameters.",
+  "dependencies": [],
+  "customSpecies": [
+    {
+      "name": "Titan Predatrix",
+      "radius": 14.0,
+      "maxSpeed": 180.0,
+      "color": [0.9, 0.2, 0.3, 1.0],
+      "diet": "carnivore"
+    }
+  ],
+  "worldOverrides": {
+    "mutationRateMultiplier": 1.25,
+    "foodSpawnInterval": 2.0
+  }
+}

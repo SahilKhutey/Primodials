@@ -1,0 +1,19 @@
+{
+  "id": "species_archetype_template",
+  "name": "Bioluminescent Glider",
+  "baseStats": {
+    "size": 8.5,
+    "speed": 120.0,
+    "perceptionRadius": 150.0,
+    "energyCapacity": 200.0,
+    "metabolicRate": 1.0,
+    "reproductionThreshold": 150.0
+  },
+  "genome": {
+    "mutationProbability": 0.05,
+    "geneCount": 20,
+    "chromosomeTraits": [
+      "Agility", "Bioluminescence", "ThermalTolerance", "Carnivory"
+    ]
+  }
+}
