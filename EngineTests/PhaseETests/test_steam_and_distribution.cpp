@@ -12,7 +12,7 @@ TEST_CASE("Steam Integration and Build Distribution Subsystem", "[Steam]") {
     SECTION("SteamAppConfig constants verification") {
         REQUIRE(Shape::Steam::SteamAppConfig::APP_ID == 480);
         REQUIRE(Shape::Steam::SteamAppConfig::ACHIEVEMENT_COUNT == 20);
-        REQUIRE(std::string(Shape::Steam::SteamAppConfig::APP_NAME) == "Polygonal Primordials");
+        REQUIRE(std::string(Shape::Steam::SteamAppConfig::APP_NAME) == "Primordials");
     }
 
     SECTION("SteamContext initialization and sub-manager creation") {

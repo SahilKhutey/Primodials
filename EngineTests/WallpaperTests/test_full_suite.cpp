@@ -57,7 +57,7 @@ TEST_CASE("FULL_SUITE: Localization works", "[FullSuite][locale]") {
     lm.setLocalesDirectory("Content/Locales");
     REQUIRE(lm.loadLocale("en"));
     REQUIRE(lm.has("ui.welcome"));
-    REQUIRE(lm.get("ui.welcome") == "Welcome to Polygonal Primordials");
+    REQUIRE(lm.get("ui.welcome") == "Welcome to Primordials");
 }
 
 TEST_CASE("FULL_SUITE: Boot and clean shutdown", "[FullSuite][boot]") {

@@ -88,7 +88,7 @@ namespace ShapeEngine::UI {
             SDL_FRect dst = {x, y, texW, texH};
             SDL_RenderTexture(m_renderer, m_logoTexture, nullptr, &dst);
         } else {
-            renderText("POLYGONAL PRIMORDIALS", winW / 2.0f - 80.0f, winH * 0.15f, 24.0f, MenuColorRGBA(0.4f, 0.9f, 1.0f, 1.0f));
+            renderText("PRIMORDIALS", winW / 2.0f - 80.0f, winH * 0.15f, 24.0f, MenuColorRGBA(0.4f, 0.9f, 1.0f, 1.0f));
         }
     }
 

@@ -42,7 +42,7 @@ namespace ShapeEngine::GameView {
             
             int windowWidth = 1200;
             int windowHeight = 750;
-            std::string windowTitle = "Polygonal Primordials - Game View";
+            std::string windowTitle = "Primordials - Game View";
             
             GameViewColorRGBA topBarColor = {15, 18, 25, 255};
             GameViewColorRGBA bottomBarColor = {15, 18, 25, 255};

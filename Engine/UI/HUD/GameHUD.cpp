@@ -47,7 +47,7 @@ namespace ShapeEngine::UI {
         SDL_FRect bar = {0.0f, 0.0f, (float)winW, 40.0f};
         SDL_RenderFillRect(m_renderer, &bar);
         
-        renderText("Polygonal Primordials", 20, 10, 18, m_accentColor);
+        renderText("Primordials", 20, 10, 18, m_accentColor);
         
         float x = (float)(winW - 400);
         renderText("Speed:", (int)x, 10, 14, m_textColor);

@@ -88,7 +88,7 @@ namespace ShapeEngine::Wallpaper {
         menu.push_back(about);
         
         MenuItem quit;
-        quit.label = "Quit Polygonal Primordials";
+        quit.label = "Quit Primordials";
         quit.id = "quit";
         menu.push_back(quit);
         

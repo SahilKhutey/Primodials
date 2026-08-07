@@ -15,7 +15,7 @@ struct SteamAppConfig {
     static constexpr usize ACHIEVEMENT_COUNT = 20;
     static constexpr u64 CLOUD_QUOTA_BYTES = 100 * 1024 * 1024; // 100 MB
 
-    static constexpr const char* APP_NAME = "Polygonal Primordials";
+    static constexpr const char* APP_NAME = "Primordials";
     static constexpr const char* APP_VERSION = "2.0.0";
     static constexpr const char* BUILD_ID = "build_20260803_001";
 };

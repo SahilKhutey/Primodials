@@ -90,7 +90,7 @@ TEST_CASE("Package: README is comprehensive", "[validation][structure]") {
     std::string content((std::istreambuf_iterator<char>(f)),
                          std::istreambuf_iterator<char>());
     
-    REQUIRE(content.find("Polygonal Primordials") != std::string::npos);
+    REQUIRE(content.find("Primordials") != std::string::npos);
     REQUIRE((content.find("Quick Install") != std::string::npos || 
             content.find("Installation") != std::string::npos));
     REQUIRE(content.find("System Requirements") != std::string::npos);

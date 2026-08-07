@@ -76,7 +76,7 @@ namespace ShapeEngine::Wallpaper {
             nid.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
             nid.uCallbackMessage = WM_USER + 1;
             nid.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-            StringCchCopyW(nid.szTip, 128, L"Polygonal Primordials Wallpaper");
+            StringCchCopyW(nid.szTip, 128, L"Primordials Wallpaper");
             Shell_NotifyIconW(NIM_ADD, &nid);
         }
 

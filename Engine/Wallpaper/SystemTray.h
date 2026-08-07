@@ -17,8 +17,8 @@ public:
     using ProfileCallback = std::function<void(const std::string& profileId)>;
 
     struct TrayConfig {
-        std::string appName = "Polygonal Primordials";
-        std::string tooltip = "Polygonal Primordials - Running";
+        std::string appName = "Primordials";
+        std::string tooltip = "Primordials - Running";
         std::string iconPath = "assets/icons/tray.png";
         bool showNotifications = true;
     };

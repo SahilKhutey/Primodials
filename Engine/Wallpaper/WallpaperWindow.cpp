@@ -80,7 +80,7 @@ namespace ShapeEngine::Wallpaper {
         }
 
         SDL_WindowFlags flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_OPENGL;
-        m_window = SDL_CreateWindow("Polygonal Primordials Wallpaper", 
+        m_window = SDL_CreateWindow("Primordials Wallpaper", 
                                       (int)w, (int)h, flags);
         if (!m_window) {
             SHAPE_LOG_ERROR("Failed to create SDL window: {}", SDL_GetError());

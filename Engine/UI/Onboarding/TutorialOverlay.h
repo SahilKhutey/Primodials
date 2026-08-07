@@ -47,7 +47,7 @@ namespace ShapeEngine::UI {
             int cardHeight = 250;
             
             std::vector<Step> steps = {
-                {"welcome", "Welcome to Polygonal Primordials!",
+                {"welcome", "Welcome to Primordials!",
                  "You're about to watch digital life evolve. Creatures with "
                  "heritable traits will hunt, reproduce, and adapt over time.\n\n"
                  "Let's take a quick tour!", 0, 0, 0, 0, 6.0f, nullptr},
