@@ -1,0 +1,38 @@
+---
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: c++23
+ColumnLimit: 120
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+BreakBeforeBraces: Attach
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: Never
+AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+AlignOperands: Align
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: true
+BinPackParameters: true
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+IncludeBlocks: Regroup
+SortIncludes: CaseSensitive
+IncludeCategories:
+  - Regex: '^"Core/'
+    Priority: 1
+  - Regex: '^"Math/'
+    Priority: 2
+  - Regex: '^"ECS/'
+    Priority: 3
+  - Regex: '^"Rendering/'
+    Priority: 4
+  - Regex: '^"Simulation/'
+    Priority: 5
+  - Regex: '^<.*'
+    Priority: 6
+...

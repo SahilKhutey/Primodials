@@ -1,0 +1,144 @@
+{
+  "app": {
+    "appid": 1234560,
+    "name": "Polygonal Primordials",
+    "type": "game"
+  },
+  "depots": {
+    "1001": {
+      "name": "Common Content"
+    },
+    "1002": {
+      "name": "Windows"
+    },
+    "1003": {
+      "name": "Linux"
+    },
+    "1004": {
+      "name": "macOS"
+    }
+  },
+  "achievements": {
+    "ACH_FIRST_SPAWN": {
+      "display_name": "First Breath",
+      "description": "Spawn your first entity"
+    },
+    "ACH_FIRST_PREDATION": {
+      "display_name": "Circle of Life",
+      "description": "Witness your first predation event"
+    },
+    "ACH_FIRST_EXTINCTION": {
+      "display_name": "Last One Standing",
+      "description": "See a species go extinct"
+    },
+    "ACH_HUNDREDTH_GEN": {
+      "display_name": "Hundredth Generation",
+      "description": "An entity reaches generation 100"
+    },
+    "ACH_THOUSANDTH_GEN": {
+      "display_name": "Thousandth Generation",
+      "description": "An entity reaches generation 1,000"
+    },
+    "ACH_IMMORTAL_LINEAGE": {
+      "display_name": "Immortal Lineage",
+      "description": "A lineage survives 10,000 generations"
+    },
+    "ACH_STEADY_STATE": {
+      "display_name": "Steady State",
+      "description": "Population stable for 5 minutes"
+    },
+    "ACH_MASS_EXTINCTION": {
+      "display_name": "Mass Extinction",
+      "description": "90% of population dies in 60 seconds"
+    },
+    "ACH_CARRYING_CAPACITY": {
+      "display_name": "Carrying Capacity",
+      "description": "Population hits the carrying capacity"
+    },
+    "ACH_BOOM_AND_BUST": {
+      "display_name": "Boom and Bust",
+      "description": "Observe a complete prey/predator cycle"
+    },
+    "ACH_POLYGON_PALETTE": {
+      "display_name": "Polygon Palette",
+      "description": "See all 16 default species colors"
+    },
+    "ACH_TRAIT_EXPLORER": {
+      "display_name": "Trait Explorer",
+      "description": "Max out any single trait (1.0)"
+    },
+    "ACH_SPEED_DEMON": {
+      "display_name": "Speed Demon",
+      "description": "Speed trait exceeds 0.95"
+    },
+    "ACH_APEX_PREDATOR": {
+      "display_name": "Apex Predator",
+      "description": "Aggression trait exceeds 0.95"
+    },
+    "ACH_FIRST_MOD": {
+      "display_name": "Modder",
+      "description": "Install your first mod"
+    },
+    "ACH_MODDED_TIL_YOU_DROPPED": {
+      "display_name": "Modded Til You Dropped",
+      "description": "Install 10 different mods"
+    },
+    "ACH_SHIP_IT": {
+      "display_name": "Ship It!",
+      "description": "Publish a mod to the Steam Workshop"
+    },
+    "ACH_CURIOUS": {
+      "display_name": "Curious",
+      "description": "Play for 1 hour total"
+    },
+    "ACH_SCIENTIST": {
+      "display_name": "Scientist",
+      "description": "Play for 10 hours total"
+    },
+    "ACH_RESEARCHER": {
+      "display_name": "Researcher",
+      "description": "Play for 100 hours total"
+    }
+  },
+  "stats": {
+    "STAT_TIME_PLAYED": {
+      "type": "seconds"
+    },
+    "STAT_SESSIONS": {
+      "type": "int"
+    },
+    "STAT_MAX_POPULATION": {
+      "type": "int"
+    },
+    "STAT_TOTAL_SPAWNED": {
+      "type": "int"
+    },
+    "STAT_TOTAL_DESPAWNED": {
+      "type": "int"
+    },
+    "STAT_MAX_GENERATION": {
+      "type": "int"
+    },
+    "STAT_PREDATION_EVENTS": {
+      "type": "int"
+    },
+    "STAT_EXTINCTIONS": {
+      "type": "int"
+    },
+    "STAT_MODS_INSTALLED": {
+      "type": "int"
+    },
+    "STAT_MODS_PUBLISHED": {
+      "type": "int"
+    }
+  },
+  "leaderboards": {
+    "LONGEST_LINEAGE": {
+      "name": "Longest Lineage"
+    },
+    "MAX_POPULATION": {
+      "name": "Max Population"
+    }
+  },
+  "app_version": "2.0.0"
+}
