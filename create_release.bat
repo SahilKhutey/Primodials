@@ -24,8 +24,10 @@ mkdir %RELEASE_DIR%\Content
 
 echo Copying binaries...
 if exist build\itch-release\bin\PolygonalPrimordials.exe copy build\itch-release\bin\PolygonalPrimordials.exe %RELEASE_DIR%\binaries\Windows\
+if exist build\itch-release\bin\PolygonalPrimordials.exe copy build\itch-release\bin\PolygonalPrimordials.exe %RELEASE_DIR%\Launch_Primordials.exe
 if exist build\itch-release\bin\PolygonalPrimordialsWallpaper.exe copy build\itch-release\bin\PolygonalPrimordialsWallpaper.exe %RELEASE_DIR%\binaries\Windows\
 if exist build\itch-release\bin\ShapeEngineTests.exe copy build\itch-release\bin\ShapeEngineTests.exe %RELEASE_DIR%\binaries\Windows\
+if exist Launch_Primordials.bat copy Launch_Primordials.bat %RELEASE_DIR%\
 
 echo Copying assets and content...
 xcopy /E /I /Y Content %RELEASE_DIR%\Content\
