@@ -1,0 +1,4 @@
+[
+    {"id": "FIRST_LAUNCH", "api_name": "ACH_FIRST_LAUNCH", "title": "Welcome!", "description": "Launch the game", "progress_target": 0},
+    {"id": "NEW_GAME", "api_name": "ACH_NEW_GAME", "title": "New World", "description": "Start a new simulation", "progress_target": 0}
+]

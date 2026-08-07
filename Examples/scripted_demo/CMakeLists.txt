@@ -1,0 +1,8 @@
+add_executable(scripted_demo src/main.cpp)
+target_include_directories(scripted_demo PRIVATE ${CMAKE_SOURCE_DIR}/Engine/Scripting/include)
+target_link_libraries(scripted_demo PRIVATE ShapeEngine ShapeScripting)
+if(NOT MSVC)
+    target_compile_options(scripted_demo PRIVATE -Wall -Wextra)
+else()
+    target_compile_options(scripted_demo PRIVATE /W3 /EHsc)
+endif()

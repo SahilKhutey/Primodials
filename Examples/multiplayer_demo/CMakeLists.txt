@@ -1,0 +1,8 @@
+add_executable(multiplayer_demo src/main.cpp)
+target_include_directories(multiplayer_demo PRIVATE ${CMAKE_SOURCE_DIR}/Engine/Network/include)
+target_link_libraries(multiplayer_demo PRIVATE ShapeEngine ShapeNetwork)
+if(NOT MSVC)
+    target_compile_options(multiplayer_demo PRIVATE -Wall -Wextra)
+else()
+    target_compile_options(multiplayer_demo PRIVATE /W3 /EHsc)
+endif()
