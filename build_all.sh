@@ -126,6 +126,10 @@ build_engine() {
 
 build_game() {
     log_section "Building Game Executable"
+    if [ ! -f "$BUILD_DIR/CMakeCache.txt" ]; then
+        log_info "Configuring with CMake..."
+        cmake -S . -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DSHAPE_ENABLE_HARDENING=ON -DSHAPE_BUILD_TESTS=ON
+    fi
     log_info "Building game executable..."
     cmake --build "$BUILD_DIR" --target PolygonalPrimordials -j $JOBS || cmake --build "$BUILD_DIR" --target ShapeEngine -j $JOBS
     log_success "Game executable built"
