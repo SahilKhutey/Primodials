@@ -1,0 +1,76 @@
+{
+  "_comment": "Quadrilateral — The Balanced Generalist. 4 sides, moderate everything, adaptable.",
+  "meta": {
+    "name": "Quadrilateral",
+    "vertex_count": 4,
+    "schema_version": "1.0"
+  },
+  "geometry": {
+    "vertex_count": 4,
+    "circumradius": 9.0,
+    "turning_radius": 7.0,
+    "visual_complexity": 0.4,
+    "primary_color":    [0.2, 0.7,  0.3,  1.0],
+    "secondary_color":  [0.1, 0.45, 0.15, 1.0],
+    "glow_intensity": 0.05,
+    "trail_strength": 0.2
+  },
+  "biology": {
+    "max_health": 100.0,
+    "max_energy": 100.0,
+    "metabolism_rate": 1.0,
+    "digestion_efficiency": 0.72,
+    "growth_rate": 1.0,
+    "maturation_period": 600.0,
+    "lifespan": 4800.0,
+    "regeneration_rate": 0.12,
+    "disease_resistance": 0.5,
+    "temperature_tolerance_min": -10.0,
+    "temperature_tolerance_max": 42.0
+  },
+  "intelligence": {
+    "raw_iq": 55.0,
+    "spatial_reasoning": 0.5,
+    "pattern_recognition": 0.5,
+    "problem_solving_speed": 0.5,
+    "planning_depth": 2.0
+  },
+  "psychology": {
+    "aggression": 0.45,
+    "fear": 0.5,
+    "curiosity": 0.55,
+    "impulsiveness": 0.4,
+    "risk_tolerance": 0.5,
+    "patience": 0.5
+  },
+  "physics": {
+    "mass": 1.0,
+    "density": 1.0,
+    "max_speed": 55.0,
+    "acceleration": 80.0,
+    "drag_coefficient": 0.3
+  },
+  "genetics": {
+    "mutation_rate": 0.025,
+    "recombination_rate": 0.5,
+    "genome_size": 16
+  },
+  "evolution": {
+    "selection_pressure": 0.5,
+    "adaptive_radius": 0.3,
+    "speciation_threshold": 0.4,
+    "evolvability": 0.5
+  },
+  "reproduction": {
+    "fertility_baseline": 0.55,
+    "gestation_period": 200.0,
+    "offspring_count_mean": 2.5,
+    "reproductive_age_min": 600.0,
+    "reproductive_age_max": 3600.0,
+    "reproductive_cost_energy": 30.0
+  },
+  "resources": {
+    "territory_need": 100.0,
+    "carrying_capacity_self": 50.0
+  }
+}

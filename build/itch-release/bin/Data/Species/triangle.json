@@ -1,0 +1,76 @@
+{
+  "_comment": "Triangle — The Fast Predator. 3 sides, high aggression, high metabolism, small body.",
+  "meta": {
+    "name": "Triangle",
+    "vertex_count": 3,
+    "schema_version": "1.0"
+  },
+  "geometry": {
+    "vertex_count": 3,
+    "circumradius": 6.0,
+    "turning_radius": 4.0,
+    "visual_complexity": 0.2,
+    "primary_color":    [1.0, 0.35, 0.15, 1.0],
+    "secondary_color":  [0.8, 0.2,  0.0,  1.0],
+    "glow_intensity": 0.1,
+    "trail_strength": 0.4
+  },
+  "biology": {
+    "max_health": 60.0,
+    "max_energy": 80.0,
+    "metabolism_rate": 1.8,
+    "digestion_efficiency": 0.85,
+    "growth_rate": 1.5,
+    "maturation_period": 300.0,
+    "lifespan": 2400.0,
+    "regeneration_rate": 0.08,
+    "disease_resistance": 0.3,
+    "temperature_tolerance_min": -5.0,
+    "temperature_tolerance_max": 45.0
+  },
+  "intelligence": {
+    "raw_iq": 35.0,
+    "spatial_reasoning": 0.7,
+    "pattern_recognition": 0.6,
+    "problem_solving_speed": 0.6,
+    "planning_depth": 1.0
+  },
+  "psychology": {
+    "aggression": 0.85,
+    "fear": 0.2,
+    "curiosity": 0.6,
+    "impulsiveness": 0.8,
+    "risk_tolerance": 0.9,
+    "patience": 0.15
+  },
+  "physics": {
+    "mass": 0.6,
+    "density": 1.1,
+    "max_speed": 90.0,
+    "acceleration": 140.0,
+    "drag_coefficient": 0.2
+  },
+  "genetics": {
+    "mutation_rate": 0.04,
+    "recombination_rate": 0.6,
+    "genome_size": 16
+  },
+  "evolution": {
+    "selection_pressure": 0.7,
+    "adaptive_radius": 0.35,
+    "speciation_threshold": 0.45,
+    "evolvability": 0.65
+  },
+  "reproduction": {
+    "fertility_baseline": 0.7,
+    "gestation_period": 120.0,
+    "offspring_count_mean": 3.0,
+    "reproductive_age_min": 300.0,
+    "reproductive_age_max": 1800.0,
+    "reproductive_cost_energy": 25.0
+  },
+  "resources": {
+    "territory_need": 50.0,
+    "carrying_capacity_self": 30.0
+  }
+}

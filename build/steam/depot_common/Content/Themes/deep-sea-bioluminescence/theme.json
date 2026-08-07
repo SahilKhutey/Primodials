@@ -1,0 +1,24 @@
+{
+    "id": "deep-sea-bioluminescence",
+    "displayName": "Deep Sea Bioluminescence",
+    "description": "Glowing creatures drifting in dark ocean depths",
+    "author": "Polygonal Primordials Team",
+    "version": "1.0.0",
+    "backgroundTopColor": [0.02, 0.03, 0.08, 1.0],
+    "backgroundBottomColor": [0.01, 0.01, 0.04, 1.0],
+    "vignetteColor": [0.0, 0.0, 0.05, 0.8],
+    "vignetteIntensity": 0.6,
+    "speciesPalette": [
+        [0.2, 0.8, 1.0, 1.0],
+        [0.4, 0.2, 1.0, 1.0],
+        [1.0, 0.3, 0.7, 1.0],
+        [0.8, 1.0, 0.4, 1.0]
+    ],
+    "accentColor": [0.3, 0.9, 1.0, 1.0],
+    "glowIntensity": 0.8,
+    "particleDensity": 0.5,
+    "motionSpeed": 0.7,
+    "populationDensity": 0.6,
+    "ambientAudio": "audio/ocean-ambient.ogg",
+    "audioVolume": 0.25
+}

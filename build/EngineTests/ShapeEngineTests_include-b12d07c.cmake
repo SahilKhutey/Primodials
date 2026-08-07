@@ -1,0 +1,5 @@
+if(EXISTS "C:/Users/ASUS/Documents/Primodilas/build/EngineTests/ShapeEngineTests_tests-b12d07c.cmake")
+  include("C:/Users/ASUS/Documents/Primodilas/build/EngineTests/ShapeEngineTests_tests-b12d07c.cmake")
+else()
+  add_test(ShapeEngineTests_NOT_BUILT-b12d07c ShapeEngineTests_NOT_BUILT-b12d07c)
+endif()

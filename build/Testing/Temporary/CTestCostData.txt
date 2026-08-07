@@ -1,0 +1,219 @@
+Array: size and capacity 20 0.00261322
+Array: element access 20 0.0028414
+Array: fill 20 0.00273001
+Array: range-for iteration 20 0.00266425
+Array: equality 20 0.00265978
+Vector: push and pop 20 0.0026288
+Vector: reserve and resize 20 0.003545
+Vector: emplace back 20 0.00274376
+Vector: swap erase (O(1), unordered) 20 0.00291819
+Vector: order-preserving erase 20 0.00265451
+Vector: growth beyond initial capacity 20 0.00367512
+Vector: copy and move semantics 20 0.0027859
+SmallVector: inline storage (no heap) 20 0.00370459
+SmallVector: heap fallback when inline full 20 0.00292147
+SmallVector: swap erase 20 0.00270848
+HashMap: insert and find 20 0.00262575
+HashMap: contains 20 0.00269695
+HashMap: update existing key 20 0.00342749
+HashMap: remove 20 0.00290433
+HashMap: operator[] 20 0.00334259
+HashMap: grow beyond initial capacity 20 0.00316553
+Bitset: set and test 20 0.00293457
+Bitset: clear bit 20 0.00273867
+Bitset: count 20 0.00294101
+Bitset: set-bit iteration 20 0.00275345
+Bitset: SetAll and All() 20 0.00282882
+Bitset: bitwise AND 20 0.00278833
+RingBuffer: push and pop 20 0.00271035
+RingBuffer: full detection 20 0.00284997
+RingBuffer: wrap around 20 0.0027619
+Pool: acquire and release 20 0.00317345
+Pool: full detection 20 0.00274356
+Pool: reuse of released slots 20 0.00307287
+Stack: push, top, pop 20 0.00293619
+Stack: LIFO order 20 0.00283126
+Queue: enqueue and dequeue 20 0.00271368
+Queue: FIFO order 20 0.00283572
+Queue: wrap around 20 0.00315089
+Dynamic Career Skill Progression and Affinity 20 0.00317886
+Memory Navigation and Fear Escape Triggers 20 0.00331892
+Cognitive System Needs and Emotion Decay 20 0.00321106
+Spatial Influence Fields Attenuation 20 0.00353292
+Sentinel Knowledge Network Broadcast 20 0.00304789
+Genetics Crossover and Mutation 20 0.00319411
+Utility AI and Decision Loop 19 0.00302428
+Lifecycle Decay, Conservation of Mass, and Birth Split 19 0.00305853
+Simulation Clock Determinism 20 0.00290325
+Polygon Geometry Calculations 20 0.00290238
+Spatial Hash Grid Indexing 20 0.00302978
+Separating Axis Theorem (SAT) Collisions 20 0.00316616
+Physics Collision Resolution & Kinetics 20 0.00335887
+ECS Entity Lifetime and Reuse 20 0.00275956
+ECS Component Storage 20 0.00314885
+ECS Query System 20 0.00274626
+ECS Command Buffer (Deferred Changes) 20 0.00276553
+Point2: construction and validity 20 0.00257043
+Point2: arithmetic type safety 20 0.00283573
+Point2: distance and midpoint 20 0.00318844
+Point2: NearEquals 20 0.00304225
+Point3: construction and validity 20 0.00289852
+Point3: arithmetic type safety 20 0.00276671
+Point3: distance and midpoint 20 0.00297603
+Point4: homogeneous operations 20 0.00262291
+PointAlgorithms: bounding box 20 0.00287672
+PointAlgorithms: Ritter sphere 20 0.00261509
+PointAlgorithms: closest pair 2D 20 0.00263257
+PointAlgorithms: circumcircle 20 0.00246694
+Geometry primitives 20 0.00260074
+Quaternion core operations 20 0.00275711
+Transform core operations 20 0.00263547
+Matrix2 structures and properties 20 0.00289447
+Vector3 basic structures and operations 20 0.00502949
+Scalar Wrapper basic traits 20 0.00325037
+Common scalar algorithms 20 0.00341106
+Vector2f operations 20 0.00260998
+Vector3 operations 20 0.00292898
+Matrix4 operations 20 0.00258998
+Arena Allocator functionality 20 0.00259542
+Pool Allocator functionality 20 0.00263423
+Platform Layer API tests 20 0.00373962
+JobSystem Execution 20 0.00283639
+Engine Bootstrap Lifecycle 20 0.00267225
+Logger Initialization and Logging File Output 20 0.00277085
+CivilizationSystem: Logistics transfer balances storage 16 0.00375105
+CivilizationSystem: Technology unlocks when science points reached 16 0.00358606
+Utility: CRC32 string hashing produces stable output 15 0.00404157
+LockstepSynchronizer: Prevents advancement if inputs are missing 15 0.00405689
+DesyncVerifier: Consistently hashes identical worlds 15 0.00405444
+Serialization System - Save/Load Maintains Determinism 10 0.00607243
+ReplaySystem - Keyframe Snapshotting 10 0.0067405
+Baseline Performance 9 0.00779829
+SteamStub Initialization 9 0.00767623
+Vulkan Renderer 9 0.0077675
+Asset Pipeline 9 0.00920038
+Lua Scripting 9 0.00891763
+Network Lockstep 9 0.00773748
+Diplomacy and Relations 9 0.0075681
+Technology Tree 9 0.00745171
+Procedural World Generation 9 0.00761262
+Replay Writer and Player 9 0.00773392
+SpeciationSystem basics 9 0.00754908
+SimulationSnapshot basics 7 0
+GenomeDecoder basics 9 0.0055716
+CombatSystem basics 9 0.00524564
+ReproductionSystem basics 9 0.00564889
+GeometryLayer ΓÇö RecomputeDerived: triangle 0 0
+GeometryLayer ΓÇö RecomputeDerived: hexagon 0 0
+Species ΓÇö default layers have sane values 0 0
+Species ΓÇö triangle has more aggression than hexagon 0 0
+Species ΓÇö hexagon has highest intelligence 0 0
+Species ΓÇö metabolism * lifespan yields total energy spend 0 0
+SpeciesIdComponent ΓÇö default is INVALID 0 0
+Genetics ΓÇö crossover child genes come from parents 0 0
+Genetics ΓÇö crossover uses both parents 0 0
+Genetics ΓÇö mutation stays in [0,1] 0 0
+Genetics ΓÇö mutation rate 0 does nothing 0 0
+Genetics ΓÇö genomic distance: identical genomes = 0 0 0
+Genetics ΓÇö genomic distance: opposite genomes = 1 0 0
+Genetics ΓÇö hash is deterministic 0 0
+Genetics ΓÇö different genomes have different hashes 0 0
+Genetics ΓÇö crossover is deterministic with same seed 0 0
+SpatialGrid ΓÇö insert and entity_count 0 0
+SpatialGrid ΓÇö query_circle returns all nearby 0 0
+SpatialGrid ΓÇö query_circle with large radius returns everything 0 0
+SpatialGrid ΓÇö remove decrements entity_count 0 0
+SpatialGrid ΓÇö update moves entity to new cell 0 0
+SpatialGrid ΓÇö wrapping grid finds entity across boundary 0 0
+SpatialGrid ΓÇö clear empties all cells 0 0
+SpatialGrid ΓÇö stats density 0 0
+WorldBounds ΓÇö wrap keeps point inside 0 0
+WorldBounds ΓÇö delta_wrapped gives shortest path 0 0
+Scheduler ΓÇö fixed delta accumulates correctly 0 0
+Scheduler ΓÇö spiral of death cap (max 8 ticks/frame) 0 0
+Scheduler ΓÇö pause halts tick execution 0 0
+Scheduler ΓÇö resume after pause continues 0 0
+Scheduler ΓÇö 2x speed doubles tick count 0 0
+Scheduler ΓÇö step_once fires exactly one tick 0 0
+Scheduler ΓÇö priority ordering: lower = first 0 0
+Scheduler ΓÇö TickContext.tick is monotone 1-indexed 0 0
+Scheduler ΓÇö RNG is deterministic for same seed 0 0
+ECS2 Stress ΓÇö 100K entities create+add+destroy 0 0
+ECS2 Stress ΓÇö archetype count stays bounded 0 0
+CommandBuffer2 ΓÇö deferred destroy 0 0
+CommandBuffer2 ΓÇö deferred add component 0 0
+CommandBuffer2 ΓÇö deferred remove component 0 0
+CommandBuffer2 ΓÇö clear discards commands 0 0
+ArchetypeId ΓÇö identical sets are equal 0 0
+ArchetypeId ΓÇö contains() works 0 0
+ArchetypeId ΓÇö with() adds component 0 0
+ArchetypeId ΓÇö without() removes component 0 0
+ArchetypeId ΓÇö contains_all() subset check 0 0
+ArchetypeStorage ΓÇö alloc and free rows 0 0
+ArchetypeStorage ΓÇö chunk capacity non-zero 0 0
+ECS2 Entity ΓÇö create returns valid handle 0 0
+ECS2 Entity ΓÇö destroy invalidates handle 0 0
+ECS2 Entity ΓÇö destroyed handle is stale 0 0
+ECS2 Entity ΓÇö add and get component 0 0
+ECS2 Entity ΓÇö remove component 0 0
+ECS2 Entity ΓÇö 1000 create/destroy cycle 0 0
+ECS2 Entity ΓÇö for_each iterates correct count 0 0
+ECS2 Entity ΓÇö for_each with EntityId 0 0
+---
+SimulationSnapshot basics
+GeometryLayer ΓÇö RecomputeDerived: triangle
+GeometryLayer ΓÇö RecomputeDerived: hexagon
+Species ΓÇö default layers have sane values
+Species ΓÇö triangle has more aggression than hexagon
+Species ΓÇö hexagon has highest intelligence
+Species ΓÇö metabolism * lifespan yields total energy spend
+SpeciesIdComponent ΓÇö default is INVALID
+Genetics ΓÇö crossover child genes come from parents
+Genetics ΓÇö crossover uses both parents
+Genetics ΓÇö mutation stays in [0,1]
+Genetics ΓÇö mutation rate 0 does nothing
+Genetics ΓÇö genomic distance: identical genomes = 0
+Genetics ΓÇö genomic distance: opposite genomes = 1
+Genetics ΓÇö hash is deterministic
+Genetics ΓÇö different genomes have different hashes
+Genetics ΓÇö crossover is deterministic with same seed
+SpatialGrid ΓÇö insert and entity_count
+SpatialGrid ΓÇö query_circle returns all nearby
+SpatialGrid ΓÇö query_circle with large radius returns everything
+SpatialGrid ΓÇö remove decrements entity_count
+SpatialGrid ΓÇö update moves entity to new cell
+SpatialGrid ΓÇö wrapping grid finds entity across boundary
+SpatialGrid ΓÇö clear empties all cells
+SpatialGrid ΓÇö stats density
+WorldBounds ΓÇö wrap keeps point inside
+WorldBounds ΓÇö delta_wrapped gives shortest path
+Scheduler ΓÇö fixed delta accumulates correctly
+Scheduler ΓÇö spiral of death cap (max 8 ticks/frame)
+Scheduler ΓÇö pause halts tick execution
+Scheduler ΓÇö resume after pause continues
+Scheduler ΓÇö 2x speed doubles tick count
+Scheduler ΓÇö step_once fires exactly one tick
+Scheduler ΓÇö priority ordering: lower = first
+Scheduler ΓÇö TickContext.tick is monotone 1-indexed
+Scheduler ΓÇö RNG is deterministic for same seed
+ECS2 Stress ΓÇö 100K entities create+add+destroy
+ECS2 Stress ΓÇö archetype count stays bounded
+CommandBuffer2 ΓÇö deferred destroy
+CommandBuffer2 ΓÇö deferred add component
+CommandBuffer2 ΓÇö deferred remove component
+CommandBuffer2 ΓÇö clear discards commands
+ArchetypeId ΓÇö identical sets are equal
+ArchetypeId ΓÇö contains() works
+ArchetypeId ΓÇö with() adds component
+ArchetypeId ΓÇö without() removes component
+ArchetypeId ΓÇö contains_all() subset check
+ArchetypeStorage ΓÇö alloc and free rows
+ArchetypeStorage ΓÇö chunk capacity non-zero
+ECS2 Entity ΓÇö create returns valid handle
+ECS2 Entity ΓÇö destroy invalidates handle
+ECS2 Entity ΓÇö destroyed handle is stale
+ECS2 Entity ΓÇö add and get component
+ECS2 Entity ΓÇö remove component
+ECS2 Entity ΓÇö 1000 create/destroy cycle
+ECS2 Entity ΓÇö for_each iterates correct count
+ECS2 Entity ΓÇö for_each with EntityId

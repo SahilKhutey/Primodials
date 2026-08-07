@@ -1,8 +1,0 @@
-﻿Filters: ~[stress]
-Randomness seeded to: 4032309151
-[2026-08-01 09:39:17] [33mWARN [0m [Achievements.cpp:99] Achievements: Definitions file not found: data/achievements.json (using built-in defaults)
-[2026-08-01 09:39:17] [32mINFO [0m [Achievements.cpp:34] Achievements: Loaded 25 achievement definitions
-[2026-08-01 09:39:17] [32mINFO [0m [Achievements.cpp:184] Achievements: Unlocked: FIRST_LAUNCH (at t=1785557357703826us)
-[2026-08-01 09:39:17] [32mINFO [0m [Achievements.cpp:184] Achievements: Unlocked: NEW_GAME (at t=1785557357703831us)
-[2026-08-01 09:39:17] [32mINFO [0m [Achievements.cpp:184] Achievements: Unlocked: POPULATION_100 (at t=1785557357703836us)
-[2026-08-01 09:39:17] [32mINFO [0m [Achievements.cpp:363] Achievements: load_state: restored 25 progress records
