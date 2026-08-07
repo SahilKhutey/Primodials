@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "Input/InputSystem.hpp"
+
 namespace ShapeEngine::UI {
 
     static void GetWindowDims(SDL_Window* window, int& w, int& h) {
@@ -166,59 +168,50 @@ namespace ShapeEngine::UI {
         m_lastClickedAction = MenuAction::None;
         
         if (!m_visible) return action;
-        
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && 
-                event.button.button == SDL_BUTTON_LEFT) {
-                int mouseX = (int)event.button.x;
-                int mouseY = (int)event.button.y;
-                
-                for (size_t i = 0; i < m_config.buttonActions.size(); ++i) {
-                    if (pointInButton((int)i, mouseX, mouseY)) {
-                        action = m_config.buttonActions[i];
-                        if (m_actionCb) m_actionCb(action);
-                        break;
-                    }
-                }
-            }
-            else if (event.type == SDL_EVENT_KEY_DOWN) {
-                if (event.key.key == SDLK_UP) {
-                    int currentIdx = -1;
-                    for (size_t i = 0; i < m_config.buttonActions.size(); ++i) {
-                        if (m_config.buttonActions[i] == m_hoveredAction) {
-                            currentIdx = (int)i;
-                            break;
-                        }
-                    }
-                    if (currentIdx > 0) m_hoveredAction = m_config.buttonActions[currentIdx - 1];
-                    else m_hoveredAction = m_config.buttonActions.back();
-                }
-                else if (event.key.key == SDLK_DOWN) {
-                    int currentIdx = -1;
-                    for (size_t i = 0; i < m_config.buttonActions.size(); ++i) {
-                        if (m_config.buttonActions[i] == m_hoveredAction) {
-                            currentIdx = (int)i;
-                            break;
-                        }
-                    }
-                    if (currentIdx >= 0 && currentIdx < (int)m_config.buttonActions.size() - 1) {
-                        m_hoveredAction = m_config.buttonActions[currentIdx + 1];
-                    } else {
-                        m_hoveredAction = m_config.buttonActions[0];
-                    }
-                }
-                else if (event.key.key == SDLK_RETURN || event.key.key == SDLK_SPACE) {
-                    if (m_hoveredAction != MenuAction::None) {
-                        action = m_hoveredAction;
-                        if (m_actionCb) m_actionCb(action);
-                    }
-                }
-                else if (event.key.key == SDLK_ESCAPE) {
-                    action = MenuAction::Quit;
+
+        float mouseX = 0.0f, mouseY = 0.0f;
+        SDL_GetMouseState(&mouseX, &mouseY);
+
+        auto& input = Shape::InputSystem::Get();
+
+        if (input.IsMouseButtonPressed(Shape::MouseButton::Left)) {
+            for (size_t i = 0; i < m_config.buttonActions.size(); ++i) {
+                if (pointInButton((int)i, (int)mouseX, (int)mouseY)) {
+                    action = m_config.buttonActions[i];
                     if (m_actionCb) m_actionCb(action);
+                    break;
                 }
             }
+        }
+
+        if (input.IsKeyPressed(Shape::KeyCode::Up)) {
+            int currentIdx = -1;
+            for (size_t i = 0; i < m_config.buttonActions.size(); ++i) {
+                if (m_config.buttonActions[i] == m_hoveredAction) {
+                    currentIdx = (int)i;
+                    break;
+                }
+            }
+            if (currentIdx > 0) m_hoveredAction = m_config.buttonActions[currentIdx - 1];
+            else m_hoveredAction = m_config.buttonActions.back();
+        }
+        else if (input.IsKeyPressed(Shape::KeyCode::Down)) {
+            int currentIdx = -1;
+            for (size_t i = 0; i < m_config.buttonActions.size(); ++i) {
+                if (m_config.buttonActions[i] == m_hoveredAction) {
+                    currentIdx = (int)i;
+                    break;
+                }
+            }
+            if (currentIdx >= 0 && currentIdx < (int)m_config.buttonActions.size() - 1) {
+                m_hoveredAction = m_config.buttonActions[currentIdx + 1];
+            } else {
+                m_hoveredAction = m_config.buttonActions[0];
+            }
+        }
+        else if (input.IsKeyPressed(Shape::KeyCode::Escape)) {
+            action = MenuAction::Quit;
+            if (m_actionCb) m_actionCb(action);
         }
         
         return action;

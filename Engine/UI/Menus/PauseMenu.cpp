@@ -2,6 +2,8 @@
 #include "PauseMenu.h"
 #include "Core/Logger.hpp"
 
+#include "Input/InputSystem.hpp"
+
 namespace ShapeEngine::UI {
 
     static void GetWindowDims(SDL_Window* window, int& w, int& h) {
@@ -76,33 +78,25 @@ namespace ShapeEngine::UI {
         m_selectedAction = PauseAction::None;
         
         if (!m_visible) return result;
-        
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN && 
-                event.button.button == SDL_BUTTON_LEFT) {
-                int mouseX = (int)event.button.x;
-                int mouseY = (int)event.button.y;
-                
-                int winW = 1280, winH = 720;
-                GetWindowDims(m_window, winW, winH);
 
-                for (int i = 0; i < 6; ++i) {
-                    int buttonW = 300, buttonH = 50;
-                    int x = (winW - buttonW) / 2;
-                    int y = 280 + i * (buttonH + 10);
-                    
-                    if (mouseX >= x && mouseX <= x + buttonW &&
-                        mouseY >= y && mouseY <= y + buttonH) {
-                        result = m_buttonActions[i];
-                        break;
-                    }
-                }
-            }
-            else if (event.type == SDL_EVENT_KEY_DOWN) {
-                if (event.key.key == SDLK_ESCAPE) {
-                    hide();
-                    result = PauseAction::Resume;
+        float mouseX = 0.0f, mouseY = 0.0f;
+        SDL_GetMouseState(&mouseX, &mouseY);
+
+        auto& input = Shape::InputSystem::Get();
+
+        if (input.IsMouseButtonPressed(Shape::MouseButton::Left)) {
+            int winW = 1280, winH = 720;
+            GetWindowDims(m_window, winW, winH);
+
+            for (int i = 0; i < 6; ++i) {
+                int buttonW = 300, buttonH = 50;
+                int x = (winW - buttonW) / 2;
+                int y = 280 + i * (buttonH + 10);
+                
+                if (mouseX >= x && mouseX <= x + buttonW &&
+                    mouseY >= y && mouseY <= y + buttonH) {
+                    result = m_buttonActions[i];
+                    break;
                 }
             }
         }

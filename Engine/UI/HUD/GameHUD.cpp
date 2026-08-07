@@ -1,6 +1,7 @@
 // Engine/UI/HUD/GameHUD.cpp
 #include "GameHUD.h"
 #include "Core/Logger.hpp"
+#include "Input/InputSystem.hpp"
 #include <cstdio>
 #include <algorithm>
 
@@ -130,44 +131,37 @@ namespace ShapeEngine::UI {
     GameHUD::HUDAction GameHUD::handleInput() {
         if (!m_visible) return HUDAction::None;
         
-        SDL_Event event;
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_KEY_DOWN) {
-                switch (event.key.key) {
-                    case SDLK_SPACE: return HUDAction::PauseToggle;
-                    case SDLK_LEFTBRACKET: return HUDAction::SpeedDown;
-                    case SDLK_RIGHTBRACKET: return HUDAction::SpeedUp;
-                    case SDLK_TAB: return HUDAction::OpenInspector;
-                    case SDLK_F1: 
-                        m_showStats = !m_showStats;
-                        return HUDAction::ShowStats;
-                }
-            }
-            else if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-                int winW = 1280, winH = 720;
-                GetWindowDims(m_window, winW, winH);
+        auto& input = Shape::InputSystem::Get();
 
-                int mouseX = (int)event.button.x;
-                int mouseY = (int)event.button.y;
+        if (input.IsKeyPressed(Shape::KeyCode::Space)) return HUDAction::PauseToggle;
+        if (input.IsKeyPressed(Shape::KeyCode::Tab)) return HUDAction::OpenInspector;
+        if (input.IsKeyPressed(Shape::KeyCode::R)) {
+            m_showStats = !m_showStats;
+            return HUDAction::ShowStats;
+        }
+
+        if (input.IsMouseButtonPressed(Shape::MouseButton::Left)) {
+            int winW = 1280, winH = 720;
+            GetWindowDims(m_window, winW, winH);
+
+            float mouseX = 0.0f, mouseY = 0.0f;
+            SDL_GetMouseState(&mouseX, &mouseY);
+
+            if (mouseY < 40) {
+                float baseX = (float)(winW - 400);
                 
-                if (mouseY < 40) {
-                    float baseX = (float)(winW - 400);
-                    
-                    if (mouseX >= baseX + 180 && mouseX <= baseX + 240) {
-                        return HUDAction::PauseToggle;
-                    }
-                    if (mouseX >= baseX + 110 && mouseX <= baseX + 134) {
-                        return HUDAction::SpeedDown;
-                    }
-                    if (mouseX >= baseX + 140 && mouseX <= baseX + 164) {
-                        return HUDAction::SpeedUp;
-                    }
-                    if (mouseX >= baseX + 250 && mouseX <= baseX + 330) {
-                        return HUDAction::None;
-                    }
+                if (mouseX >= baseX + 180 && mouseX <= baseX + 240) {
+                    return HUDAction::PauseToggle;
+                }
+                if (mouseX >= baseX + 110 && mouseX <= baseX + 134) {
+                    return HUDAction::SpeedDown;
+                }
+                if (mouseX >= baseX + 140 && mouseX <= baseX + 164) {
+                    return HUDAction::SpeedUp;
                 }
             }
         }
+
         return HUDAction::None;
     }
 
