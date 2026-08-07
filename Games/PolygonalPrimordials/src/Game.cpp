@@ -113,18 +113,72 @@ static void seed_creatures(ECS2::World2& world,
 }
 
 static void tick_ai(ECS2::World2& world, float dt, const WorldBounds& bounds) {
+    usize alive_count = 0;
     world.for_each<Position, Velocity, Rotation, CreatureState, AIState, DerivedAttributes>(
         [&](Position& pos, Velocity& vel, Rotation& rot,
             CreatureState& state, AIState& ai, DerivedAttributes& da) {
             if (!state.is_alive) return;
+            alive_count++;
 
-            const float target_angle = ai.wander_angle;
+            state.age_ticks++;
+            state.energy -= da.metabolism * dt * 2.0f;
+            if (state.energy <= 0.0f) {
+                state.energy = 0.0f;
+                state.is_alive = false;
+                return;
+            }
+
+            Math::Vector2f target_dir = {std::cos(rot.radians), std::sin(rot.radians)};
+            if (state.energy < 80.0f) {
+                float nearest_dist_sq = 150.0f * 150.0f;
+                Math::Vector2f food_pos = {0.0f, 0.0f};
+                bool found_food = false;
+
+                world.for_each<Position, FoodDeposit>(
+                    [&](Position& fpos, FoodDeposit& food) {
+                        if (food.depleted || food.energy <= 0.0f) return;
+                        float dx = fpos.value.x - pos.value.x;
+                        float dy = fpos.value.y - pos.value.y;
+                        float d2 = dx * dx + dy * dy;
+                        if (d2 < nearest_dist_sq) {
+                            nearest_dist_sq = d2;
+                            food_pos = fpos.value;
+                            found_food = true;
+                        }
+                    });
+
+                if (found_food) {
+                    float dx = food_pos.x - pos.value.x;
+                    float dy = food_pos.y - pos.value.y;
+                    float dist = std::sqrt(nearest_dist_sq);
+                    if (dist > 0.001f) {
+                        target_dir = {dx / dist, dy / dist};
+                        ai.wander_angle = std::atan2(dy, dx);
+                    }
+
+                    if (dist < 15.0f) {
+                        world.for_each<Position, FoodDeposit>(
+                            [&](Position& fpos, FoodDeposit& food) {
+                                if (food.depleted || food.energy <= 0.0f) return;
+                                if (std::abs(fpos.value.x - food_pos.x) < 0.1f &&
+                                    std::abs(fpos.value.y - food_pos.y) < 0.1f) {
+                                    float gain = std::min(food.energy, 25.0f);
+                                    food.energy -= gain;
+                                    state.energy = std::min(100.0f, state.energy + gain);
+                                    if (food.energy <= 0.0f) food.depleted = true;
+                                }
+                            });
+                    }
+                }
+            }
+
+            float target_angle = std::atan2(target_dir.y, target_dir.x);
             float diff = target_angle - rot.radians;
             while (diff >  3.14159f) diff -= 6.28318f;
             while (diff < -3.14159f) diff += 6.28318f;
-            rot.radians += Math::Clamp(diff, -2.0f * dt, 2.0f * dt);
+            rot.radians += Math::Clamp(diff, -4.0f * dt, 4.0f * dt);
 
-            float base_speed = da.max_speed * (0.5f + state.energy / (da.max_energy * 2.0f));
+            float base_speed = da.max_speed * (0.4f + state.energy / (da.max_energy * 2.0f));
             vel.value = {std::cos(rot.radians) * base_speed,
                          std::sin(rot.radians) * base_speed};
 
@@ -132,17 +186,36 @@ static void tick_ai(ECS2::World2& world, float dt, const WorldBounds& bounds) {
             pos.value.y += vel.value.y * dt;
             bounds.wrap(pos.value);
 
-            state.age_ticks++;
-            state.energy -= da.metabolism * dt * 60.0f;
-            if (state.energy < 0.0f) { state.energy = 0.0f; state.is_alive = false; }
-
             ai.decision_timer -= dt;
             if (ai.decision_timer <= 0.0f) {
                 const float hash = static_cast<float>((state.age_ticks * 6364136223846793005ULL + 1442695040888963407ULL) & 0xFFFF) / 65536.0f;
                 ai.wander_angle = hash * 6.28318530f;
-                ai.decision_timer = 0.5f + hash * 1.5f;
+                ai.decision_timer = 1.0f + hash * 2.0f;
             }
         });
+
+    usize food_count = 0;
+    world.for_each<FoodDeposit>([&](FoodDeposit& food) {
+        if (!food.depleted && food.energy > 0.0f) food_count++;
+    });
+
+    if (food_count < 300) {
+        Shape::Simulation::DeterministicRng rng(static_cast<u64>(alive_count + 12345));
+        for (usize i = food_count; i < 300; ++i) {
+            float x = bounds.min.x + rng.NextF32() * bounds.width();
+            float y = bounds.min.y + rng.NextF32() * bounds.height();
+            ECS2::EntityId food = world.create();
+            world.add<Position>(food, {{x, y}});
+            world.add<FoodDeposit>(food, {50.0f, 50.0f, 0.2f, false});
+            world.add<FoodTag>(food);
+            world.add<SpatialTag>(food);
+        }
+    }
+
+    if (alive_count < 200) {
+        Shape::Simulation::DeterministicRng rng(static_cast<u64>(alive_count + 54321));
+        seed_creatures(world, rng, bounds, static_cast<u32>(300 - alive_count));
+    }
 }
 
 using namespace PolygonalPrimordials;
