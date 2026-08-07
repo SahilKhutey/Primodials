@@ -130,3 +130,4 @@ add_subdirectory(Compute)
 add_subdirectory(AssetPipeline)
 add_subdirectory(Optimization)
 
+shape_apply_hardening(ShapeEngine)

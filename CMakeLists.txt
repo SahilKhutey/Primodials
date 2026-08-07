@@ -32,12 +32,14 @@ option(SHAPE_ENABLE_UBSAN       "Enable UBSanitizer (Debug only)"       OFF)
 option(SHAPE_ENABLE_TSAN        "Enable ThreadSanitizer (Debug only)"   OFF)
 option(SHAPE_ENABLE_ASSERTS     "Enable runtime asserts"                ON)
 option(SHAPE_ENABLE_LOGGING     "Enable logging system"                 ON)
+option(SHAPE_ENABLE_HARDENING   "Enable compiler & linker security hardening" ON)
 
 # ─── cmake/ helpers ───────────────────────────────────────────────────────────
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ShapeConfig)
 include(CompilerWarnings)
 include(Sanitizers)
+include(SecurityHardening)
 
 # ─── Third-party dependencies ─────────────────────────────────────────────────
 include(FetchContent)

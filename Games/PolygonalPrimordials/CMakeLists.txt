@@ -18,3 +18,5 @@ if(NOT MSVC)
 else()
     target_compile_options(PolygonalPrimordials PRIVATE /W3 /EHsc)
 endif()
+
+shape_apply_hardening(PolygonalPrimordials)
