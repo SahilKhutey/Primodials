@@ -44,18 +44,31 @@ static void draw_polygon(Shape::IRenderer& ren, float sx, float sy,
         const float a = rotation_rad + TWO_PI * static_cast<float>(i) / sides;
         vertices[i] = {sx + radius * std::cos(a), sy + radius * std::sin(a)};
     }
-    for (int i = 0; i < sides; ++i) {
-        ren.DrawLine(vertices[i], vertices[(i + 1) % sides], color, 1.5f);
-    }
-    if (radius > 4.0f) {
+
+    // 1. Solid filled body with species color
+    ren.DrawPolygon(vertices.data(), sides, color * 0.75f, true);
+
+    // 2. Crisp outer neon border
+    ren.DrawPolygon(vertices.data(), sides, color, false);
+
+    // 3. Inner accent border
+    if (radius > 8.0f) {
+        std::vector<Shape::Math::Vector2f> inner(sides);
         for (int i = 0; i < sides; ++i) {
             const float a = rotation_rad + TWO_PI * static_cast<float>(i) / sides;
-            vertices[i] = {sx + (radius - 2.0f) * std::cos(a), sy + (radius - 2.0f) * std::sin(a)};
+            inner[i] = {sx + (radius * 0.65f) * std::cos(a), sy + (radius * 0.65f) * std::sin(a)};
         }
-        for (int i = 0; i < sides; ++i) {
-            ren.DrawLine(vertices[i], vertices[(i + 1) % sides], color * 0.8f, 1.0f);
-        }
+        ren.DrawPolygon(inner.data(), sides, color * 1.25f, false);
     }
+
+    // 4. Glowing nucleus / core
+    ren.DrawCircle({sx, sy}, std::max(2.5f, radius * 0.25f), {1.0f, 1.0f, 1.0f}, true);
+
+    // 5. Directional sensory eye / pointer
+    float eye_dist = radius * 0.7f;
+    float eye_x = sx + eye_dist * std::cos(rotation_rad);
+    float eye_y = sy + eye_dist * std::sin(rotation_rad);
+    ren.DrawCircle({eye_x, eye_y}, std::max(2.0f, radius * 0.18f), {1.0f, 1.0f, 1.0f}, true);
 }
 
 static void seed_creatures(ECS2::World2& world,
@@ -544,26 +557,55 @@ void Game::render() {
         const float SW = static_cast<float>(m_window.GetWidth());
         const float SH = static_cast<float>(m_window.GetHeight());
 
+        // 1. Draw World Arena Bounds & Grid Lines
+        const float b_left   = m_camera.screen_x(-600.0f, SW);
+        const float b_top    = m_camera.screen_y(-400.0f, SH);
+        const float b_right  = m_camera.screen_x( 600.0f, SW);
+        const float b_bottom = m_camera.screen_y( 400.0f, SH);
+
+        // Subtle background arena grid
+        const float step_w = 100.0f * m_camera.zoom;
+        for (float gx = b_left; gx <= b_right; gx += step_w) {
+            m_renderer->DrawLine({gx, b_top}, {gx, b_bottom}, {0.08f, 0.12f, 0.22f}, 1.0f);
+        }
+        for (float gy = b_top; gy <= b_bottom; gy += step_w) {
+            m_renderer->DrawLine({b_left, gy}, {b_right, gy}, {0.08f, 0.12f, 0.22f}, 1.0f);
+        }
+
+        // Glowing arena outer boundary
+        m_renderer->DrawLine({b_left, b_top}, {b_right, b_top}, {0.2f, 0.6f, 1.0f}, 2.0f);
+        m_renderer->DrawLine({b_right, b_top}, {b_right, b_bottom}, {0.2f, 0.6f, 1.0f}, 2.0f);
+        m_renderer->DrawLine({b_right, b_bottom}, {b_left, b_bottom}, {0.2f, 0.6f, 1.0f}, 2.0f);
+        m_renderer->DrawLine({b_left, b_bottom}, {b_left, b_top}, {0.2f, 0.6f, 1.0f}, 2.0f);
+
+        // 2. Draw Food Deposits with Outer Glow
         m_world.for_each<Shape::Position, Shape::FoodDeposit>(
             [&](Shape::ECS2::EntityId, Shape::Position& pos, Shape::FoodDeposit& food) {
                 if (food.depleted) return;
                 const float sx = m_camera.screen_x(pos.value.x, SW);
                 const float sy = m_camera.screen_y(pos.value.y, SH);
-                if (sx < -10 || sx > SW+10 || sy < -10 || sy > SH+10) return;
-                const float r = 3.0f * m_camera.zoom;
-                m_renderer->DrawCircle({sx, sy}, r, {0.3f, 0.8f, 0.3f}, true);
+                if (sx < -20 || sx > SW+20 || sy < -20 || sy > SH+20) return;
+                
+                const float r = std::max(4.0f, 4.5f * m_camera.zoom);
+                // Outer glow aura
+                m_renderer->DrawCircle({sx, sy}, r * 2.2f, {0.08f, 0.40f, 0.18f}, true);
+                // Solid food body
+                m_renderer->DrawCircle({sx, sy}, r, {0.25f, 0.85f, 0.35f}, true);
+                // Bright center core
+                m_renderer->DrawCircle({sx, sy}, r * 0.4f, {0.80f, 1.00f, 0.85f}, true);
             });
 
+        // 3. Draw High-Definition Primordials (Creatures)
         const int sp_sides[] = {3, 4, 5, 6};
         m_world.for_each<Shape::Position, Shape::CreatureState, Shape::Rotation, Shape::DerivedAttributes, Shape::ColorOverride>(
             [&](Shape::ECS2::EntityId, Shape::Position& pos, Shape::CreatureState& state, Shape::Rotation& rot, Shape::DerivedAttributes& da, Shape::ColorOverride& co) {
                 if (!state.is_alive) return;
                 const float sx = m_camera.screen_x(pos.value.x, SW);
                 const float sy = m_camera.screen_y(pos.value.y, SH);
-                if (sx < -30 || sx > SW+30 || sy < -30 || sy > SH+30) return;
+                if (sx < -50 || sx > SW+50 || sy < -50 || sy > SH+50) return;
 
                 const int species_idx = (state.species_id > 0 && state.species_id <= 4) ? state.species_id - 1 : 0;
-                const float screen_radius = da.size * m_camera.zoom;
+                const float screen_radius = std::max(12.0f, da.size * m_camera.zoom * 1.5f);
 
                 float final_r = da.color_r;
                 float final_g = da.color_g;
@@ -630,7 +672,7 @@ bool Game::new_game(const std::string& seed) {
 
     m_camera.x = 0.0f;
     m_camera.y = 0.0f;
-    m_camera.zoom = 0.4f;
+    m_camera.zoom = 1.25f;
 
     if (m_cfg.enable_achievements) {
         Achievements::instance().unlock("NEW_GAME");
