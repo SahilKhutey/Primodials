@@ -107,13 +107,23 @@ namespace PolygonalPrimordials {
         struct Camera {
             float x      = 0.0f;
             float y      = 0.0f;
-            float zoom   = 0.4f;
+            float zoom   = 1.0f;
 
             void pan(float dx, float dy) noexcept { x += dx / zoom; y += dy / zoom; }
-            void zoom_by(float factor)   noexcept { zoom = Shape::Math::Clamp(zoom * factor, 0.05f, 20.0f); }
+            void zoom_by(float factor)   noexcept { zoom = Shape::Math::Clamp(zoom * factor, 0.1f, 10.0f); }
 
-            float screen_x(float wx, float sw) const noexcept { return (wx - x) * zoom + sw * 0.5f; }
-            float screen_y(float wy, float sh) const noexcept { return (wy - y) * zoom + sh * 0.5f; }
+            float scale(float sw, float sh) const noexcept {
+                const float s_w = sw / 1200.0f;
+                const float s_h = sh / 800.0f;
+                return (s_w < s_h ? s_w : s_h) * zoom;
+            }
+
+            float screen_x(float wx, float sw, float sh) const noexcept {
+                return (wx - x) * scale(sw, sh) + sw * 0.5f;
+            }
+            float screen_y(float wy, float sw, float sh) const noexcept {
+                return (wy - y) * scale(sw, sh) + sh * 0.5f;
+            }
         } m_camera;
 
         std::unique_ptr<Shape::SpatialGrid> m_grid;

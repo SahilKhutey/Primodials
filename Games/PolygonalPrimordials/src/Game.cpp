@@ -558,13 +558,15 @@ void Game::render() {
         const float SH = static_cast<float>(m_window.GetHeight());
 
         // 1. Draw World Arena Bounds & Grid Lines
-        const float b_left   = m_camera.screen_x(-600.0f, SW);
-        const float b_top    = m_camera.screen_y(-400.0f, SH);
-        const float b_right  = m_camera.screen_x( 600.0f, SW);
-        const float b_bottom = m_camera.screen_y( 400.0f, SH);
+        const float b_left   = m_camera.screen_x(-600.0f, SW, SH);
+        const float b_top    = m_camera.screen_y(-400.0f, SW, SH);
+        const float b_right  = m_camera.screen_x( 600.0f, SW, SH);
+        const float b_bottom = m_camera.screen_y( 400.0f, SW, SH);
+
+        const float cam_scale = m_camera.scale(SW, SH);
 
         // Subtle background arena grid
-        const float step_w = 100.0f * m_camera.zoom;
+        const float step_w = 100.0f * cam_scale;
         for (float gx = b_left; gx <= b_right; gx += step_w) {
             m_renderer->DrawLine({gx, b_top}, {gx, b_bottom}, {0.08f, 0.12f, 0.22f}, 1.0f);
         }
@@ -582,11 +584,11 @@ void Game::render() {
         m_world.for_each<Shape::Position, Shape::FoodDeposit>(
             [&](Shape::ECS2::EntityId, Shape::Position& pos, Shape::FoodDeposit& food) {
                 if (food.depleted) return;
-                const float sx = m_camera.screen_x(pos.value.x, SW);
-                const float sy = m_camera.screen_y(pos.value.y, SH);
+                const float sx = m_camera.screen_x(pos.value.x, SW, SH);
+                const float sy = m_camera.screen_y(pos.value.y, SW, SH);
                 if (sx < -20 || sx > SW+20 || sy < -20 || sy > SH+20) return;
                 
-                const float r = std::max(4.0f, 4.5f * m_camera.zoom);
+                const float r = std::max(4.0f, 4.5f * cam_scale);
                 // Outer glow aura
                 m_renderer->DrawCircle({sx, sy}, r * 2.2f, {0.08f, 0.40f, 0.18f}, true);
                 // Solid food body
@@ -600,12 +602,12 @@ void Game::render() {
         m_world.for_each<Shape::Position, Shape::CreatureState, Shape::Rotation, Shape::DerivedAttributes, Shape::ColorOverride>(
             [&](Shape::ECS2::EntityId, Shape::Position& pos, Shape::CreatureState& state, Shape::Rotation& rot, Shape::DerivedAttributes& da, Shape::ColorOverride& co) {
                 if (!state.is_alive) return;
-                const float sx = m_camera.screen_x(pos.value.x, SW);
-                const float sy = m_camera.screen_y(pos.value.y, SH);
+                const float sx = m_camera.screen_x(pos.value.x, SW, SH);
+                const float sy = m_camera.screen_y(pos.value.y, SW, SH);
                 if (sx < -50 || sx > SW+50 || sy < -50 || sy > SH+50) return;
 
                 const int species_idx = (state.species_id > 0 && state.species_id <= 4) ? state.species_id - 1 : 0;
-                const float screen_radius = std::max(12.0f, da.size * m_camera.zoom * 1.5f);
+                const float screen_radius = std::max(12.0f, da.size * cam_scale * 1.5f);
 
                 float final_r = da.color_r;
                 float final_g = da.color_g;
