@@ -46,6 +46,15 @@ add_executable(ShapeEngineTests
     PhaseETests/test_phase9_hud.cpp
     PhaseETests/test_phase10_integration.cpp
     PhaseETests/test_phase11_accessibility.cpp
+    ../tests/final_validation/test_01_package_structure.cpp
+    ../tests/final_validation/test_02_installer_simulation.cpp
+    ../tests/final_validation/test_03_dev_setup_simulation.cpp
+    ../tests/final_validation/test_04_build_pipeline.cpp
+    ../tests/final_validation/test_05_cross_platform.cpp
+    ../tests/final_validation/test_06_user_experience.cpp
+    ../tests/final_validation/test_08_performance.cpp
+    ../tests/final_validation/test_09_security.cpp
+    ../tests/final_validation/test_10_smoke.cpp
     PhaseETests/test_replay.cpp
     PhaseETests/test_procedural.cpp
     PhaseETests/test_tech_tree.cpp
