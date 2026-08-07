@@ -14,6 +14,8 @@ add_library(ShapeEngine STATIC
     UI/Onboarding/TutorialOverlay.cpp
     UI/Performance/PerformanceOverlay.cpp
     UI/Heatmap/HeatmapToggle.cpp
+    UI/Accessibility/KeyboardNavigator.cpp
+    Localization/Localization.cpp
     GameView/GameViewWindow.cpp
     GameView/SharedStateSync.cpp
     Wallpaper/WallpaperTrayMenu.cpp

@@ -45,6 +45,7 @@ add_executable(ShapeEngineTests
     PhaseETests/test_phase8_ui.cpp
     PhaseETests/test_phase9_hud.cpp
     PhaseETests/test_phase10_integration.cpp
+    PhaseETests/test_phase11_accessibility.cpp
     PhaseETests/test_replay.cpp
     PhaseETests/test_procedural.cpp
     PhaseETests/test_tech_tree.cpp
