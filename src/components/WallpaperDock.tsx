@@ -299,10 +299,23 @@ export function WallpaperDock({
               >
                 <span
                   className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${
-                    wallpaperSettings.autoPause ? 'left-4' : 'left-0.5'
+                    wallpaperSettings.autoPause ? 'left-4.5 bg-white' : 'left-0.5 bg-neutral-400'
                   }`}
                 />
               </button>
+            </div>
+
+            {/* Active Simulation Features Summary (Read-Only) */}
+            <div className="pt-1">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500 mb-2">Active Simulation Features</div>
+              <div className="flex flex-wrap gap-1.5 text-[11px]">
+                <span className={`px-2 py-0.5 rounded-md border ${settings.biomes ? 'border-green-500/30 bg-green-500/10 text-green-300' : 'border-neutral-800 bg-neutral-900/60 text-neutral-500'}`}>Biomes</span>
+                <span className={`px-2 py-0.5 rounded-md border ${settings.knowledgeNodes ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300' : 'border-neutral-800 bg-neutral-900/60 text-neutral-500'}`}>Knowledge</span>
+                <span className={`px-2 py-0.5 rounded-md border ${settings.structureBuilding ? 'border-sky-500/30 bg-sky-500/10 text-sky-300' : 'border-neutral-800 bg-neutral-900/60 text-neutral-500'}`}>Structures</span>
+                <span className={`px-2 py-0.5 rounded-md border ${settings.diseaseEvents ? 'border-red-500/30 bg-red-500/10 text-red-300' : 'border-neutral-800 bg-neutral-900/60 text-neutral-500'}`}>Disease</span>
+                <span className={`px-2 py-0.5 rounded-md border ${settings.socialBehavior ? 'border-purple-500/30 bg-purple-500/10 text-purple-300' : 'border-neutral-800 bg-neutral-900/60 text-neutral-500'}`}>Social</span>
+                <span className={`px-2 py-0.5 rounded-md border ${settings.endlessGeneration ? 'border-amber-500/30 bg-amber-500/10 text-amber-300' : 'border-neutral-800 bg-neutral-900/60 text-neutral-500'}`}>Endless</span>
+              </div>
             </div>
 
             {/* Read-Only Active Sim Systems Summary */}

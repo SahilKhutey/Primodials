@@ -608,6 +608,11 @@ export class Simulation {
       this.recordHistory();
     }
 
+    // Entity -> Environment feedback: colony and organism activity dynamically adjusts local biome foodRate
+    if (this.tick % 30 === 0) {
+      this.updateBiomeFeedback();
+    }
+
     this.updateParticles();
   }
 
@@ -731,6 +736,28 @@ export class Simulation {
     // Resize chemical field to match new world dimensions
     if (this.chemicalField) {
       this.chemicalField.resize(this.settings.worldWidth, this.settings.worldHeight);
+    }
+  }
+
+  private updateBiomeFeedback() {
+    if (!this.settings.biomes || this.biomes.length === 0) return;
+
+    for (const b of this.biomes) {
+      let localCount = 0;
+      let photoSum = 0;
+      this.spatialGrid.getNearby(b.cx, b.cy, b.radius, this.nearbyScratch);
+      for (let i = 0; i < this.nearbyScratch.length; i++) {
+        const o = this.nearbyScratch[i];
+        if (o.alive) {
+          localCount++;
+          photoSum += o.genome.photosynthesis;
+        }
+      }
+
+      const info = BIOME_INFO[b.type];
+      const baseFoodRate = info ? info.foodRate : 1.0;
+      const targetFoodRate = Math.max(0.3, Math.min(2.5, baseFoodRate * (1 + photoSum * 0.1 - localCount * 0.02)));
+      b.foodRate += (targetFoodRate - b.foodRate) * 0.05;
     }
   }
 
