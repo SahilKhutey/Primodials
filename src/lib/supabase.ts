@@ -3,13 +3,30 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Cloud history/checkpoints are optional. If no Supabase project is
+function isValidUrl(url?: string): boolean {
+  if (!url || typeof url !== 'string' || !url.trim()) return false;
+  if (url.includes('your-project-ref') || url.includes('YOUR_SUPABASE_URL')) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function isValidKey(key?: string): boolean {
+  if (!key || typeof key !== 'string' || !key.trim()) return false;
+  if (key.includes('your-anon-key') || key.includes('YOUR_SUPABASE_ANON_KEY')) return false;
+  return key.length > 20;
+}
+
+// Cloud history/checkpoints are optional. If no valid Supabase project is
 // configured, the sim still runs fully offline — history saving/loading
 // is simply disabled instead of crashing the app on boot.
-export const supabaseEnabled = Boolean(supabaseUrl && supabaseAnonKey);
+export const supabaseEnabled = isValidUrl(supabaseUrl) && isValidKey(supabaseAnonKey);
 
 export const supabase: SupabaseClient | null = supabaseEnabled
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl!, supabaseAnonKey!)
   : null;
 
 export type SnapshotRow = {
