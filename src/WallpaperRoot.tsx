@@ -14,6 +14,7 @@ import { CinematicCamera } from '@/sim/cinematicCamera';
 import { EcosystemDiary } from '@/sim/diary';
 import { DiaryPanel } from '@/components/DiaryPanel';
 import { THEMES, getTheme, DEFAULT_THEME_ID, PACING_PRESETS, type PacingPreset } from '@/sim/themes';
+import { AmbientOrganismCard } from '@/components/AmbientOrganismCard';
 import { BookOpen, Monitor } from 'lucide-react';
 import { useWallpaperSettings } from '@/hooks/useWallpaperSettings';
 
@@ -23,6 +24,7 @@ export function WallpaperRoot() {
   const [running, setRunning] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showDiary, setShowDiary] = useState(false);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [themeId, setThemeId] = useState(DEFAULT_THEME_ID);
   const [pacing, setPacing] = useState<PacingPreset>('peaceful');
   const [settings, setSettings] = useState<SimSettings>(DEFAULT_SETTINGS);
@@ -129,8 +131,8 @@ export function WallpaperRoot() {
         running={running}
         speed={simStepsPerTick as 1 | 2 | 4 | 8}
         showSense={false}
-        selectedId={null}
-        onSelect={() => {}}
+        selectedId={selectedId}
+        onSelect={(id) => setSelectedId(id)}
         showColonies
         wallpaperMode
         cinematic={cinematicRef.current!}
@@ -183,6 +185,14 @@ export function WallpaperRoot() {
         visible={showDiary}
         onClose={() => setShowDiary(false)}
       />
+
+      {/* Ambient Organism Inspector Popover for Wallpaper Engine Mode */}
+      {selectedId !== null && (() => {
+        const org = simRef.current.organisms.find((o) => o.id === selectedId && o.alive);
+        return org ? (
+          <AmbientOrganismCard org={org} onClose={() => setSelectedId(null)} />
+        ) : null;
+      })()}
     </div>
   );
 }
