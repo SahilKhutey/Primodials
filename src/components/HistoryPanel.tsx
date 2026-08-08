@@ -25,8 +25,7 @@ export function HistoryPanel({
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    if (sim.population === 0) return;
-    if (!supabaseEnabled) { alert('Cloud saves unavailable — add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env.local file.'); return; }
+    if (!supabase || sim.population === 0) return;
     setSaving(true);
     const snapshot = {
       name: name.trim() || `Experiment @ tick ${sim.tick}`,
@@ -45,7 +44,7 @@ export function HistoryPanel({
   };
 
   const handleDelete = async (id: string) => {
-    if (!supabaseEnabled) return;
+    if (!supabase) return;
     const { error } = await supabase.from('simulation_snapshots').delete().eq('id', id);
     if (!error) onDeleted();
   };
@@ -61,7 +60,8 @@ export function HistoryPanel({
         />
         <button
           onClick={handleSave}
-          disabled={saving || sim.population === 0}
+          disabled={!supabaseEnabled || saving || sim.population === 0}
+          title={!supabaseEnabled ? 'Cloud history is not configured (no Supabase project set)' : undefined}
           className="flex items-center gap-2 rounded-lg bg-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-white disabled:opacity-50 active:scale-95"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -69,7 +69,12 @@ export function HistoryPanel({
         </button>
       </div>
 
-      {loading ? (
+      {!supabaseEnabled ? (
+        <p className="text-sm text-neutral-500 italic">
+          Cloud history is disabled — this build isn't connected to a Supabase project. The
+          simulation itself runs fully offline; only save/load of past experiments is unavailable.
+        </p>
+      ) : loading ? (
         <div className="flex items-center justify-center py-6 text-neutral-500">
           <Loader2 className="animate-spin" size={20} />
         </div>

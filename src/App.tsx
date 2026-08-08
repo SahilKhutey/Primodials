@@ -101,8 +101,8 @@ function App() {
   }, []);
 
   const loadHistory = useCallback(async () => {
+    if (!supabase) return;
     setLoadingHistory(true);
-    if (!supabaseEnabled) { setLoadingHistory(false); return; }
     const { data, error } = await supabase
       .from('simulation_snapshots')
       .select('*')
@@ -120,6 +120,7 @@ function App() {
   const registerAutoCheckpoint = (sim: Simulation) => {
     sim.onAutoCheckpoint = async (cycle: number, tick: number) => {
       if (!sim.settings.autoCheckpoint) return;
+      if (!supabase) return;
       const snapshot = {
         name: `Auto-checkpoint · Cycle ${cycle}`,
         tick,
