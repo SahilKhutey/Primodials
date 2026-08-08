@@ -4,7 +4,7 @@ import {
   Maximize, Monitor, LineChart,
 } from 'lucide-react';
 import { Simulation } from '@/sim/simulation';
-import { DEFAULT_SETTINGS, type SimSettings, type Species, type Colony, type BoundaryMode, type GodTool } from '@/sim/types';
+import { DEFAULT_SETTINGS, type SimSettings, type Species, type Colony, type BoundaryMode } from '@/sim/types';
 import { SimCanvas } from '@/components/SimCanvas';
 import { ControlBar, type SimSpeed } from '@/components/ControlBar';
 import { StatsPanel } from '@/components/StatsPanel';
@@ -14,12 +14,12 @@ import { InspectorPanel } from '@/components/InspectorPanel';
 import { EvolutionChart } from '@/components/EvolutionChart';
 import { AmbientHUD } from '@/components/AmbientHUD';
 import { WallpaperDock } from '@/components/WallpaperDock';
+import { WallpaperInfoPopover } from '@/components/WallpaperInfoPopover';
 import { CinematicCamera } from '@/sim/cinematicCamera';
-import { supabase, supabaseEnabled, type SnapshotRow } from '@/lib/supabase';
+import { supabase, type SnapshotRow } from '@/lib/supabase';
 import { THEMES, getTheme, DEFAULT_THEME_ID, PACING_PRESETS, type WallpaperTheme, type PacingPreset } from '@/sim/themes';
 import { EcosystemDiary } from '@/sim/diary';
 import { DiaryPanel } from '@/components/DiaryPanel';
-import { AmbientOrganismCard } from '@/components/AmbientOrganismCard';
 import { BookOpen } from 'lucide-react';
 
 function App() {
@@ -34,12 +34,17 @@ function App() {
   const [activeTab, setActiveTab] = useState<'species' | 'inspector' | 'evolution' | 'history' | 'settings'>('species');
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [settings, setSettings] = useState<SimSettings>(DEFAULT_SETTINGS);
-  const [wallpaperMode, setWallpaperMode] = useState(false);
+  // Set via .env.wallpaper (VITE_WALLPAPER_ONLY=true), loaded automatically when built with
+  // `npm run build:wallpaper` (vite --mode wallpaper). Produces a build that boots straight
+  // into Wallpaper Mode with no path back to the dense Simulation View — the correct shape
+  // for a Wallpaper Engine Workshop item, which should never expose the full editor UI.
+  const WALLPAPER_ONLY = import.meta.env.VITE_WALLPAPER_ONLY === 'true';
+
+  const [wallpaperMode, setWallpaperMode] = useState(WALLPAPER_ONLY);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [themeId, setThemeId] = useState(DEFAULT_THEME_ID);
   const [pacing, setPacing] = useState<PacingPreset>('peaceful');
   const [showDiary, setShowDiary] = useState(false);
-  const [godTool, setGodTool] = useState<GodTool>('select');
   const theme = getTheme(themeId);
   const cinematicRef = useRef<CinematicCamera | null>(null);
   const diaryRef = useRef<EcosystemDiary | null>(null);
@@ -179,7 +184,6 @@ function App() {
           settings: sim.settings,
         },
       };
-      if (!supabaseEnabled) return;
       await supabase.from('simulation_snapshots').insert(snapshot);
       loadHistory();
     };
@@ -236,8 +240,6 @@ function App() {
       symbiosisPartner: o.symbiosisPartner ?? null,
       socialRank: (o.socialRank as 'alpha' | 'beta' | 'omega' | 'solitary') ?? 'solitary',
       clusterId: o.clusterId ?? null,
-      hibernating: o.hibernating ?? false,
-      sonarPulse: o.sonarPulse ?? 0,
     }));
     sim.species = snap.species.map((s: Species & { generations: number; avgIntelligence: number; rank: number; totalKills: number; structuresBuilt: number; civilizationLevel: number; knowledgeDiscovered: number; evolutionLeaps: number }) => ({
       ...s,
@@ -311,13 +313,14 @@ function App() {
           speed={speed}
           showSense={showSense}
           selectedId={selectedId}
-          onSelect={(id) => { setSelectedId(id); if (id !== null) setActiveTab('inspector'); }}
+          onSelect={setSelectedId}
           showColonies={showColonies}
           wallpaperMode
           cinematic={cinematicRef.current!}
           theme={theme}
         />
         <AmbientHUD sim={sim} visible />
+        <WallpaperInfoPopover sim={sim} selectedId={selectedId} onClose={() => setSelectedId(null)} />
         <WallpaperDock
           sim={sim}
           running={running}
@@ -347,14 +350,17 @@ function App() {
           )}
         </button>
 
-        {/* Exit wallpaper mode button — top right, subtle */}
-        <button
-          onClick={() => setWallpaperMode(false)}
-          className="fixed right-6 top-6 z-30 flex items-center gap-2 rounded-xl bg-neutral-950/60 px-3 py-2 text-xs font-semibold text-neutral-400 ring-1 ring-white/10 backdrop-blur-md transition hover:bg-neutral-900/80 hover:text-neutral-200"
-        >
-          <Monitor size={15} />
-          Exit Wallpaper
-        </button>
+        {/* Exit wallpaper mode button — top right, subtle. Hidden entirely in
+            wallpaper-only builds: there's no Simulation View to exit into. */}
+        {!WALLPAPER_ONLY && (
+          <button
+            onClick={() => setWallpaperMode(false)}
+            className="fixed right-6 top-6 z-30 flex items-center gap-2 rounded-xl bg-neutral-950/60 px-3 py-2 text-xs font-semibold text-neutral-400 ring-1 ring-white/10 backdrop-blur-md transition hover:bg-neutral-900/80 hover:text-neutral-200"
+          >
+            <Monitor size={15} />
+            Exit Wallpaper
+          </button>
+        )}
 
         {/* Diary panel modal */}
         <DiaryPanel
@@ -362,14 +368,6 @@ function App() {
           visible={showDiary}
           onClose={() => setShowDiary(false)}
         />
-
-        {/* Ambient Organism Inspector Popover for Wallpaper Mode */}
-        {selectedId !== null && (() => {
-          const org = sim.organisms.find((o) => o.id === selectedId && o.alive);
-          return org ? (
-            <AmbientOrganismCard org={org} onClose={() => setSelectedId(null)} />
-          ) : null;
-        })()}
       </div>
     );
   }
@@ -433,10 +431,8 @@ function App() {
               onToggleColonies={() => setShowColonies((s) => !s)}
               settings={settings}
               onToggleSetting={handleToggleSetting}
-              activeGodTool={godTool}
-              onSelectGodTool={setGodTool}
             />
-            <div className="relative min-h-[680px] h-[680px] w-full overflow-hidden rounded-2xl bg-neutral-950 ring-1 ring-neutral-800/80 shadow-2xl shadow-black/80">
+            <div className="relative aspect-[3/2] w-full overflow-hidden rounded-2xl bg-neutral-900 ring-1 ring-neutral-800/60">
               <SimCanvas
                 sim={sim}
                 running={running}
@@ -445,7 +441,6 @@ function App() {
                 selectedId={selectedId}
                 onSelect={(id) => { setSelectedId(id); if (id !== null) setActiveTab('inspector'); }}
                 showColonies={showColonies}
-                godTool={godTool}
               />
             </div>
             <StatsPanel sim={sim} />
@@ -544,12 +539,6 @@ function SettingsPanel({
         <ToggleRow label="Biomes" checked={settings.biomes} onChange={(v) => update('biomes', v)} />
         <ToggleRow label="Knowledge nodes" checked={settings.knowledgeNodes} onChange={(v) => update('knowledgeNodes', v)} />
         <ToggleRow label="Advanced blueprints" checked={settings.blueprints} onChange={(v) => update('blueprints', v)} />
-        <ToggleRow label="Microbial behavior" checked={settings.microbialBehavior} onChange={(v) => update('microbialBehavior', v)} />
-        <ToggleRow label="Disease & immunity" checked={settings.diseaseEvents} onChange={(v) => update('diseaseEvents', v)} />
-        <ToggleRow label="Advanced biology" checked={settings.advancedBiology} onChange={(v) => update('advancedBiology', v)} />
-        <ToggleRow label="Social hierarchy" checked={settings.socialBehavior} onChange={(v) => update('socialBehavior', v)} />
-        <ToggleRow label="Neutral genetic drift" checked={settings.neutralDrift} onChange={(v) => update('neutralDrift', v)} />
-        <ToggleRow label="Endless generation cycles" checked={settings.endlessGeneration} onChange={(v) => update('endlessGeneration', v)} />
         <div className="pt-1">
           <label className="text-xs font-semibold uppercase tracking-wider text-neutral-400">World Boundary</label>
           <div className="mt-2 flex gap-1 rounded-lg bg-neutral-800/60 p-1">
