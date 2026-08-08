@@ -1560,7 +1560,10 @@ export class Simulation {
   private moveOrganism(org: Organism, biome: Biome | undefined, speedMod = 1, blendSpeed = 1) {
     const speed = org.genome.speed * blendSpeed * speedMod;
 
-    if (org.genome.diet >= 0.5 || org.genome.aggression > 0.6) {
+    const brainAggressionMod = org.lastOutputs ? org.lastOutputs[3] * 0.4 : 0;
+    const effectiveAggression = Math.max(0, Math.min(1, org.genome.aggression + brainAggressionMod));
+
+    if (org.genome.diet >= 0.5 || effectiveAggression > 0.6) {
       for (const s of this.structures) {
         if (s.type !== 'wall') continue;
         const dx = s.x - org.x;
@@ -1978,7 +1981,9 @@ export class Simulation {
     const visited = new Set<number>();
     for (const org of this.organisms) {
       if (!org.alive || visited.has(org.id)) continue;
-      const colonyTendency = (org.genome.socialGene + org.genome.intelligence * 0.3) * org.genome.cooperation;
+      const brainCoopMod = org.lastOutputs ? org.lastOutputs[4] * 0.4 : 0;
+      const effectiveCooperation = Math.max(0, Math.min(1, org.genome.cooperation + brainCoopMod));
+      const colonyTendency = (org.genome.socialGene + org.genome.intelligence * 0.3) * effectiveCooperation;
       if (colonyTendency < 0.3) { visited.add(org.id); continue; }
 
       const group: Organism[] = [org];
