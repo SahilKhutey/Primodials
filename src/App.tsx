@@ -53,17 +53,32 @@ function App() {
     cinematicRef.current = new CinematicCamera(simRef.current);
   }
 
-  // Apply pacing to simulation settings ONLY when theme or pacing explicitly changes
-  useEffect(() => {
-    const pacingCfg = PACING_PRESETS[pacing];
+  // Apply a theme+pacing combination's derived settings to the simulation.
+  // IMPORTANT: this is only ever called from explicit user actions (picking a
+  // theme or a pacing preset in the Wallpaper dock) — never as a passive side
+  // effect of switching into Wallpaper Mode. Simply entering Wallpaper Mode
+  // must not silently discard settings the user tuned in Simulation View.
+  const applyThemeAndPacing = (nextThemeId: string, nextPacing: PacingPreset) => {
+    const nextTheme = getTheme(nextThemeId);
+    const pacingCfg = PACING_PRESETS[nextPacing];
     const sim = simRef.current;
     sim.settings = {
       ...sim.settings,
-      maxPopulation: Math.round(theme.maxPopulation * pacingCfg.maxPopulationMod),
-      foodGrowthRate: Math.round(theme.foodRate * pacingCfg.foodRateMod),
+      maxPopulation: Math.round(nextTheme.maxPopulation * pacingCfg.maxPopulationMod),
+      foodGrowthRate: Math.round(nextTheme.foodRate * pacingCfg.foodRateMod),
       mutationRate: 0.15 * pacingCfg.mutationMod,
     };
-  }, [themeId, pacing]);
+  };
+
+  const handleThemeChange = (nextThemeId: string) => {
+    setThemeId(nextThemeId);
+    applyThemeAndPacing(nextThemeId, pacing);
+  };
+
+  const handlePacingChange = (nextPacing: PacingPreset) => {
+    setPacing(nextPacing);
+    applyThemeAndPacing(themeId, nextPacing);
+  };
 
   // Re-render UI panels ~4x/sec to reflect sim state
   useEffect(() => {
@@ -314,9 +329,9 @@ function App() {
           onToggleFullscreen={toggleFullscreen}
           isFullscreen={isFullscreen}
           themeId={themeId}
-          onThemeChange={setThemeId}
+          onThemeChange={handleThemeChange}
           pacing={pacing}
-          onPacingChange={setPacing}
+          onPacingChange={handlePacingChange}
         />
         {/* Diary button — top left, below HUD */}
         <button
