@@ -1,0 +1,16 @@
+{
+  "title": "Polygonal Primordials",
+  "description": "Living digital ecosystem wallpaper. Watch polygonal organisms eat, mutate, form colonies, and evolve in real time.",
+  "type": "web",
+  "file": "index.html",
+  "preview": "preview.png",
+  "general": {
+    "properties": {
+      "schemecolor": {
+        "text": "Scheme Color",
+        "type": "color",
+        "value": "0.04 0.09 0.16"
+      }
+    }
+  }
+}

@@ -10,13 +10,13 @@ type Props = {
 // Minimal ambient HUD for wallpaper mode — shows just the essential
 // stats in a subtle, elegant overlay that fades when not interacted with.
 export function AmbientHUD({ sim, visible }: Props) {
-  const [opacity, setOpacity] = useState(0.7);
+  const [opacity, setOpacity] = useState(0.85);
   const lastInteraction = useRef(Date.now());
 
   useEffect(() => {
     const onMove = () => {
       lastInteraction.current = Date.now();
-      setOpacity(1);
+      setOpacity(0.95);
     };
     window.addEventListener('mousemove', onMove);
     return () => window.removeEventListener('mousemove', onMove);
@@ -24,10 +24,10 @@ export function AmbientHUD({ sim, visible }: Props) {
 
   useEffect(() => {
     const id = setInterval(() => {
-      if (Date.now() - lastInteraction.current > 3000) {
-        setOpacity(0.25);
+      if (Date.now() - lastInteraction.current > 4000) {
+        setOpacity(0.2);
       } else {
-        setOpacity(1);
+        setOpacity(0.95);
       }
     }, 500);
     return () => clearInterval(id);
@@ -40,20 +40,20 @@ export function AmbientHUD({ sim, visible }: Props) {
 
   return (
     <div
-      className="pointer-events-none fixed left-6 top-6 z-30 flex flex-col gap-2 transition-opacity duration-1000"
+      className="pointer-events-none fixed left-6 top-6 z-30 flex flex-col gap-2.5 transition-opacity duration-1000"
       style={{ opacity }}
     >
       {/* Title */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         <div className="relative">
-          <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-cyan-500/20 to-emerald-500/10 blur-sm" />
-          <div className="relative rounded-lg bg-neutral-900/60 p-1.5 ring-1 ring-white/10 backdrop-blur-md">
-            <Dna className="text-cyan-300" size={18} />
+          <div className="absolute -inset-1 rounded-xl bg-gradient-to-br from-cyan-500/30 to-violet-500/20 blur-sm" />
+          <div className="relative rounded-xl bg-neutral-950/80 p-2 ring-1 ring-white/15 backdrop-blur-md shadow-lg shadow-black/50">
+            <Dna className="text-cyan-300 animate-pulse" size={20} />
           </div>
         </div>
         <div>
-          <div className="text-sm font-bold tracking-tight text-neutral-100">Primordials</div>
-          <div className="text-[10px] text-neutral-500">Living wallpaper engine</div>
+          <div className="text-sm font-bold tracking-tight text-neutral-100 drop-shadow-md">Polygonal Primordials</div>
+          <div className="text-[10px] font-medium tracking-wide text-neutral-400">Ecosystem Wallpaper</div>
         </div>
       </div>
 
@@ -67,15 +67,15 @@ export function AmbientHUD({ sim, visible }: Props) {
       </div>
 
       {/* Evolution progress bar */}
-      <div className="w-48">
-        <div className="mb-0.5 flex justify-between text-[9px] font-medium uppercase tracking-wider text-neutral-500">
-          <span>Evolution</span>
-          <span>{Math.round(tier * 100)}%</span>
+      <div className="w-52 glass-pill p-2 rounded-xl">
+        <div className="mb-1 flex justify-between text-[9px] font-semibold uppercase tracking-wider text-neutral-400">
+          <span>Neural Evolution</span>
+          <span className="text-cyan-300 font-mono">{Math.round(tier * 100)}%</span>
         </div>
-        <div className="h-1 overflow-hidden rounded-full bg-neutral-800/60">
+        <div className="h-1.5 overflow-hidden rounded-full bg-neutral-900/80 ring-1 ring-white/5">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-500 via-cyan-500 to-violet-500 transition-all duration-1000"
-            style={{ width: `${tier * 100}%` }}
+            className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-violet-500 transition-all duration-1000 shadow-sm shadow-cyan-500/50"
+            style={{ width: `${Math.max(4, tier * 100)}%` }}
           />
         </div>
       </div>
@@ -85,10 +85,10 @@ export function AmbientHUD({ sim, visible }: Props) {
 
 function StatChip({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: number | string; color: string }) {
   return (
-    <div className="flex items-center gap-1 rounded-md bg-neutral-900/50 px-2 py-1 ring-1 ring-white/5 backdrop-blur-md">
+    <div className="flex items-center gap-1.5 rounded-lg glass-pill px-2.5 py-1">
       <span className={color}>{icon}</span>
-      <span className="text-[10px] font-semibold text-neutral-400">{label}</span>
-      <span className={`text-[10px] font-bold ${color}`}>{value}</span>
+      <span className="text-[10px] font-medium text-neutral-400">{label}</span>
+      <span className={`text-[10px] font-bold font-mono ${color}`}>{value}</span>
     </div>
   );
 }

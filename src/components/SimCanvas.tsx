@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ZoomIn, ZoomOut, Maximize, Locate, Crosshair } from 'lucide-react';
 import type { Simulation } from '@/sim/simulation';
 import { render } from '@/sim/renderer';
-import { defaultCamera, type Camera } from '@/sim/types';
+import { defaultCamera, type Camera, type GodTool } from '@/sim/types';
 import type { CinematicCamera } from '@/sim/cinematicCamera';
 import type { WallpaperTheme } from '@/sim/themes';
 
@@ -17,12 +17,13 @@ type Props = {
   wallpaperMode?: boolean;
   cinematic?: CinematicCamera;
   theme?: WallpaperTheme | null;
+  godTool?: GodTool;
 };
 
 const MIN_ZOOM = 0.4;
 const MAX_ZOOM = 8;
 
-export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect, showColonies, wallpaperMode = false, cinematic, theme = null }: Props) {
+export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect, showColonies, wallpaperMode = false, cinematic, theme = null, godTool = 'select' }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const minimapRef = useRef<HTMLCanvasElement>(null);
   const simRef = useRef(sim);
@@ -147,7 +148,7 @@ export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect
     const STEP_MS = 1000 / 30;
 
     const loop = (now: number) => {
-      const dt = now - last;
+      const dt = Math.min(now - last, 100); // cap dt to avoid spiral-of-death on tab focus
       last = now;
       phase += dt * 0.002;
 
@@ -186,12 +187,16 @@ export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect
       }
 
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
-        canvas.width = w * dpr;
-        canvas.height = h * dpr;
+      // Use offsetWidth/offsetHeight (layout size) as primary — more reliable than clientWidth
+      const w = Math.max(100, canvas.offsetWidth || canvas.clientWidth || window.innerWidth || 1200);
+      const h = Math.max(100, canvas.offsetHeight || canvas.clientHeight || window.innerHeight || 800);
+      const targetW = Math.round(w * dpr);
+      const targetH = Math.round(h * dpr);
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
       }
+
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       // Use cinematic camera in wallpaper mode, manual camera in sandbox
@@ -247,6 +252,28 @@ export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect
     const py = e.clientY - rect.top;
     const { x: wx, y: wy } = screenToWorld(px, py);
 
+    // Execute selected God Tool action on click
+    if (godTool === 'meteor') {
+      sim.triggerMeteorStrike(wx, wy, 100);
+      return;
+    } else if (godTool === 'volcano') {
+      sim.spawnBiomeAt(wx, wy, 'volcanic', 120);
+      return;
+    } else if (godTool === 'sanctuary') {
+      sim.spawnStructureAt(wx, wy, 'sanctuary');
+      return;
+    } else if (godTool === 'organism') {
+      sim.spawnOrganismGroupAt(wx, wy, 5);
+      return;
+    } else if (godTool === 'food') {
+      for (let i = 0; i < 5; i++) {
+        const rx = wx + (Math.random() - 0.5) * 30;
+        const ry = wy + (Math.random() - 0.5) * 30;
+        sim.spawnFoodAt(rx, ry, Math.floor(25 + Math.random() * 20));
+      }
+      return;
+    }
+
     let nearest: number | null = null;
     let nearestDist = Infinity;
     for (const org of sim.organisms) {
@@ -261,6 +288,15 @@ export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect
       }
     }
     onSelect(nearest);
+
+    // If no organism was clicked (or in wallpaper mode), spawn nutrient pulse at click position
+    if (nearest === null || wallpaperMode) {
+      for (let i = 0; i < 4; i++) {
+        const rx = wx + (Math.random() - 0.5) * 30;
+        const ry = wy + (Math.random() - 0.5) * 30;
+        sim.spawnFoodAt(rx, ry, Math.floor(25 + Math.random() * 20));
+      }
+    }
   };
 
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
@@ -288,7 +324,7 @@ export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect
   };
 
   return (
-    <div className="relative h-full w-full">
+    <div className={`w-full h-full ${wallpaperMode ? 'fixed inset-0 z-0 bg-neutral-950' : 'relative min-h-[680px]'}`}>
       <canvas
         ref={canvasRef}
         onMouseDown={handleMouseDown}
@@ -296,7 +332,7 @@ export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect
         onMouseUp={handleMouseUp}
         onMouseLeave={() => { dragRef.current = null; }}
         onWheel={handleWheel}
-        className={`h-full w-full ${
+        className={`absolute inset-0 block h-full w-full ${
           wallpaperMode
             ? 'cursor-default'
             : 'cursor-grab rounded-2xl border border-neutral-800/60 shadow-2xl shadow-black/50 active:cursor-grabbing'

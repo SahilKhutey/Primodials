@@ -4,7 +4,34 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Build & Test](https://github.com/SahilKhutey/Primodials/actions/workflows/master.yml/badge.svg)](https://github.com/SahilKhutey/Primodials/actions)
 
-Welcome to **Primordials** — a high-performance, real-time artificial life simulation engine built with modern C++23 and SDL3.
+Welcome to **Primordials** — a living artificial life simulation & dynamic desktop wallpaper.
+
+> **Active Product Folder:** `src/` (TypeScript / React / Vite wallpaper application). The native C++ engine (`Engine/`, `Games/`) is frozen.
+
+---
+
+## 📌 Codebase Architecture: Which Version Do I Run?
+
+This repository contains two independent implementations:
+
+### 1. 🌐 Web App & Desktop Wallpaper (`src/`) — Primary Product
+- **Tech Stack:** React 18, TypeScript, Vite, Tailwind CSS, Canvas 2D
+- **Target:** Living desktop wallpaper, web app, Wallpaper Engine Workshop
+- **Quick Run:**
+  ```bash
+  npm install
+  npm run dev            # Sandbox mode at http://localhost:5173
+  npm run dev -- --open  # Open in browser
+  ```
+- **Wallpaper Mode:**
+  - Launch with `http://localhost:5173/?wallpaper=1` or click **Wallpaper Mode** in UI.
+  - Runs **100% offline** by default (Supabase is optional for cloud saves).
+- **Wallpaper Engine Packaging:** `npm run wallpaper:pkg`
+
+### 2. ⚡ Native C++ Simulation Engine (`Engine/`, `Games/PolygonalPrimordials/`)
+- **Tech Stack:** Modern C++23, SDL3, CMake, Catch2
+- **Target:** High-throughput simulation research platform & native desktop app (221 tests passing)
+- **Quick Run:** `build_all.bat` or `cmake -B build/itch-release -S . && cmake --build build/itch-release`
 
 ---
 

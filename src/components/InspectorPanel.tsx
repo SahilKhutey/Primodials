@@ -6,6 +6,7 @@ import {
   Compass, Lightbulb, Package, Mountain, TreePine, Sun, Droplets, Snowflake,
   FlaskConical, Share2, Layers, Shield, Bug, Clock,
   Waves, Flame as FlameIcon, Skull, Gem, UsersRound, Network, Mountain as MountainIcon,
+  EyeOff, Radio, Moon,
 } from 'lucide-react';
 import type { Organism, Genome, BiomeType } from '@/sim/types';
 import { intelligenceTier, civilizationLevel, BIOME_INFO } from '@/sim/types';
@@ -358,13 +359,21 @@ export function InspectorPanel({ sim, selectedId, onClear }: Props) {
               <Badge color="bg-sky-950/60 text-sky-300"><Users size={11} />Beta — subordinate</Badge>
             )}
             {selected.socialRank === 'omega' && (
-              <Badge color="bg-neutral-700/60 text-neutral-300"><Users size={11} />Omega — lowest rank</Badge>
-            )}
-            {selected.clusterId !== null && (
-              <Badge color="bg-indigo-950/60 text-indigo-300"><Network size={11} />Cluster #{selected.clusterId}</Badge>
+              <Badge color="bg-neutral-800 text-neutral-400"><Users size={11} />Omega — peripheral</Badge>
             )}
           </div>
         )}
+      </div>
+
+      {/* Adaptive ML Behaviors */}
+      <div>
+        <SectionTitle icon={<Sparkles size={14} />} text="Adaptive Behaviors" />
+        <div className="grid grid-cols-2 gap-2">
+          <AttrCard icon={<EyeOff size={15} className="text-emerald-400" />} label="Camouflage" value={traitLevel(g.camouflage)} sub={g.camouflage.toFixed(2)} />
+          <AttrCard icon={<Sparkles size={15} className="text-cyan-300" />} label="Biolum" value={traitLevel(g.bioluminescence)} sub={g.bioluminescence.toFixed(2)} />
+          <AttrCard icon={<Radio size={15} className="text-sky-400" />} label="Echolocation" value={traitLevel(g.echolocation)} sub={g.echolocation.toFixed(2)} />
+          <AttrCard icon={<Moon size={15} className="text-indigo-400" />} label="Hibernation" value={selected.hibernating ? 'ACTIVE' : traitLevel(g.hibernation)} sub={selected.hibernating ? 'metabolic savings' : g.hibernation.toFixed(2)} />
+        </div>
       </div>
 
       {/* Materials & Knowledge */}

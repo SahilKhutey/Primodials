@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Save, FolderOpen, Trash2, Loader2 } from 'lucide-react';
 import type { SnapshotRow } from '@/lib/supabase';
-import { supabase } from '@/lib/supabase';
+import { supabase, supabaseEnabled } from '@/lib/supabase';
 import type { Simulation } from '@/sim/simulation';
 
 type Props = {
@@ -26,6 +26,7 @@ export function HistoryPanel({
 
   const handleSave = async () => {
     if (sim.population === 0) return;
+    if (!supabaseEnabled) { alert('Cloud saves unavailable — add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env.local file.'); return; }
     setSaving(true);
     const snapshot = {
       name: name.trim() || `Experiment @ tick ${sim.tick}`,
@@ -44,6 +45,7 @@ export function HistoryPanel({
   };
 
   const handleDelete = async (id: string) => {
+    if (!supabaseEnabled) return;
     const { error } = await supabase.from('simulation_snapshots').delete().eq('id', id);
     if (!error) onDeleted();
   };

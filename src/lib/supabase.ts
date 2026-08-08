@@ -1,9 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl: string | undefined = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey: string | undefined = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Guard: createClient throws if called with undefined values (no .env file).
+// When Supabase is not configured, the app runs fully offline — cloud save/load
+// is simply disabled rather than crashing at startup.
+export const supabaseEnabled = !!(supabaseUrl && supabaseAnonKey);
+
+export const supabase = supabaseEnabled
+  ? createClient(supabaseUrl!, supabaseAnonKey!)
+  : (null as unknown as ReturnType<typeof createClient>);
 
 export type SnapshotRow = {
   id: string;

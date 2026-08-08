@@ -4,7 +4,7 @@ import {
   Maximize, Monitor, LineChart,
 } from 'lucide-react';
 import { Simulation } from '@/sim/simulation';
-import { DEFAULT_SETTINGS, type SimSettings, type Species, type Colony, type BoundaryMode } from '@/sim/types';
+import { DEFAULT_SETTINGS, type SimSettings, type Species, type Colony, type BoundaryMode, type GodTool } from '@/sim/types';
 import { SimCanvas } from '@/components/SimCanvas';
 import { ControlBar, type SimSpeed } from '@/components/ControlBar';
 import { StatsPanel } from '@/components/StatsPanel';
@@ -15,10 +15,11 @@ import { EvolutionChart } from '@/components/EvolutionChart';
 import { AmbientHUD } from '@/components/AmbientHUD';
 import { WallpaperDock } from '@/components/WallpaperDock';
 import { CinematicCamera } from '@/sim/cinematicCamera';
-import { supabase, type SnapshotRow } from '@/lib/supabase';
+import { supabase, supabaseEnabled, type SnapshotRow } from '@/lib/supabase';
 import { THEMES, getTheme, DEFAULT_THEME_ID, PACING_PRESETS, type WallpaperTheme, type PacingPreset } from '@/sim/themes';
 import { EcosystemDiary } from '@/sim/diary';
 import { DiaryPanel } from '@/components/DiaryPanel';
+import { AmbientOrganismCard } from '@/components/AmbientOrganismCard';
 import { BookOpen } from 'lucide-react';
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
   const [themeId, setThemeId] = useState(DEFAULT_THEME_ID);
   const [pacing, setPacing] = useState<PacingPreset>('peaceful');
   const [showDiary, setShowDiary] = useState(false);
+  const [godTool, setGodTool] = useState<GodTool>('select');
   const theme = getTheme(themeId);
   const cinematicRef = useRef<CinematicCamera | null>(null);
   const diaryRef = useRef<EcosystemDiary | null>(null);
@@ -51,9 +53,8 @@ function App() {
     cinematicRef.current = new CinematicCamera(simRef.current);
   }
 
-  // Apply pacing to simulation settings when theme or pacing changes
+  // Apply pacing to simulation settings ONLY when theme or pacing explicitly changes
   useEffect(() => {
-    if (!wallpaperMode) return;
     const pacingCfg = PACING_PRESETS[pacing];
     const sim = simRef.current;
     sim.settings = {
@@ -62,7 +63,7 @@ function App() {
       foodGrowthRate: Math.round(theme.foodRate * pacingCfg.foodRateMod),
       mutationRate: 0.15 * pacingCfg.mutationMod,
     };
-  }, [themeId, pacing, wallpaperMode]);
+  }, [themeId, pacing]);
 
   // Re-render UI panels ~4x/sec to reflect sim state
   useEffect(() => {
@@ -101,6 +102,7 @@ function App() {
 
   const loadHistory = useCallback(async () => {
     setLoadingHistory(true);
+    if (!supabaseEnabled) { setLoadingHistory(false); return; }
     const { data, error } = await supabase
       .from('simulation_snapshots')
       .select('*')
@@ -161,6 +163,7 @@ function App() {
           settings: sim.settings,
         },
       };
+      if (!supabaseEnabled) return;
       await supabase.from('simulation_snapshots').insert(snapshot);
       loadHistory();
     };
@@ -217,6 +220,8 @@ function App() {
       symbiosisPartner: o.symbiosisPartner ?? null,
       socialRank: (o.socialRank as 'alpha' | 'beta' | 'omega' | 'solitary') ?? 'solitary',
       clusterId: o.clusterId ?? null,
+      hibernating: o.hibernating ?? false,
+      sonarPulse: o.sonarPulse ?? 0,
     }));
     sim.species = snap.species.map((s: Species & { generations: number; avgIntelligence: number; rank: number; totalKills: number; structuresBuilt: number; civilizationLevel: number; knowledgeDiscovered: number; evolutionLeaps: number }) => ({
       ...s,
@@ -341,6 +346,14 @@ function App() {
           visible={showDiary}
           onClose={() => setShowDiary(false)}
         />
+
+        {/* Ambient Organism Inspector Popover for Wallpaper Mode */}
+        {selectedId !== null && (() => {
+          const org = sim.organisms.find((o) => o.id === selectedId && o.alive);
+          return org ? (
+            <AmbientOrganismCard org={org} onClose={() => setSelectedId(null)} />
+          ) : null;
+        })()}
       </div>
     );
   }
@@ -404,8 +417,10 @@ function App() {
               onToggleColonies={() => setShowColonies((s) => !s)}
               settings={settings}
               onToggleSetting={handleToggleSetting}
+              activeGodTool={godTool}
+              onSelectGodTool={setGodTool}
             />
-            <div className="relative aspect-[3/2] w-full overflow-hidden rounded-2xl bg-neutral-900 ring-1 ring-neutral-800/60">
+            <div className="relative min-h-[680px] h-[680px] w-full overflow-hidden rounded-2xl bg-neutral-950 ring-1 ring-neutral-800/80 shadow-2xl shadow-black/80">
               <SimCanvas
                 sim={sim}
                 running={running}
@@ -414,6 +429,7 @@ function App() {
                 selectedId={selectedId}
                 onSelect={(id) => { setSelectedId(id); if (id !== null) setActiveTab('inspector'); }}
                 showColonies={showColonies}
+                godTool={godTool}
               />
             </div>
             <StatsPanel sim={sim} />
@@ -512,6 +528,12 @@ function SettingsPanel({
         <ToggleRow label="Biomes" checked={settings.biomes} onChange={(v) => update('biomes', v)} />
         <ToggleRow label="Knowledge nodes" checked={settings.knowledgeNodes} onChange={(v) => update('knowledgeNodes', v)} />
         <ToggleRow label="Advanced blueprints" checked={settings.blueprints} onChange={(v) => update('blueprints', v)} />
+        <ToggleRow label="Microbial behavior" checked={settings.microbialBehavior} onChange={(v) => update('microbialBehavior', v)} />
+        <ToggleRow label="Disease & immunity" checked={settings.diseaseEvents} onChange={(v) => update('diseaseEvents', v)} />
+        <ToggleRow label="Advanced biology" checked={settings.advancedBiology} onChange={(v) => update('advancedBiology', v)} />
+        <ToggleRow label="Social hierarchy" checked={settings.socialBehavior} onChange={(v) => update('socialBehavior', v)} />
+        <ToggleRow label="Neutral genetic drift" checked={settings.neutralDrift} onChange={(v) => update('neutralDrift', v)} />
+        <ToggleRow label="Endless generation cycles" checked={settings.endlessGeneration} onChange={(v) => update('endlessGeneration', v)} />
         <div className="pt-1">
           <label className="text-xs font-semibold uppercase tracking-wider text-neutral-400">World Boundary</label>
           <div className="mt-2 flex gap-1 rounded-lg bg-neutral-800/60 p-1">

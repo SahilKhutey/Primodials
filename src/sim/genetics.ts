@@ -1,6 +1,6 @@
 import { Rng } from './rng';
 import type { Genome } from './types';
-import { makeBrain, mutateBrain, crossoverBrain, cloneBrain, hiddenForIntel, type Brain } from './brain';
+import { makeBrain, mutateBrain, crossoverBrain, cloneBrain, hiddenForIntel, resizeBrain, N_INPUTS, N_OUTPUTS, type Brain } from './brain';
 
 export function randomGenome(rng: Rng): Genome {
   return {
@@ -36,6 +36,10 @@ export function randomGenome(rng: Rng): Genome {
     dominance: rng.range(0.1, 0.5),
     nicheBreadth: rng.range(0.3, 0.7),
     competitiveness: rng.range(0.2, 0.6),
+    camouflage: rng.range(0, 0.4),
+    bioluminescence: rng.range(0, 0.4),
+    echolocation: rng.range(0, 0.4),
+    hibernation: rng.range(0, 0.4),
   };
 }
 
@@ -65,10 +69,10 @@ export function mutateGenome(g: Genome, mutationRate: number, rng: Rng): Genome 
     else buildBoost = rng.range(0.05, 0.12);
   }
 
-  return {
+  const child: Genome = {
     sides: clamp(Math.round(m(g.sides, 3, 8, 2)), 3, 8),
     size: clamp(m(g.size, 4, 18, 3), 4, 18),
-    hue: (m(g.hue, 0, 360, 30) + 360) % 360,
+    hue: g.hue, // calculated below via genetic distance drift
     speed: clamp(m(g.speed, 0.2, 2.4, 0.3), 0.2, 2.4),
     senseRadius: clamp(m(g.senseRadius, 30, 160, 25), 30, 160),
     diet: rng.next() < mutationRate * 0.3 ? (g.diet === 0 ? 1 : 0) : g.diet,
@@ -98,7 +102,23 @@ export function mutateGenome(g: Genome, mutationRate: number, rng: Rng): Genome 
     dominance: clamp(m(g.dominance, 0, 1, 0.08), 0, 1),
     nicheBreadth: clamp(m(g.nicheBreadth, 0, 1, 0.08), 0, 1),
     competitiveness: clamp(m(g.competitiveness, 0, 1, 0.06), 0, 1),
+    camouflage: clamp(m(g.camouflage, 0, 1, 0.08), 0, 1),
+    bioluminescence: clamp(m(g.bioluminescence, 0, 1, 0.08), 0, 1),
+    echolocation: clamp(m(g.echolocation, 0, 1, 0.08), 0, 1),
+    hibernation: clamp(m(g.hibernation, 0, 1, 0.08), 0, 1),
   };
+
+  // Phylogenetic Hue Inheritance: hue drift scales with genetic distance from parent
+  const dist = geneticDistance(g, child);
+  if (rng.next() < mutationRate * 1.2) {
+    const shiftDir = rng.next() < 0.5 ? 1 : -1;
+    const hueDrift = Math.min(45, Math.max(2, dist * 12)) * shiftDir;
+    child.hue = (g.hue + hueDrift + 360) % 360;
+  } else {
+    child.hue = g.hue;
+  }
+
+  return child;
 }
 
 export function hadEvolutionLeap(parent: Genome, child: Genome): boolean {
@@ -115,7 +135,9 @@ export function hadEvolutionLeap(parent: Genome, child: Genome): boolean {
     child.clustering > parent.clustering + 0.08 ||
     child.altruism > parent.altruism + 0.08 ||
     child.dominance > parent.dominance + 0.08 ||
-    child.nicheBreadth > parent.nicheBreadth + 0.08
+    child.nicheBreadth > parent.nicheBreadth + 0.08 ||
+    child.bioluminescence > parent.bioluminescence + 0.08 ||
+    child.echolocation > parent.echolocation + 0.08
   );
 }
 
@@ -155,6 +177,10 @@ export function crossoverGenome(a: Genome, b: Genome, rng: Rng): Genome {
     dominance: avg(a.dominance, b.dominance),
     nicheBreadth: avg(a.nicheBreadth, b.nicheBreadth),
     competitiveness: avg(a.competitiveness, b.competitiveness),
+    camouflage: avg(a.camouflage, b.camouflage),
+    bioluminescence: avg(a.bioluminescence, b.bioluminescence),
+    echolocation: avg(a.echolocation, b.echolocation),
+    hibernation: avg(a.hibernation, b.hibernation),
   };
 }
 
@@ -229,7 +255,11 @@ export function geneticDistance(a: Genome, b: Genome): number {
     dAltruism * 1.2 +
     dDominance * 1 +
     dNiche * 1.5 +
-    dCompete * 1
+    dCompete * 1 +
+    Math.abs(a.camouflage - b.camouflage) * 1.2 +
+    Math.abs(a.bioluminescence - b.bioluminescence) * 1.5 +
+    Math.abs(a.echolocation - b.echolocation) * 1.5 +
+    Math.abs(a.hibernation - b.hibernation) * 1.2
   );
 }
 
@@ -238,10 +268,11 @@ export const SPECIATION_THRESHOLD = 3.5;
 export function mutateBrainForGenome(parent: Genome, parentBrain: Brain | null, mutationRate: number, rng: Rng): Brain | null {
   const newHidden = hiddenForIntel(parent.intelligence);
   if (newHidden === 0) return null;
-  if (parentBrain && parentBrain.nHidden === newHidden) {
-    return mutateBrain(parentBrain, mutationRate, rng);
+  if (parentBrain) {
+    const resized = resizeBrain(parentBrain, newHidden, rng);
+    return mutateBrain(resized, mutationRate, rng);
   }
-  return makeBrain(14, newHidden, 5, rng);
+  return makeBrain(N_INPUTS, newHidden, N_OUTPUTS, rng);
 }
 
 export function crossoverBrainForGenome(
@@ -252,10 +283,18 @@ export function crossoverBrainForGenome(
   const avgIntel = (genomeA.intelligence + genomeB.intelligence) / 2;
   const newHidden = hiddenForIntel(avgIntel);
   if (newHidden === 0) return null;
-  if (brainA && brainB && brainA.nHidden === brainB.nHidden && brainA.nHidden === newHidden) {
-    return crossoverBrain(brainA, brainB, rng);
+
+  const rA = brainA ? resizeBrain(brainA, newHidden, rng) : null;
+  const rB = brainB ? resizeBrain(brainB, newHidden, rng) : null;
+
+  if (rA && rB) {
+    return crossoverBrain(rA, rB, rng);
   }
-  if (brainA && brainA.nHidden === newHidden) return cloneBrain(brainA);
-  if (brainB && brainB.nHidden === newHidden) return cloneBrain(brainB);
-  return makeBrain(14, newHidden, 5, rng);
+  if (rA) return mutateBrain(rA, mutationRateForCrossover(0.05), rng);
+  if (rB) return mutateBrain(rB, mutationRateForCrossover(0.05), rng);
+  return makeBrain(N_INPUTS, newHidden, N_OUTPUTS, rng);
+}
+
+function mutationRateForCrossover(val: number): number {
+  return val;
 }

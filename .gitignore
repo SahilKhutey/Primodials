@@ -10,6 +10,7 @@ build/
 build-*/
 node_modules
 dist
+dist-wallpaper-engine
 dist-release-*
 dist-ssr
 *.local

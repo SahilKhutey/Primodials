@@ -33,17 +33,25 @@ export class CinematicCamera {
     this.sim = sim;
     this.x = sim.settings.worldWidth / 2;
     this.y = sim.settings.worldHeight / 2;
-    // Start zoomed out to show the whole world
-    this.zoom = 0.85;
+    // Start zoomed to fill the screen with an expansive open-world view
+    this.zoom = 1.15;
     this.targetX = this.x;
     this.targetY = this.y;
     this.targetZoom = this.zoom;
   }
 
+  private getOverviewZoom(): number {
+    const baseWidth = 2800;
+    const baseHeight = 1800;
+    const currentArea = this.sim.settings.worldWidth * this.sim.settings.worldHeight;
+    const scale = Math.sqrt((baseWidth * baseHeight) / Math.max(1, currentArea));
+    return Math.max(0.35, Math.min(1.15, 1.15 * scale));
+  }
+
   setMode(mode: CinematicMode) {
     this.mode = mode;
     if (mode === 'overview' || mode === 'free') {
-      this.targetZoom = 0.85;
+      this.targetZoom = this.getOverviewZoom();
       this.targetX = this.sim.settings.worldWidth / 2;
       this.targetY = this.sim.settings.worldHeight / 2;
     }
@@ -69,7 +77,7 @@ export class CinematicCamera {
       this.currentTarget = {
         x: sim.settings.worldWidth / 2,
         y: sim.settings.worldHeight / 2,
-        zoom: 0.85,
+        zoom: this.getOverviewZoom(),
         priority: 0,
         ttl: 180,
       };
@@ -141,7 +149,7 @@ export class CinematicCamera {
     } else if (this.mode === 'overview') {
       this.targetX = this.sim.settings.worldWidth / 2;
       this.targetY = this.sim.settings.worldHeight / 2;
-      this.targetZoom = 0.85;
+      this.targetZoom = this.getOverviewZoom();
     }
 
     // Smooth interpolation — slower for cinematic feel
@@ -152,12 +160,16 @@ export class CinematicCamera {
   }
 
   getCamera(): Camera {
-    const shakeX = (Math.random() - 0.5) * this.shake * 10;
-    const shakeY = (Math.random() - 0.5) * this.shake * 10;
+    const s = isFinite(this.shake) ? this.shake : 0;
+    const shakeX = (Math.random() - 0.5) * s * 10;
+    const shakeY = (Math.random() - 0.5) * s * 10;
+    const safeX = isFinite(this.x) ? this.x : this.sim.settings.worldWidth / 2;
+    const safeY = isFinite(this.y) ? this.y : this.sim.settings.worldHeight / 2;
+    const safeZoom = isFinite(this.zoom) && this.zoom > 0.1 ? this.zoom : 1.0;
     return {
-      x: this.x + shakeX,
-      y: this.y + shakeY,
-      zoom: this.zoom,
+      x: safeX + shakeX,
+      y: safeY + shakeY,
+      zoom: safeZoom,
     };
   }
 }

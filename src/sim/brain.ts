@@ -12,7 +12,7 @@ export type Brain = {
   weights: Float32Array; // full weight vector
 };
 
-export const N_INPUTS = 14;
+export const N_INPUTS = 18;
 export const N_OUTPUTS = 5;
 
 export function brainSize(nInputs: number, nHidden: number, nOutputs: number): number {
@@ -84,6 +84,77 @@ export function evalBrain(b: Brain, inputs: Float32Array, outputs: Float32Array)
     }
     outputs[o] = Math.tanh(sum);
   }
+}
+
+// ── Online Plasticity / Lifetime Reinforcement Learning ─────────────
+// Updates weights during organism lifetime based on rewards (food/kills/knowledge)
+// and penalties (damage/starvation). Implements Baldwin effect learning.
+export function adaptBrainOnline(b: Brain, inputs: Float32Array, outputs: Float32Array, reward: number, rate = 0.01): void {
+  if (reward === 0) return;
+  const { nInputs, nHidden, nOutputs, weights } = b;
+  let idx = 0;
+  const rRate = reward * rate;
+
+  // Adapt hidden weights
+  for (let h = 0; h < nHidden; h++) {
+    const hiddenAct = hiddenBuf[h];
+    weights[idx] += rRate * hiddenAct * 0.1;
+    idx++;
+    const factor = rRate * hiddenAct;
+    for (let i = 0; i < nInputs; i++) {
+      const w = weights[idx] + factor * inputs[i];
+      weights[idx] = w > 3 ? 3 : w < -3 ? -3 : w;
+      idx++;
+    }
+  }
+
+  // Adapt output weights
+  for (let o = 0; o < nOutputs; o++) {
+    const outAct = outputs[o];
+    weights[idx] += rRate * outAct * 0.1;
+    idx++;
+    const factor = rRate * outAct;
+    for (let h = 0; h < nHidden; h++) {
+      const w = weights[idx] + factor * hiddenBuf[h];
+      weights[idx] = w > 3 ? 3 : w < -3 ? -3 : w;
+      idx++;
+    }
+  }
+}
+
+// Weight-preserving brain resize: copies 100% of common hidden and output weights when crossing intelligence tiers
+export function resizeBrain(b: Brain, newHidden: number, rng: Rng): Brain {
+  if (b.nHidden === newHidden) return cloneBrain(b);
+  const target = makeBrain(b.nInputs, newHidden, b.nOutputs, rng);
+  const oldH = b.nHidden;
+  const commonH = Math.min(oldH, newHidden);
+  const nIn = b.nInputs;
+  const nOut = b.nOutputs;
+
+  // Copy common hidden units (bias + incoming weights)
+  for (let h = 0; h < commonH; h++) {
+    const oldOffset = h * (1 + nIn);
+    const newOffset = h * (1 + nIn);
+    for (let k = 0; k <= nIn; k++) {
+      target.weights[newOffset + k] = b.weights[oldOffset + k];
+    }
+  }
+
+  // Copy common output weights
+  const oldOutBase = oldH * (1 + nIn);
+  const newOutBase = newHidden * (1 + nIn);
+  for (let o = 0; o < nOut; o++) {
+    const oldO = oldOutBase + o * (1 + oldH);
+    const newO = newOutBase + o * (1 + newHidden);
+    // Copy output bias
+    target.weights[newO] = b.weights[oldO];
+    // Copy output weights for common hidden units
+    for (let h = 0; h < commonH; h++) {
+      target.weights[newO + 1 + h] = b.weights[oldO + 1 + h];
+    }
+  }
+
+  return target;
 }
 
 // Hidden layer size scales with intelligence tier

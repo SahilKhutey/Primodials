@@ -1,9 +1,10 @@
 import {
   Play, Pause, RotateCcw, Eye, Sparkles, Users, Mountain, Lightbulb,
   Sparkle, Home, Heart, Box, ChevronRight, Brain, Clock, Globe, Save, FlaskConical, Beaker, Infinity as InfinityIcon, Shield, Leaf, UsersRound, Network,
-  SkipForward, Gauge,
+  SkipForward, Gauge, Dna,
 } from 'lucide-react';
-import type { SimSettings, BoundaryMode } from '@/sim/types';
+import type { SimSettings, BoundaryMode, GodTool } from '@/sim/types';
+import { Flame, ShieldAlert, Sparkles as SparklesIcon, MousePointer } from 'lucide-react';
 
 export type SimSpeed = 0.25 | 0.5 | 1 | 2 | 4;
 
@@ -23,6 +24,8 @@ type Props = {
   onToggleColonies: () => void;
   settings: SimSettings;
   onToggleSetting: (key: keyof SimSettings, value: boolean | BoundaryMode) => void;
+  activeGodTool?: GodTool;
+  onSelectGodTool?: (tool: GodTool) => void;
 };
 
 function ToggleButton({
@@ -74,6 +77,8 @@ export function ControlBar({
   onToggleColonies,
   settings,
   onToggleSetting,
+  activeGodTool,
+  onSelectGodTool,
 }: Props) {
   const cycleBoundary = () => {
     const idx = BOUNDARY_MODES.indexOf(settings.boundaryMode);
@@ -295,9 +300,86 @@ export function ControlBar({
           onClick={() => onToggleSetting('neutralDrift', !settings.neutralDrift)}
           icon={<Network size={15} />}
           label="Neutral Drift"
-          activeClass="bg-slate-500/20 text-slate-300"
+          activeClass="bg-teal-500/20 text-teal-300"
         />
       </div>
+
+      {/* Interactive God Tools Palette */}
+      {onSelectGodTool && (
+        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-white/5">
+          <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">God Tools:</span>
+          <ToolButton
+            active={activeGodTool === 'select'}
+            onClick={() => onSelectGodTool('select')}
+            icon={<MousePointer size={15} />}
+            label="Inspect / Select"
+            activeClass="bg-cyan-500/25 text-cyan-300 ring-1 ring-cyan-400/40"
+          />
+          <ToolButton
+            active={activeGodTool === 'food'}
+            onClick={() => onSelectGodTool('food')}
+            icon={<SparklesIcon size={15} />}
+            label="Nutrient Pulse"
+            activeClass="bg-lime-500/25 text-lime-300 ring-1 ring-lime-400/40"
+          />
+          <ToolButton
+            active={activeGodTool === 'organism'}
+            onClick={() => onSelectGodTool('organism')}
+            icon={<Dna size={15} />}
+            label="Spawn Organisms"
+            activeClass="bg-violet-500/25 text-violet-300 ring-1 ring-violet-400/40"
+          />
+          <ToolButton
+            active={activeGodTool === 'meteor'}
+            onClick={() => onSelectGodTool('meteor')}
+            icon={<Flame size={15} />}
+            label="Meteor Strike"
+            activeClass="bg-rose-500/25 text-rose-300 ring-1 ring-rose-400/40"
+          />
+          <ToolButton
+            active={activeGodTool === 'volcano'}
+            onClick={() => onSelectGodTool('volcano')}
+            icon={<Mountain size={15} />}
+            label="Volcanic Biome"
+            activeClass="bg-amber-500/25 text-amber-300 ring-1 ring-amber-400/40"
+          />
+          <ToolButton
+            active={activeGodTool === 'sanctuary'}
+            onClick={() => onSelectGodTool('sanctuary')}
+            icon={<ShieldAlert size={15} />}
+            label="Sanctuary Dome"
+            activeClass="bg-sky-500/25 text-sky-300 ring-1 ring-sky-400/40"
+          />
+        </div>
+      )}
     </div>
+  );
+}
+
+function ToolButton({
+  active,
+  onClick,
+  icon,
+  label,
+  activeClass,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  activeClass: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 ${
+        active
+          ? activeClass
+          : 'bg-neutral-900/90 text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 ring-1 ring-white/5'
+      }`}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }

@@ -42,38 +42,43 @@ export function render(
   trails: Map<number, { x: number; y: number; hue: number }[]> | null = null,
   theme: WallpaperTheme | null = null,
 ) {
+  const renderW = width > 0 ? width : 1200;
+  const renderH = height > 0 ? height : 800;
   // Base scale that fits the whole world in the viewport (zoom === 1)
-  const baseScale = Math.min(width / sim.settings.worldWidth, height / sim.settings.worldHeight);
-  const cam = camera ?? { x: sim.settings.worldWidth / 2, y: sim.settings.worldHeight / 2, zoom: 1 };
+  const camX = camera && isFinite(camera.x) ? camera.x : sim.settings.worldWidth / 2;
+  const camY = camera && isFinite(camera.y) ? camera.y : sim.settings.worldHeight / 2;
+  const camZoom = camera && isFinite(camera.zoom) && camera.zoom > 0 ? camera.zoom : 1;
+  const cam = { x: camX, y: camY, zoom: camZoom };
+  const baseScale = Math.min(renderW / sim.settings.worldWidth, renderH / sim.settings.worldHeight);
   const scale = baseScale * cam.zoom;
 
   // ── Atmospheric background ──────────────────────────────────────────
   if (wallpaperMode && theme) {
-    const grad = ctx.createRadialGradient(width * 0.5, height * 0.45, 0, width * 0.5, height * 0.6, width * 0.8);
+    const grad = ctx.createRadialGradient(renderW * 0.5, renderH * 0.45, 0, renderW * 0.5, renderH * 0.6, renderW * 0.8);
     grad.addColorStop(0, theme.bgInner);
     grad.addColorStop(0.5, theme.bgMid);
     grad.addColorStop(1, theme.bgOuter);
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, renderW, renderH);
   } else if (wallpaperMode) {
-    const grad = ctx.createRadialGradient(width * 0.5, height * 0.45, 0, width * 0.5, height * 0.6, width * 0.8);
+    const grad = ctx.createRadialGradient(renderW * 0.5, renderH * 0.45, 0, renderW * 0.5, renderH * 0.6, renderW * 0.8);
     grad.addColorStop(0, '#0d0d14');
     grad.addColorStop(0.5, '#08080d');
     grad.addColorStop(1, '#040406');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, renderW, renderH);
   } else {
-    const grad = ctx.createRadialGradient(width * 0.5, height * 0.45, 0, width * 0.5, height * 0.5, width * 0.75);
+    const grad = ctx.createRadialGradient(renderW * 0.5, renderH * 0.45, 0, renderW * 0.5, renderH * 0.5, renderW * 0.75);
     grad.addColorStop(0, '#141418');
     grad.addColorStop(0.6, '#0e0e12');
     grad.addColorStop(1, '#08080a');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, renderW, renderH);
   }
 
   ctx.save();
   // Map: screen = (world - cam) * scale + screenCenter
-  ctx.translate(width / 2, height / 2);
+  ctx.translate(renderW / 2, renderH / 2);
   ctx.scale(scale, scale);
   ctx.translate(-cam.x, -cam.y);
 
@@ -91,7 +96,7 @@ export function render(
   }
 
   // Subtle grid
-  ctx.strokeStyle = 'rgba(255,255,255,0.018)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.045)';
   ctx.lineWidth = 1;
   const gridSize = 80;
   for (let x = 0; x <= sim.settings.worldWidth; x += gridSize) {
@@ -205,9 +210,10 @@ export function render(
   }
 
   // ── Organisms ───────────────────────────────────────────────────────
+  const popCount = sim.organisms.length;
   for (const org of sim.organisms) {
     if (!org.alive) continue;
-    drawOrganism(ctx, org, showSense, org.id === selectedId, phase, theme);
+    drawOrganism(ctx, org, showSense, org.id === selectedId, phase, theme, popCount, wallpaperMode);
   }
 
   // ── Neural brain glow for selected organism ──────────────────────────
@@ -231,7 +237,7 @@ export function render(
 
   // ── Ambient floating particles (wallpaper mode) ─────────────────────
   if (wallpaperMode) {
-    drawAmbientParticles(ctx, width, height, phase, theme);
+    drawAmbientParticles(ctx, width, height, phase, theme, sim);
   }
 
   // ── Vignette (wallpaper mode) ────────────────────────────────────────
@@ -252,12 +258,16 @@ function drawBoundary(ctx: CanvasRenderingContext2D, sim: Simulation, phase: num
   const pulse = 0.5 + Math.sin(phase * 0.5) * 0.5;
 
   if (mode === 'wrap') {
-    // Subtle dashed line indicating wrap-around
-    ctx.strokeStyle = `rgba(120, 140, 180, ${0.08 + pulse * 0.03})`;
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([8, 6]);
-    ctx.strokeRect(0, 0, w, h);
-    ctx.setLineDash([]);
+    // Endless mode: subtle ambient corner halos instead of a restrictive bounding box
+    const haloRadius = 40;
+    ctx.strokeStyle = `rgba(120, 140, 180, ${0.03 + pulse * 0.02})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, haloRadius, 0, Math.PI / 2);
+    ctx.arc(w, 0, haloRadius, Math.PI / 2, Math.PI);
+    ctx.arc(w, h, haloRadius, Math.PI, Math.PI * 1.5);
+    ctx.arc(0, h, haloRadius, Math.PI * 1.5, Math.PI * 2);
+    ctx.stroke();
   } else if (mode === 'reflect') {
     // Glowing solid border
     ctx.shadowBlur = 8;
@@ -291,9 +301,10 @@ function drawBoundary(ctx: CanvasRenderingContext2D, sim: Simulation, phase: num
 function drawBiome(ctx: CanvasRenderingContext2D, b: Biome, phase: number) {
   const info = BIOME_INFO[b.type];
   const pulse = 0.5 + Math.sin(phase * 0.3 + b.id) * 0.1;
+  const radius = Math.max(1, b.radius || 1);
 
   // Soft radial fill
-  const g = ctx.createRadialGradient(b.cx, b.cy, 0, b.cx, b.cy, b.radius);
+  const g = ctx.createRadialGradient(b.cx, b.cy, 0, b.cx, b.cy, radius);
   g.addColorStop(0, hsl(b.hue, 35, 18, 0.35 + pulse * 0.05));
   g.addColorStop(0.7, hsl(b.hue, 30, 15, 0.15));
   g.addColorStop(1, hsl(b.hue, 30, 12, 0));
@@ -718,6 +729,28 @@ function drawParticles(ctx: CanvasRenderingContext2D, particles: Particle[]) {
       ctx.beginPath();
       ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
       ctx.fill();
+    } else if (p.type === 'leap') {
+      ctx.fillStyle = `hsla(48, 100%, 70%, ${alpha * 0.95})`;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = `hsla(48, 100%, 60%, ${alpha * 0.8})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, size * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else if (p.type === 'speciation') {
+      ctx.fillStyle = `hsla(${p.hue}, 95%, 75%, ${alpha * 0.95})`;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = `hsla(${p.hue}, 95%, 70%, ${alpha * 0.8})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, size * 1.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = `hsla(${p.hue}, 100%, 85%, ${alpha * 0.6})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x - p.vx * 4, p.y - p.vy * 4);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
     } else if (p.type === 'birth') {
       ctx.fillStyle = `hsla(${p.hue}, 80%, 65%, ${alpha * 0.8})`;
       ctx.beginPath();
@@ -733,12 +766,16 @@ function drawParticles(ctx: CanvasRenderingContext2D, particles: Particle[]) {
   ctx.restore();
 }
 
-function drawOrganism(ctx: CanvasRenderingContext2D, org: Organism, showSense: boolean, selected: boolean, phase: number, theme: WallpaperTheme | null = null) {
-  const { size, sides, hue: rawHue, diet, intelligence } = org.genome;
+function drawOrganism(ctx: CanvasRenderingContext2D, org: Organism, showSense: boolean, selected: boolean, phase: number, theme: WallpaperTheme | null = null, pop = 0, wallpaperMode = false) {
+  const { size, sides, hue: rawHue, diet, intelligence, aggression, metabolism } = org.genome;
   const hue = theme ? tintHue(rawHue, theme) : rawHue;
   const isCarnivore = diet >= 0.5;
   const effectiveIntel = Math.min(1, intelligence + org.knowledgeBoost);
   const glowMult = theme ? theme.glowIntensity : 1;
+
+  // Adaptive Glow LOD: disable expensive shadowBlur on secondary organisms in dense wallpaper mode
+  const isImportant = selected || (org.leapTimer && org.leapTimer > 0) || (org.speciationTimer && org.speciationTimer > 0) || effectiveIntel > 0.6 || org.colonyRole === 'leader';
+  const useGlow = !wallpaperMode || pop <= 100 || isImportant;
 
   if (showSense) {
     const sg = ctx.createRadialGradient(org.x, org.y, 0, org.x, org.y, org.genome.senseRadius);
@@ -756,33 +793,96 @@ function drawOrganism(ctx: CanvasRenderingContext2D, org: Organism, showSense: b
     ctx.stroke();
   }
 
+  // 1. Saturation mapped directly to aggression (passive = soft pastel, aggressive = vivid intense saturation)
+  const sat = Math.round(35 + aggression * 60);
+
+  // 2. Lightness mapped directly to energy & metabolism
   const energyRatio = Math.max(0, Math.min(1, org.energy / 150));
-  const lightness = 30 + energyRatio * 22 + effectiveIntel * 12;
-  const sat = 25 + effectiveIntel * 15;
+  const lightness = Math.round(25 + energyRatio * 25 + (1 / Math.max(0.5, metabolism)) * 10);
 
-  // Body glow
-  const glowSize = size + 4 + effectiveIntel * 6;
-  const gg = ctx.createRadialGradient(org.x, org.y, 0, org.x, org.y, glowSize);
-  gg.addColorStop(0, hsl(hue, sat, lightness, (0.35 + effectiveIntel * 0.2) * glowMult));
-  gg.addColorStop(1, hsl(hue, sat, lightness, 0));
-  ctx.fillStyle = gg;
-  ctx.beginPath();
-  ctx.arc(org.x, org.y, glowSize, 0, Math.PI * 2);
-  ctx.fill();
+  // Body glow (rendered when useGlow is active)
+  if (useGlow) {
+    const glowSize = size + 4 + effectiveIntel * 8;
+    const gg = ctx.createRadialGradient(org.x, org.y, 0, org.x, org.y, glowSize);
+    gg.addColorStop(0, hsl(hue, sat, lightness, (0.35 + effectiveIntel * 0.25) * glowMult));
+    gg.addColorStop(1, hsl(hue, sat, lightness, 0));
+    ctx.fillStyle = gg;
+    ctx.beginPath();
+    ctx.arc(org.x, org.y, glowSize, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
-  // Body
-  ctx.shadowBlur = (6 + effectiveIntel * 8) * glowMult;
-  ctx.shadowColor = hsl(hue, sat, lightness, (0.6 + effectiveIntel * 0.2) * glowMult);
+  // 3. Evolution Leap Radiant Golden Ring
+  if (org.leapTimer && org.leapTimer > 0) {
+    const leapAlpha = (org.leapTimer / 180) * 0.8;
+    const leapR = size + 6 + Math.sin(phase * 4 + org.id) * 3;
+    ctx.strokeStyle = `hsla(48, 100%, 65%, ${leapAlpha})`;
+    ctx.lineWidth = 2.5;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = `hsla(48, 100%, 65%, ${leapAlpha})`;
+    ctx.beginPath();
+    ctx.arc(org.x, org.y, leapR, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // 4. Speciation Origin Nova Ring
+  if (org.speciationTimer && org.speciationTimer > 0) {
+    const specAlpha = (org.speciationTimer / 180) * 0.85;
+    const specR = size + 8 + (180 - org.speciationTimer) * 0.15;
+    ctx.strokeStyle = `hsla(190, 95%, 70%, ${specAlpha})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(org.x, org.y, specR, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = `hsla(310, 95%, 70%, ${specAlpha * 0.7})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(org.x, org.y, specR + 3, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Body polygon rendering
+  if (useGlow) {
+    ctx.shadowBlur = (6 + effectiveIntel * 8) * glowMult;
+    ctx.shadowColor = hsl(hue, sat, lightness, (0.6 + effectiveIntel * 0.2) * glowMult);
+  }
   drawPolygon(ctx, org.x, org.y, size, sides, org.angle);
   ctx.fillStyle = hsl(hue, sat, lightness, 0.88);
   ctx.fill();
   ctx.shadowBlur = 0;
 
-  ctx.strokeStyle = hsl(hue, sat, Math.min(72, lightness + 22), 0.85);
-  ctx.lineWidth = 1.3;
-  ctx.stroke();
+  // 5. Diet visual distinction: Carnivore double outline & vertex teeth spikes vs. Herbivore smooth membrane
+  if (isCarnivore) {
+    // Red/Crimson double outer stroke
+    ctx.strokeStyle = `hsla(0, 90%, 60%, 0.85)`;
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
 
-  // Intelligence inner pattern
+    ctx.strokeStyle = hsl(hue, sat, Math.min(85, lightness + 25), 0.9);
+    ctx.lineWidth = 1;
+    drawPolygon(ctx, org.x, org.y, size * 0.82, sides, org.angle);
+    ctx.stroke();
+
+    // Corner tooth spikes
+    ctx.fillStyle = 'rgba(255, 80, 80, 0.9)';
+    for (let i = 0; i < sides; i++) {
+      const a = org.angle + (i * Math.PI * 2) / sides;
+      const sx = org.x + Math.cos(a) * (size + 2.5);
+      const sy = org.y + Math.sin(a) * (size + 2.5);
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else {
+    // Herbivore smooth rounded single membrane stroke
+    ctx.strokeStyle = hsl(hue, sat, Math.min(75, lightness + 20), 0.85);
+    ctx.lineWidth = 1.3;
+    ctx.stroke();
+  }
+
+  // 6. Intelligence inner neural core pattern
   if (effectiveIntel >= 0.4) {
     ctx.strokeStyle = `rgba(255, 255, 255, ${0.15 + effectiveIntel * 0.3})`;
     ctx.lineWidth = 0.9;
@@ -790,7 +890,7 @@ function drawOrganism(ctx: CanvasRenderingContext2D, org: Organism, showSense: b
     ctx.stroke();
   }
   if (effectiveIntel >= 0.7) {
-    ctx.fillStyle = `rgba(255, 255, 255, ${0.1 + effectiveIntel * 0.15})`;
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.15 + effectiveIntel * 0.2})`;
     ctx.beginPath();
     ctx.arc(org.x, org.y, size * 0.22, 0, Math.PI * 2);
     ctx.fill();
@@ -803,17 +903,6 @@ function drawOrganism(ctx: CanvasRenderingContext2D, org: Organism, showSense: b
   ctx.moveTo(org.x, org.y);
   ctx.lineTo(org.x + Math.cos(org.angle) * size, org.y + Math.sin(org.angle) * size);
   ctx.stroke();
-
-  // Carnivore marker
-  if (isCarnivore) {
-    ctx.shadowBlur = 4;
-    ctx.shadowColor = 'rgba(255, 80, 80, 0.6)';
-    ctx.fillStyle = 'rgba(255, 100, 100, 0.9)';
-    ctx.beginPath();
-    ctx.arc(org.x, org.y, 1.8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-  }
 
   // Carrying material indicator
   if (org.carrying > 0) {
@@ -898,6 +987,36 @@ function drawOrganism(ctx: CanvasRenderingContext2D, org: Organism, showSense: b
     ctx.stroke();
     ctx.setLineDash([]);
   }
+
+  // Hibernation mode indicator
+  if (org.hibernating) {
+    ctx.strokeStyle = `rgba(100, 160, 240, 0.6)`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(org.x, org.y, size + 4, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Bioluminescence pulse aura
+  if (org.genome.bioluminescence > 0.3) {
+    const bioPulse = 0.3 + Math.sin(phase * 3 + org.id) * 0.3;
+    ctx.strokeStyle = `hsla(${hue}, 90%, 75%, ${org.genome.bioluminescence * bioPulse * glowMult})`;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.arc(org.x, org.y, size + 7 + bioPulse * 4, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Echolocation sonar pulse ring
+  if (org.genome.echolocation > 0.3 && org.sonarPulse > 0) {
+    const sonarR = size + 6 + (org.sonarPulse / (Math.PI * 2)) * 30;
+    const sonarAlpha = Math.max(0, 0.4 * (1 - org.sonarPulse / (Math.PI * 2)));
+    ctx.strokeStyle = `rgba(140, 220, 255, ${sonarAlpha})`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(org.x, org.y, sonarR, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 }
 
 function drawChemicalField(ctx: CanvasRenderingContext2D, sim: Simulation, _phase: number) {
@@ -930,9 +1049,10 @@ function drawChemicalField(ctx: CanvasRenderingContext2D, sim: Simulation, _phas
 function drawBiofilm(ctx: CanvasRenderingContext2D, bf: BiofilmCluster, phase: number) {
   const pulse = 0.5 + Math.sin(phase * 1.5 + bf.id) * 0.5;
   const alpha = 0.08 + pulse * 0.05;
+  const radius = Math.max(1, bf.radius || 1);
 
   // Biofilm blob — organic, irregular shape
-  const grad = ctx.createRadialGradient(bf.cx, bf.cy, 0, bf.cx, bf.cy, bf.radius);
+  const grad = ctx.createRadialGradient(bf.cx, bf.cy, 0, bf.cx, bf.cy, radius);
   grad.addColorStop(0, `rgba(100, 200, 150, ${alpha + 0.05})`);
   grad.addColorStop(0.7, `rgba(80, 180, 130, ${alpha * 0.5})`);
   grad.addColorStop(1, `rgba(60, 160, 110, 0)`);
@@ -968,64 +1088,90 @@ function drawAmbientParticles(
   height: number,
   phase: number,
   theme: WallpaperTheme | null = null,
+  sim?: Simulation,
 ) {
   if (!theme || theme.particleStyle === 'none') return;
-  const count = Math.min(AMBIENT_PARTICLES.length, theme.particleCount);
+
+  const mood = sim?.ecosystemMood;
+  const popHealth = mood ? mood.populationHealth : 0.5;
+  const stress = mood ? mood.stressLevel : 0;
+  const eventPulse = mood ? mood.eventPulse : 0;
+  const domHue = mood ? mood.dominantHue : (theme.particleHueRange[0] + theme.particleHueRange[1]) / 2;
+
+  // Atmosphere shockwave pulse on speciation or evolution leap events
+  if (eventPulse > 0.05) {
+    ctx.save();
+    const r = (1 - eventPulse) * Math.max(width, height) * 0.8;
+    ctx.strokeStyle = `hsla(${domHue}, 85%, 65%, ${eventPulse * 0.35})`;
+    ctx.lineWidth = 4 + eventPulse * 8;
+    ctx.beginPath();
+    ctx.arc(width / 2, height / 2, Math.max(10, r), 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Particle count scales with population health (0.6x .. 1.4x)
+  const count = Math.min(
+    AMBIENT_PARTICLES.length,
+    Math.round(theme.particleCount * (0.6 + popHealth * 0.8)),
+  );
   const [hueMin, hueMax] = theme.particleHueRange;
   const [sizeMin, sizeMax] = theme.particleSizeRange;
   const hueRange = hueMax - hueMin;
   const sizeRange = sizeMax - sizeMin;
 
+  // Speed multiplier increases during high environmental stress
+  const speedMult = 1 + stress * 0.8;
+
   for (let i = 0; i < count; i++) {
     const p = AMBIENT_PARTICLES[i];
-    const hue = hueMin + (p.hue / 360) * hueRange;
-    const pSize = sizeMin + p.size * sizeRange;
+    const baseHue = hueMin + (p.hue / 360) * hueRange;
+    // Blend 30% toward dominant species hue
+    const finalHue = baseHue * 0.7 + domHue * 0.3;
+    const pSize = (sizeMin + p.size * sizeRange) * (1 + eventPulse * 0.4);
     let x: number, y: number, alpha: number;
+
+    const effPhase = phase * speedMult;
 
     switch (theme.particleStyle) {
       case 'bubbles': {
-        // Rising from bottom, slight horizontal sway
         const cycleLen = 8;
-        const cyclePos = ((phase * p.speed * 0.15 + p.phaseOffset) % cycleLen) / cycleLen;
-        x = p.baseX * width + Math.sin(phase * p.speed + p.phaseOffset) * 25;
+        const cyclePos = ((effPhase * p.speed * 0.15 + p.phaseOffset) % cycleLen) / cycleLen;
+        x = p.baseX * width + Math.sin(effPhase * p.speed + p.phaseOffset) * 25;
         y = height - cyclePos * height * 1.1;
-        alpha = 0.12 + Math.sin(phase * 0.5 + p.phaseOffset) * 0.06;
+        alpha = (0.12 + Math.sin(effPhase * 0.5 + p.phaseOffset) * 0.06) * (1 + eventPulse * 0.5);
         if (y < -10) continue;
         break;
       }
       case 'motes': {
-        // Slow horizontal drift with gentle bob
-        x = (p.baseX * width + phase * p.speed * 8) % width;
-        y = p.baseY * height + Math.sin(phase * p.speed * 0.5 + p.phaseOffset) * 15;
-        alpha = 0.06 + Math.sin(phase * 0.3 + p.phaseOffset) * 0.04;
+        x = (p.baseX * width + effPhase * p.speed * 8) % width;
+        y = p.baseY * height + Math.sin(effPhase * p.speed * 0.5 + p.phaseOffset) * 15;
+        alpha = (0.06 + Math.sin(effPhase * 0.3 + p.phaseOffset) * 0.04) * (1 + eventPulse * 0.5);
         break;
       }
       case 'sparks': {
-        // Pulsing in place, brief bright flashes
-        x = p.baseX * width + Math.sin(phase * p.speed * 0.3 + p.phaseOffset) * 10;
-        y = p.baseY * height + Math.cos(phase * p.speed * 0.4 + p.phaseOffset) * 8;
-        const pulse = Math.sin(phase * 1.5 + p.phaseOffset);
-        alpha = pulse > 0.7 ? (pulse - 0.7) * 1.5 : 0;
+        x = p.baseX * width + Math.sin(effPhase * p.speed * 0.3 + p.phaseOffset) * 10;
+        y = p.baseY * height + Math.cos(effPhase * p.speed * 0.4 + p.phaseOffset) * 8;
+        const pulse = Math.sin(effPhase * 1.5 + p.phaseOffset);
+        alpha = (pulse > 0.7 ? (pulse - 0.7) * 1.5 : 0) * (1 + eventPulse * 0.5);
         if (alpha < 0.01) continue;
         break;
       }
       case 'snow': {
-        // Falling slowly with horizontal drift
         const cycleLen = 10;
-        const cyclePos = ((phase * p.speed * 0.12 + p.phaseOffset) % cycleLen) / cycleLen;
-        x = p.baseX * width + Math.sin(phase * 0.4 + p.phaseOffset) * 20;
+        const cyclePos = ((effPhase * p.speed * 0.12 + p.phaseOffset) % cycleLen) / cycleLen;
+        x = p.baseX * width + Math.sin(effPhase * 0.4 + p.phaseOffset) * 20;
         y = cyclePos * height * 1.1 - 10;
-        alpha = 0.1 + Math.sin(phase * 0.5 + p.phaseOffset) * 0.05;
+        alpha = (0.1 + Math.sin(effPhase * 0.5 + p.phaseOffset) * 0.05) * (1 + eventPulse * 0.5);
         if (y > height + 10) continue;
         break;
       }
       case 'pollen': {
-        // Drifting upward slowly, warm tones
         const cycleLen = 12;
-        const cyclePos = ((phase * p.speed * 0.08 + p.phaseOffset) % cycleLen) / cycleLen;
-        x = p.baseX * width + Math.sin(phase * 0.3 + p.phaseOffset) * 18;
+        const cyclePos = ((effPhase * p.speed * 0.08 + p.phaseOffset) % cycleLen) / cycleLen;
+        x = p.baseX * width + Math.sin(effPhase * 0.3 + p.phaseOffset) * 18;
         y = height - cyclePos * height * 1.1;
-        alpha = 0.08 + Math.sin(phase * 0.4 + p.phaseOffset) * 0.04;
+        alpha = (0.08 + Math.sin(effPhase * 0.4 + p.phaseOffset) * 0.04) * (1 + eventPulse * 0.5);
         if (y < -10) continue;
         break;
       }
@@ -1033,7 +1179,7 @@ function drawAmbientParticles(
         continue;
     }
 
-    ctx.fillStyle = `hsla(${hue}, 50%, 70%, ${alpha})`;
+    ctx.fillStyle = `hsla(${finalHue}, 55%, 70%, ${alpha})`;
     ctx.beginPath();
     ctx.arc(x, y, pSize, 0, Math.PI * 2);
     ctx.fill();

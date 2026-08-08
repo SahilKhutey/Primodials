@@ -29,6 +29,11 @@ export class ChemicalField {
 
   resize(width: number, height: number): void {
     if (width === this.width && height === this.height) return;
+    const oldCols = this.cols;
+    const oldRows = this.rows;
+    const oldAtt = this.attractant;
+    const oldRep = this.repellent;
+
     this.width = width;
     this.height = height;
     this.cols = Math.ceil(width / this.cellSize);
@@ -38,6 +43,16 @@ export class ChemicalField {
     this.repellent = new Float32Array(n);
     this.nextAttractant = new Float32Array(n);
     this.nextRepellent = new Float32Array(n);
+
+    // Copy existing grid cell values so chemical memory & trails persist across expansions
+    for (let cy = 0; cy < oldRows; cy++) {
+      for (let cx = 0; cx < oldCols; cx++) {
+        const oldIdx = cy * oldCols + cx;
+        const newIdx = cy * this.cols + cx;
+        this.attractant[newIdx] = oldAtt[oldIdx];
+        this.repellent[newIdx] = oldRep[oldIdx];
+      }
+    }
   }
 
   private idx(cx: number, cy: number): number {

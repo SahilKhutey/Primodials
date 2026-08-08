@@ -36,6 +36,11 @@ export type Genome = {
   dominance: number;      // drive to assert social rank within colony hierarchy
   nicheBreadth: number;   // ecological niche width — broad niches tolerate more biomes, narrow ones specialize
   competitiveness: number; // tendency to compete for resources rather than share
+  // Advanced adaptive behavior attributes
+  camouflage: number;      // reduces predator detection radius by blending with biome background
+  bioluminescence: number; // emits luminous pulses that attract mates & coordinate kin
+  echolocation: number;    // emits sonar pulses detecting hidden prey/obstacles in dark biomes
+  hibernation: number;     // enters low-power metabolic state when energy drops below critical threshold
 };
 
 export type Organism = {
@@ -76,6 +81,11 @@ export type Organism = {
   // Social hierarchy state
   socialRank: 'alpha' | 'beta' | 'omega' | 'solitary'; // rank within colony hierarchy
   clusterId: number | null; // which spatial cluster this organism belongs to
+  // Adaptive behavior state
+  hibernating: boolean;    // in low-energy metabolic hibernation
+  sonarPulse: number;     // active sonar pulse animation phase
+  leapTimer: number;       // ticks remaining for evolution leap glow pulse
+  speciationTimer: number; // ticks remaining for new species founder origin ring
 };
 
 export type Food = {
@@ -89,6 +99,8 @@ export type StructureType = 'nest' | 'cache' | 'watchtower' | 'wall'
   | 'monument' | 'sanctuary' | 'observatory' | 'bridge';
 
 export type StructureTier = 'basic' | 'advanced';
+
+export type GodTool = 'select' | 'food' | 'organism' | 'meteor' | 'volcano' | 'sanctuary';
 
 export const BASIC_STRUCTURES: StructureType[] = ['nest', 'cache', 'watchtower', 'wall'];
 export const ADVANCED_STRUCTURES: StructureType[] = ['monument', 'sanctuary', 'observatory', 'bridge'];
@@ -133,7 +145,7 @@ export type Remains = {
   hue: number;
 };
 
-export type ParticleType = 'birth' | 'death' | 'kill' | 'sparkle';
+export type ParticleType = 'birth' | 'death' | 'kill' | 'sparkle' | 'leap' | 'speciation';
 
 export type Particle = {
   x: number;
@@ -145,6 +157,13 @@ export type Particle = {
   hue: number;
   type: ParticleType;
   size: number;
+};
+
+export type EcosystemMood = {
+  populationHealth: number; // 0..1 ratio of population vs maxPopulation
+  dominantHue: number; // 0..360 mean hue of dominant species
+  stressLevel: number; // 0..1 ratio of infected/threatened organisms
+  eventPulse: number; // 0..1 decaying pulse from speciation/evolution leaps
 };
 
 export type KnowledgeNode = {
@@ -314,18 +333,18 @@ export type SimSettings = {
 };
 
 export const DEFAULT_SETTINGS: SimSettings = {
-  worldWidth: 1200,
-  worldHeight: 800,
-  initialPopulation: 40,
-  initialFood: 120,
-  foodGrowthRate: 2,
+  worldWidth: 2800,
+  worldHeight: 1800,
+  initialPopulation: 75,
+  initialFood: 220,
+  foodGrowthRate: 3,
   mutationRate: 0.15,
   reproductionThreshold: 140,
-  maxPopulation: 400,
-  maxFood: 250,
+  maxPopulation: 500,
+  maxFood: 400,
   colonyFormation: true,
   sexualReproduction: true,
-  colonyRadius: 80,
+  colonyRadius: 90,
   structureBuilding: true,
   biomes: true,
   knowledgeNodes: true,

@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   Play, Pause, RotateCcw, Sparkles, Eye, FlaskConical, Beaker,
-  Brain, Globe, Save, Maximize, Minimize, Camera, Palette, Gauge,
+  Brain, Globe, Save, Maximize, Minimize, Camera, Palette, Gauge, Settings, SlidersHorizontal, ChevronUp, ChevronDown,
 } from 'lucide-react';
 import type { Simulation } from '@/sim/simulation';
 import type { SimSettings } from '@/sim/types';
 import type { CinematicCamera } from '@/sim/cinematicCamera';
 import { THEMES, PACING_PRESETS, type PacingPreset } from '@/sim/themes';
+import { useWallpaperSettings, type QualityPreset } from '@/hooks/useWallpaperSettings';
 
 type Props = {
   sim: Simulation;
@@ -24,51 +25,45 @@ type Props = {
   onPacingChange: (p: PacingPreset) => void;
 };
 
-// Minimal floating dock for wallpaper mode — auto-hides after inactivity.
-// Slides up from the bottom when the mouse moves near the bottom edge.
+// Floating dock for wallpaper mode with persistent controls toggle
 export function WallpaperDock({
   sim, running, onToggleRun, onReset, settings, onToggleSetting,
   cinematic, onToggleFullscreen, isFullscreen,
   themeId, onThemeChange, pacing, onPacingChange,
 }: Props) {
-  const [visible, setVisible] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const [expanded, setExpanded] = useState(true);
   const [showThemes, setShowThemes] = useState(false);
   const [showPacing, setShowPacing] = useState(false);
-  const hideTimer = useRef<number | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
 
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      if (e.clientY > window.innerHeight - 120) {
-        setVisible(true);
-        setExpanded(true);
-        if (hideTimer.current) clearTimeout(hideTimer.current);
-        hideTimer.current = window.setTimeout(() => {
-          setExpanded(false);
-          setShowThemes(false);
-          setShowPacing(false);
-        }, 2500);
-        hideTimer.current = window.setTimeout(() => {
-          setVisible(false);
-        }, 4000);
-      } else if (e.clientY < window.innerHeight - 200) {
-        if (hideTimer.current) clearTimeout(hideTimer.current);
-        hideTimer.current = window.setTimeout(() => {
-          setVisible(false);
-        }, 500);
-      }
-    };
-    window.addEventListener('mousemove', onMove);
-    return () => window.removeEventListener('mousemove', onMove);
-  }, []);
+  const { wallpaperSettings, updateSetting } = useWallpaperSettings();
 
   return (
-    <div
-      className={`fixed bottom-0 left-1/2 z-30 -translate-x-1/2 transition-all duration-500 ${
-        visible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'
-      }`}
-    >
-      <div className={`mx-auto flex flex-col items-center gap-2 transition-all duration-300 ${expanded ? 'pb-4' : 'pb-2'}`}>
+    <div className="fixed bottom-3 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center">
+      {/* Floating Toggle Button (Always Visible) */}
+      {!visible && (
+        <button
+          onClick={() => setVisible(true)}
+          className="flex items-center gap-2 rounded-full border border-white/20 bg-neutral-950/80 px-4 py-2 text-xs font-semibold text-neutral-200 shadow-2xl backdrop-blur-xl transition hover:bg-neutral-900 active:scale-95"
+        >
+          <SlidersHorizontal size={14} className="text-cyan-400" />
+          <span>Wallpaper Controls</span>
+          <ChevronUp size={14} className="text-neutral-400" />
+        </button>
+      )}
+
+      {/* Main Control Panel Dock */}
+      {visible && (
+        <div className="mx-auto flex flex-col items-center gap-2 transition-all duration-300 pb-2">
+          {/* Hide button header */}
+          <button
+            onClick={() => setVisible(false)}
+            className="flex items-center gap-1 rounded-full bg-neutral-950/60 px-3 py-0.5 text-[10px] font-medium text-neutral-400 ring-1 ring-white/10 hover:text-neutral-200"
+          >
+            <span>Hide Panel</span>
+            <ChevronDown size={12} />
+          </button>
         {/* Main dock */}
         <div className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/70 px-3 py-2 shadow-2xl shadow-black/60 backdrop-blur-xl">
           {/* Run / Pause */}
@@ -111,7 +106,7 @@ export function WallpaperDock({
 
           {/* Theme picker */}
           <DockButton
-            onClick={() => { setShowThemes((s) => !s); setShowPacing(false); }}
+            onClick={() => { setShowThemes((s) => !s); setShowPacing(false); setShowSettings(false); }}
             active={showThemes}
             icon={<Palette size={16} />}
             label="Theme"
@@ -120,11 +115,20 @@ export function WallpaperDock({
 
           {/* Pacing */}
           <DockButton
-            onClick={() => { setShowPacing((s) => !s); setShowThemes(false); }}
+            onClick={() => { setShowPacing((s) => !s); setShowThemes(false); setShowSettings(false); }}
             active={showPacing}
             icon={<Gauge size={16} />}
             label="Pacing"
             activeClass="bg-teal-500/20 text-teal-300"
+          />
+
+          {/* Wallpaper Settings */}
+          <DockButton
+            onClick={() => { setShowSettings((s) => !s); setShowThemes(false); setShowPacing(false); }}
+            active={showSettings}
+            icon={<Settings size={16} />}
+            label="Settings"
+            activeClass="bg-purple-500/20 text-purple-300"
           />
 
           <Divider />
@@ -182,7 +186,7 @@ export function WallpaperDock({
         {showThemes && (
           <div className="mt-1 flex flex-col gap-1.5 rounded-2xl border border-white/10 bg-neutral-950/85 p-3 shadow-2xl shadow-black/60 backdrop-blur-xl">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Themes</div>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5">
               {THEMES.map((t) => (
                 <button
                   key={t.id}
@@ -224,7 +228,125 @@ export function WallpaperDock({
             </div>
           </div>
         )}
+
+        {/* Wallpaper Settings Panel */}
+        {showSettings && (
+          <div className="mt-1 flex w-80 flex-col gap-3 rounded-2xl border border-white/10 bg-neutral-950/90 p-4 shadow-2xl shadow-black/60 backdrop-blur-xl text-neutral-200">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">Wallpaper Customization</div>
+
+            {/* Max Population */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-neutral-400">Population Cap</span>
+                <span className="font-mono text-cyan-300">{wallpaperSettings.maxPopulation}</span>
+              </div>
+              <input
+                type="range"
+                min={50}
+                max={500}
+                step={25}
+                value={wallpaperSettings.maxPopulation}
+                onChange={(e) => updateSetting('maxPopulation', parseInt(e.target.value))}
+                className="w-full accent-cyan-400"
+              />
+            </div>
+
+            {/* Quality Preset */}
+            <div className="space-y-1">
+              <span className="text-xs text-neutral-400">Rendering Quality</span>
+              <div className="flex gap-1.5">
+                {(['low', 'medium', 'high'] as QualityPreset[]).map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => updateSetting('quality', q)}
+                    className={`flex-1 rounded-xl py-1.5 text-xs font-semibold capitalize transition ${
+                      wallpaperSettings.quality === q
+                        ? 'bg-purple-500/25 text-purple-300 ring-1 ring-purple-400/40'
+                        : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800'
+                    }`}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Mutation Rate */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-neutral-400">Mutation Rate</span>
+                <span className="font-mono text-cyan-300">{(wallpaperSettings.mutationRate * 100).toFixed(0)}%</span>
+              </div>
+              <input
+                type="range"
+                min={0.01}
+                max={0.5}
+                step={0.01}
+                value={wallpaperSettings.mutationRate}
+                onChange={(e) => updateSetting('mutationRate', parseFloat(e.target.value))}
+                className="w-full accent-cyan-400"
+              />
+            </div>
+
+            {/* Auto Pause */}
+            <div className="flex items-center justify-between pt-1 border-b border-white/10 pb-3">
+              <span className="text-xs text-neutral-400">Pause on Gaming / Background</span>
+              <button
+                onClick={() => updateSetting('autoPause', !wallpaperSettings.autoPause)}
+                className={`h-5 w-9 rounded-full transition relative ${
+                  wallpaperSettings.autoPause ? 'bg-emerald-500' : 'bg-neutral-800'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${
+                    wallpaperSettings.autoPause ? 'left-4' : 'left-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Read-Only Active Sim Systems Summary */}
+            <div className="space-y-1.5 pt-1">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">Active Simulation Systems</div>
+              <div className="grid grid-cols-2 gap-1 text-[10px]">
+                <div className="flex items-center justify-between rounded-lg bg-white/5 px-2 py-1">
+                  <span className="text-neutral-400">Biomes</span>
+                  <span className={settings.biomes ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>{settings.biomes ? 'ON' : 'OFF'}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white/5 px-2 py-1">
+                  <span className="text-neutral-400">Nodes</span>
+                  <span className={settings.knowledgeNodes ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>{settings.knowledgeNodes ? 'ON' : 'OFF'}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white/5 px-2 py-1">
+                  <span className="text-neutral-400">Structures</span>
+                  <span className={settings.structures ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>{settings.structures ? 'ON' : 'OFF'}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white/5 px-2 py-1">
+                  <span className="text-neutral-400">Colonies</span>
+                  <span className={settings.colonyFormation ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>{settings.colonyFormation ? 'ON' : 'OFF'}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white/5 px-2 py-1">
+                  <span className="text-neutral-400">Mating</span>
+                  <span className={settings.sexualReproduction ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>{settings.sexualReproduction ? 'ON' : 'OFF'}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white/5 px-2 py-1">
+                  <span className="text-neutral-400">Biology</span>
+                  <span className={settings.advancedBiology ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>{settings.advancedBiology ? 'ON' : 'OFF'}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white/5 px-2 py-1">
+                  <span className="text-neutral-400">Disease</span>
+                  <span className={settings.diseaseEvents ? 'text-amber-400 font-bold' : 'text-neutral-500'}>{settings.diseaseEvents ? 'ON' : 'OFF'}</span>
+                </div>
+                <div className="flex items-center justify-between rounded-lg bg-white/5 px-2 py-1">
+                  <span className="text-neutral-400">Social</span>
+                  <span className={settings.socialBehavior ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>{settings.socialBehavior ? 'ON' : 'OFF'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+      )}
     </div>
   );
 }

@@ -26,7 +26,10 @@ bool SDL3Renderer::Initialize(Window& window) {
         return false;
     }
 
+    // Quality: geometry-based line rendering for crisp thick lines
     SDL_SetRenderVSync(m_renderer, 1);
+    SDL_SetRenderScale(m_renderer, 1.0f, 1.0f);
+    SDL_SetHint(SDL_HINT_RENDER_LINE_METHOD, "3");  // geometry-based lines (SDL3)
     SHAPE_LOG_INFO("SDL3Renderer: Initialized successfully.");
     return true;
 }
@@ -60,58 +63,79 @@ void SDL3Renderer::Clear() {
 }
 
 void SDL3Renderer::DrawLine(const Math::Vector2f& start, const Math::Vector2f& end, const Math::Vector3f& color, f32 thickness) {
-    (void)thickness;
-    SDL_SetRenderDrawColorFloat(m_renderer, color.x, color.y, color.z, 1.0f);
-    // SDL3 handles thickness inherently or we simulate it. For now, basic line.
-    SDL_RenderLine(m_renderer, start.x, start.y, end.x, end.y);
+    if (thickness <= 1.0f) {
+        SDL_SetRenderDrawColorFloat(m_renderer, color.x, color.y, color.z, 1.0f);
+        SDL_RenderLine(m_renderer, start.x, start.y, end.x, end.y);
+        return;
+    }
+
+    // Build a thick line as a quad (2 triangles) offset perpendicular to the direction
+    const float dx = end.x - start.x;
+    const float dy = end.y - start.y;
+    const float len = std::sqrt(dx * dx + dy * dy);
+    if (len < 0.001f) return;
+
+    const float nx = (-dy / len) * (thickness * 0.5f);  // perpendicular offset
+    const float ny = ( dx / len) * (thickness * 0.5f);
+
+    SDL_Vertex verts[4];
+    verts[0].position = { start.x - nx, start.y - ny };
+    verts[1].position = { start.x + nx, start.y + ny };
+    verts[2].position = { end.x   + nx, end.y   + ny };
+    verts[3].position = { end.x   - nx, end.y   - ny };
+    for (auto& v : verts)
+        v.color = { color.x, color.y, color.z, 1.0f };
+
+    const int indices[6] = { 0, 1, 2,  0, 2, 3 };
+    SDL_RenderGeometry(m_renderer, nullptr, verts, 4, indices, 6);
 }
 
 void SDL3Renderer::DrawPolygon(const Math::Vector2f* vertices, usize vertexCount, const Math::Vector3f& color, bool filled) {
     if (vertexCount < 3) return;
-    SDL_SetRenderDrawColorFloat(m_renderer, color.x, color.y, color.z, 1.0f);
-    
+
     if (!filled) {
+        // Draw crisp thick outline edges using geometry-based thick lines (2px)
         for (usize i = 0; i < vertexCount; ++i) {
             usize next = (i + 1) % vertexCount;
-            SDL_RenderLine(m_renderer, vertices[i].x, vertices[i].y, vertices[next].x, vertices[next].y);
+            DrawLine(vertices[i], vertices[next], color, 2.0f);
         }
     } else {
-        // Simple fan triangulation for filled polygon
-        for (usize i = 1; i < vertexCount - 1; ++i) {
+        // Fan triangulation for filled polygon
+        for (usize i = 1; i + 1 < vertexCount; ++i) {
             SDL_Vertex v[3];
-            v[0].position = {vertices[0].x, vertices[0].y};
-            v[1].position = {vertices[i].x, vertices[i].y};
-            v[2].position = {vertices[i+1].x, vertices[i+1].y};
-            v[0].color = v[1].color = v[2].color = {color.x, color.y, color.z, 1.0f};
+            v[0].position = { vertices[0].x,   vertices[0].y };
+            v[1].position = { vertices[i].x,   vertices[i].y };
+            v[2].position = { vertices[i+1].x, vertices[i+1].y };
+            v[0].color = v[1].color = v[2].color = { color.x, color.y, color.z, 1.0f };
             SDL_RenderGeometry(m_renderer, nullptr, v, 3, nullptr, 0);
         }
     }
 }
 
 void SDL3Renderer::DrawCircle(const Math::Vector2f& center, f32 radius, const Math::Vector3f& color, bool filled) {
-    SDL_SetRenderDrawColorFloat(m_renderer, color.x, color.y, color.z, 1.0f);
-    
-    // Naive circle drawing
-    const int segments = 32;
+    // Adaptive segment count: more segments for larger circles — smooth at all sizes
+    // clamp between 24 (tiny nuclei) and 128 (large aura rings)
+    const int segments = static_cast<int>(std::clamp(2.0f * 3.14159265f * radius / 2.0f, 24.0f, 128.0f));
     const float step = (2.0f * 3.14159265f) / segments;
-    
+
     if (!filled) {
         for (int i = 0; i < segments; ++i) {
-            float a1 = i * step;
-            float a2 = (i + 1) * step;
-            SDL_RenderLine(m_renderer, 
-                           center.x + radius * cosf(a1), center.y + radius * sinf(a1),
-                           center.x + radius * cosf(a2), center.y + radius * sinf(a2));
+            const float a1 = i * step;
+            const float a2 = (i + 1) * step;
+            DrawLine(
+                { center.x + radius * cosf(a1), center.y + radius * sinf(a1) },
+                { center.x + radius * cosf(a2), center.y + radius * sinf(a2) },
+                color, 1.5f);
         }
     } else {
         for (int i = 0; i < segments; ++i) {
-            float a1 = i * step;
-            float a2 = (i + 1) * step;
+            const float a1 = i * step;
+            const float a2 = (i + 1) * step;
             SDL_Vertex v[3];
-            v[0].position = {center.x, center.y};
-            v[1].position = {center.x + radius * cosf(a1), center.y + radius * sinf(a1)};
-            v[2].position = {center.x + radius * cosf(a2), center.y + radius * sinf(a2)};
-            v[0].color = v[1].color = v[2].color = {color.x, color.y, color.z, 1.0f};
+            v[0].position = { center.x,                          center.y                          };
+            v[1].position = { center.x + radius * cosf(a1),      center.y + radius * sinf(a1)      };
+            v[2].position = { center.x + radius * cosf(a2),      center.y + radius * sinf(a2)      };
+            v[0].color = v[1].color = v[2].color = { color.x, color.y, color.z, 1.0f };
             SDL_RenderGeometry(m_renderer, nullptr, v, 3, nullptr, 0);
         }
     }

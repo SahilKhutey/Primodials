@@ -3,12 +3,17 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
-    "dev": "vite",
+    "dev": "set BROWSERSLIST_IGNORE_OLD_DATA=true&& vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "sim:benchmark": "npx tsx src/sim/simBenchmark.ts",
+    "wallpaper:dev": "electron .",
+    "wallpaper:build": "npm run build && electron-builder",
+    "wallpaper:pkg": "node packaging/wallpaper-engine/build.cjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

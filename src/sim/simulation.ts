@@ -16,6 +16,7 @@ import {
   type HistoryPoint,
   type Particle,
   type ParticleType,
+  type EcosystemMood,
   DEFAULT_SETTINGS,
   STRUCTURE_INFO,
   BIOME_INFO,
@@ -33,8 +34,9 @@ import {
   crossoverBrainForGenome,
   SPECIATION_THRESHOLD,
 } from './genetics';
-import { evalBrain, N_INPUTS, N_OUTPUTS, type Brain } from './brain';
+import { evalBrain, adaptBrainOnline, hiddenForIntel, N_INPUTS, N_OUTPUTS, type Brain } from './brain';
 import { ChemicalField } from './chemicalField';
+import { SpatialHashGrid } from './spatialHash';
 import {
   runAndTumble, quorumSense, updateBiofilms, trySporulation, tryHGT, applyHGT,
   type BiofilmCluster,
@@ -53,6 +55,8 @@ const BRIDGE_CONNECT_RANGE = 200;
 
 export class Simulation {
   rng: Rng;
+  spatialGrid = new SpatialHashGrid(100);
+  private nearbyScratch: Organism[] = [];
   settings: SimSettings;
   organisms: Organism[] = [];
   food: Food[] = [];
@@ -66,6 +70,7 @@ export class Simulation {
   chemicalField: ChemicalField | null = null;
   biofilms: BiofilmCluster[] = [];
   nextBiofilmId = 1;
+  ecosystemMood: EcosystemMood = { populationHealth: 0.5, dominantHue: 200, stressLevel: 0, eventPulse: 0 };
   stats: SimStats;
   tick = 0;
   history: HistoryPoint[] = [];
@@ -76,6 +81,7 @@ export class Simulation {
   nextStructureId = 1;
   nextRemainsId = 1;
   nextKnowledgeId = 1;
+  nextParticleId = 1;
 
   constructor(seed: number, settings: SimSettings = DEFAULT_SETTINGS) {
     this.rng = new Rng(seed);
@@ -127,6 +133,7 @@ export class Simulation {
     this.nextStructureId = 1;
     this.nextRemainsId = 1;
     this.nextKnowledgeId = 1;
+    this.nextParticleId = 1;
     this.nextBiofilmId = 1;
     this.stats = this.makeStats();
 
@@ -195,7 +202,7 @@ export class Simulation {
       angle: this.rng.range(0, Math.PI * 2),
       energy: 80, age: 0, generation,
       genome,
-      speciesId: this.assignSpecies(genome),
+      speciesId: this.assignSpecies(genome).id,
       alive: true,
       reproductionCooldown: 30,
       colonyId: null, colonyRole: 'solitary',
@@ -216,12 +223,160 @@ export class Simulation {
       symbiosisPartner: null,
       socialRank: 'solitary',
       clusterId: null,
+      hibernating: false,
+      sonarPulse: 0,
+      leapTimer: 0,
+      speciationTimer: 0,
     };
     this.organisms.push(org);
     if (org.genome.diet >= 0.5) this.stats.carnivores++;
     else this.stats.herbivores++;
     if (generation > this.stats.maxGeneration) this.stats.maxGeneration = generation;
     return org;
+  }
+
+  spawnFoodAt(x: number, y: number, energy = 40) {
+    const clampedX = Math.max(0, Math.min(this.settings.worldWidth, x));
+    const clampedY = Math.max(0, Math.min(this.settings.worldHeight, y));
+    this.food.push({ id: this.nextFoodId++, x: clampedX, y: clampedY, energy: Math.max(15, energy) });
+    if (this.chemicalField) {
+      this.chemicalField.deposit(clampedX, clampedY, 15, 0);
+    }
+  }
+
+  triggerMeteorStrike(x: number, y: number, radius = 100) {
+    const r2 = radius * radius;
+    // Destroy organisms in blast zone & turn them into particles/remains
+    for (const org of this.organisms) {
+      if (!org.alive) continue;
+      const dx = org.x - x;
+      const dy = org.y - y;
+      if (dx * dx + dy * dy <= r2) {
+        org.alive = false;
+        org.energy = 0;
+        this.stats.deaths++;
+        this.remains.push({
+          id: this.nextRemainsId++,
+          x: org.x,
+          y: org.y,
+          energy: 30,
+          age: 0,
+          hue: org.genome.hue,
+        });
+        this.particles.push({
+          x: org.x,
+          y: org.y,
+          vx: (org.x - x) * 0.1,
+          vy: (org.y - y) * 0.1,
+          life: 40,
+          maxLife: 40,
+          size: 6,
+          hue: 20,
+          type: 'kill',
+        });
+      }
+    }
+    // Vaporize food & clear structures in blast zone
+    this.food = this.food.filter((f) => {
+      const dx = f.x - x;
+      const dy = f.y - y;
+      return dx * dx + dy * dy > r2;
+    });
+    this.structures = this.structures.filter((s) => {
+      const dx = s.x - x;
+      const dy = s.y - y;
+      return dx * dx + dy * dy > r2;
+    });
+    // Create crater biome
+    this.spawnBiomeAt(x, y, 'volcanic', radius * 0.9);
+  }
+
+  spawnBiomeAt(cx: number, cy: number, type: Biome['type'], radius = 120) {
+    const info = BIOME_INFO[type];
+    this.biomes.push({
+      id: this.nextBiomeId++,
+      type,
+      cx: Math.max(0, Math.min(this.settings.worldWidth, cx)),
+      cy: Math.max(0, Math.min(this.settings.worldHeight, cy)),
+      radius,
+      foodRate: info.foodRate,
+      energyDrain: info.energyDrain,
+      speedMod: info.speedMod,
+      hue: info.hue,
+    });
+  }
+
+  spawnStructureAt(x: number, y: number, type: Structure['type']) {
+    const clampedX = Math.max(0, Math.min(this.settings.worldWidth, x));
+    const clampedY = Math.max(0, Math.min(this.settings.worldHeight, y));
+    this.structures.push({
+      id: this.nextStructureId++,
+      type,
+      x: clampedX,
+      y: clampedY,
+      speciesId: 0,
+      colonyId: null,
+      hp: 100,
+      maxHp: 100,
+      radius: 20,
+      hue: 200,
+      age: 0,
+      materials: 20,
+      tier: 'basic',
+      contributingColonies: [],
+    });
+  }
+
+  spawnOrganismGroupAt(x: number, y: number, count = 5) {
+    const parentGenome = randomGenome(this.rng);
+    const spId = this.assignSpecies(parentGenome);
+    for (let i = 0; i < count; i++) {
+      const g = mutateGenome(parentGenome, this.rng, 0.15);
+      const ox = Math.max(10, Math.min(this.settings.worldWidth - 10, x + (Math.random() - 0.5) * 40));
+      const oy = Math.max(10, Math.min(this.settings.worldHeight - 10, y + (Math.random() - 0.5) * 40));
+      const org: Organism = {
+        id: this.nextOrgId++,
+        x: ox,
+        y: oy,
+        vx: 0,
+        vy: 0,
+        angle: this.rng.range(0, Math.PI * 2),
+        energy: 100,
+        age: 0,
+        generation: 1,
+        genome: g,
+        speciesId: spId,
+        alive: true,
+        reproductionCooldown: 30,
+        colonyId: null,
+        colonyRole: 'solitary',
+        threatLevel: 0,
+        buildCooldown: 0,
+        carrying: 0,
+        knowledgeBoost: 0,
+        biomeId: 0,
+        brain: mutateBrainForGenome(g, null, 0.15, this.rng),
+        fitness: 0,
+        lastInputs: null,
+        lastOutputs: null,
+        tumbleTimer: this.rng.int(10, 40),
+        inBiofilm: false,
+        biofilmId: null,
+        sporeMode: false,
+        sporeTimer: 0,
+        infected: false,
+        infectionTimer: 0,
+        symbiosisPartner: null,
+        socialRank: 'solitary',
+        clusterId: null,
+        hibernating: false,
+        sonarPulse: 0,
+        leapTimer: 0,
+        speciationTimer: 0,
+      };
+      this.organisms.push(org);
+      this.stats.births++;
+    }
   }
 
   private spawnFood() {
@@ -247,6 +402,45 @@ export class Simulation {
     this.food.push({ id: this.nextFoodId++, x, y, energy: Math.max(15, energy) });
   }
 
+  biomeBlendAt(x: number, y: number): { foodRate: number; energyDrain: number; speedMod: number; primaryBiome?: Biome } {
+    let totalWeight = 0;
+    let foodRateSum = 0;
+    let energyDrainSum = 0;
+    let speedModSum = 0;
+    let primary: Biome | undefined = undefined;
+    let maxWeight = 0;
+
+    for (const b of this.biomes) {
+      const dx = x - b.cx;
+      const dy = y - b.cy;
+      const d = Math.hypot(dx, dy);
+      if (d < b.radius) {
+        const normDist = d / b.radius;
+        const w = (1 - normDist) * (1 - normDist); // smooth quadratic falloff
+        totalWeight += w;
+        foodRateSum += b.foodRate * w;
+        energyDrainSum += b.energyDrain * w;
+        speedModSum += b.speedMod * w;
+        if (w > maxWeight) {
+          maxWeight = w;
+          primary = b;
+        }
+      }
+    }
+
+    if (totalWeight === 0) {
+      return { foodRate: 1, energyDrain: 1, speedMod: 1, primaryBiome: undefined };
+    }
+
+    const norm = Math.min(1, totalWeight);
+    return {
+      foodRate: (foodRateSum / totalWeight) * norm + 1 * (1 - norm),
+      energyDrain: (energyDrainSum / totalWeight) * norm + 1 * (1 - norm),
+      speedMod: (speedModSum / totalWeight) * norm + 1 * (1 - norm),
+      primaryBiome: primary,
+    };
+  }
+
   private biomeAt(x: number, y: number): Biome | undefined {
     for (const b of this.biomes) {
       const dx = x - b.cx;
@@ -256,7 +450,7 @@ export class Simulation {
     return undefined;
   }
 
-  private assignSpecies(genome: Genome): number {
+  private assignSpecies(genome: Genome): { id: number; isNew: boolean } {
     let best: Species | null = null;
     let bestDist = Infinity;
     for (const sp of this.species) {
@@ -265,7 +459,7 @@ export class Simulation {
     }
     if (best && bestDist < SPECIATION_THRESHOLD) {
       best.count++;
-      return best.id;
+      return { id: best.id, isNew: false };
     }
     const sp: Species = {
       id: this.nextSpeciesId++, hue: genome.hue, count: 1,
@@ -275,11 +469,19 @@ export class Simulation {
       knowledgeDiscovered: 0, evolutionLeaps: 0,
     };
     this.species.push(sp);
-    return sp.id;
+    this.ecosystemMood.eventPulse = 1.0;
+    return { id: sp.id, isNew: true };
   }
 
   step() {
     this.tick++;
+    this.ecosystemMood.eventPulse *= 0.94;
+
+    // Populate Spatial Hash Grid for O(n) proximity queries
+    this.spatialGrid.clear(this.settings.worldWidth, this.settings.worldHeight);
+    for (let i = 0; i < this.organisms.length; i++) {
+      if (this.organisms[i].alive) this.spatialGrid.insert(this.organisms[i]);
+    }
 
     const foodToAdd = Math.min(this.settings.foodGrowthRate, this.settings.maxFood - this.food.length);
     for (let i = 0; i < foodToAdd; i++) this.spawnFood();
@@ -350,6 +552,9 @@ export class Simulation {
     // ── Endless generation: auto-spawn life when population drops ───────
     if (this.settings.endlessGeneration) {
       this.handleEndlessGeneration();
+    } else if (this.population === 0 && this.tick % 90 === 0) {
+      // Safety guard: if population drops to 0, seed life automatically so the world stays alive
+      this.seedLife(5);
     }
 
     // ── Disease events: periodic outbreaks ─────────────────────────────
@@ -408,21 +613,22 @@ export class Simulation {
 
   // ─── Particle system ─────────────────────────────────────────────────
   spawnParticle(x: number, y: number, type: ParticleType, hue: number) {
-    if (this.particles.length > 300) return;
-    const count = type === 'kill' ? 8 : type === 'death' ? 6 : type === 'birth' ? 5 : 4;
+    if (this.particles.length > 400) return;
+    const count = type === 'speciation' ? 16 : type === 'leap' ? 12 : type === 'kill' ? 8 : type === 'death' ? 6 : type === 'birth' ? 5 : 4;
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2 + this.rng.range(0, 0.5);
-      const speed = type === 'kill' ? this.rng.range(1.5, 3) : this.rng.range(0.5, 1.5);
+      const speed = type === 'speciation' ? this.rng.range(3, 5.5) : type === 'leap' ? this.rng.range(2.5, 4.5) : type === 'kill' ? this.rng.range(1.5, 3) : this.rng.range(0.5, 1.5);
+      const particleHue = type === 'leap' ? 48 : type === 'speciation' ? (i % 2 === 0 ? 190 : 310) : hue;
       this.particles.push({
         x,
         y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        life: type === 'kill' ? 40 : type === 'birth' ? 30 : 25,
-        maxLife: type === 'kill' ? 40 : type === 'birth' ? 30 : 25,
-        hue,
+        life: type === 'speciation' ? 55 : type === 'leap' ? 45 : type === 'kill' ? 40 : type === 'birth' ? 30 : 25,
+        maxLife: type === 'speciation' ? 55 : type === 'leap' ? 45 : type === 'kill' ? 40 : type === 'birth' ? 30 : 25,
+        hue: particleHue,
         type,
-        size: type === 'kill' ? 3 : 2,
+        size: type === 'speciation' || type === 'leap' ? 4 : type === 'kill' ? 3 : 2,
       });
     }
   }
@@ -509,8 +715,8 @@ export class Simulation {
       this.biomes.push({
         id: this.biomes.length,
         type,
-        cx: this.rng.range(this.settings.worldWidth * 0.6, this.settings.worldWidth),
-        cy: this.rng.range(this.settings.worldHeight * 0.6, this.settings.worldHeight),
+        cx: this.rng.range(100, this.settings.worldWidth - 100),
+        cy: this.rng.range(100, this.settings.worldHeight - 100),
         radius: this.rng.range(120, 220),
         foodRate: info.foodRate,
         energyDrain: info.energyDrain,
@@ -584,13 +790,13 @@ export class Simulation {
       org.infectionTimer--;
       // Infected organisms drain energy faster
       org.energy -= 0.15;
-      // Spread to nearby organisms
+      // Spread to nearby organisms (O(n) via spatial grid)
       if (this.rng.next() < 0.02) {
-        for (const other of this.organisms) {
+        this.spatialGrid.getNearby(org.x, org.y, 20, this.nearbyScratch);
+        for (let i = 0; i < this.nearbyScratch.length; i++) {
+          const other = this.nearbyScratch[i];
           if (other === org || !other.alive || other.infected) continue;
-          const dx = other.x - org.x;
-          const dy = other.y - org.y;
-          if (dx * dx + dy * dy < 400 && this.rng.next() > other.genome.diseaseResistance) {
+          if (this.rng.next() > other.genome.diseaseResistance) {
             other.infected = true;
             other.infectionTimer = 200;
           }
@@ -620,36 +826,32 @@ export class Simulation {
         this.chemicalField.depositRepellent(org.x, org.y, org.genome.toxicity * 0.2);
       }
 
-      // Parasitism: drain energy from nearby organisms
+      // Parasitism: drain energy from nearby organisms (O(n) via spatial grid)
       if (org.genome.parasitism > 0.3 && org.energy < 120) {
-        for (const other of this.organisms) {
+        this.spatialGrid.getNearby(org.x, org.y, 10, this.nearbyScratch);
+        for (let i = 0; i < this.nearbyScratch.length; i++) {
+          const other = this.nearbyScratch[i];
           if (other === org || !other.alive) continue;
           if (other.speciesId === org.speciesId) continue;
-          const dx = other.x - org.x;
-          const dy = other.y - org.y;
-          if (dx * dx + dy * dy < 100) {
-            const drain = Math.min(other.energy, org.genome.parasitism * 0.5);
-            other.energy -= drain;
-            org.energy += drain * 0.7; // parasite gets 70% of drained energy
-            this.stats.parasiticEvents++;
-            break;
-          }
+          const drain = Math.min(other.energy, org.genome.parasitism * 0.5);
+          other.energy -= drain;
+          org.energy += drain * 0.7; // parasite gets 70% of drained energy
+          this.stats.parasiticEvents++;
+          break;
         }
       }
 
-      // Symbiosis: form mutualistic pairs that benefit both organisms
+      // Symbiosis: form mutualistic pairs that benefit both organisms (O(n) via spatial grid)
       if (org.genome.symbiosis > 0.3 && org.symbiosisPartner === null) {
-        for (const other of this.organisms) {
+        this.spatialGrid.getNearby(org.x, org.y, 50, this.nearbyScratch);
+        for (let i = 0; i < this.nearbyScratch.length; i++) {
+          const other = this.nearbyScratch[i];
           if (other === org || !other.alive) continue;
           if (other.symbiosisPartner !== null) continue;
           if (other.genome.symbiosis < 0.3) continue;
-          const dx = other.x - org.x;
-          const dy = other.y - org.y;
-          if (dx * dx + dy * dy < 2500) {
-            org.symbiosisPartner = other.id;
-            other.symbiosisPartner = org.id;
-            break;
-          }
+          org.symbiosisPartner = other.id;
+          other.symbiosisPartner = org.id;
+          break;
         }
       }
       // Symbiosis benefit: both partners gain energy when close
@@ -684,45 +886,47 @@ export class Simulation {
       this.assignHierarchy();
     }
 
-    // ── Altruism: share energy with nearby same-species organisms in need
+    // ── Altruism: share energy with nearby same-species organisms in need (O(n) via spatial grid)
     for (const org of this.organisms) {
       if (!org.alive || org.sporeMode) continue;
       if (org.genome.altruism < 0.2 || org.energy < 80) continue;
 
-      for (const other of this.organisms) {
+      this.spatialGrid.getNearby(org.x, org.y, 30, this.nearbyScratch);
+      for (let i = 0; i < this.nearbyScratch.length; i++) {
+        const other = this.nearbyScratch[i];
         if (other === org || !other.alive) continue;
         if (other.speciesId !== org.speciesId) continue;
-        if (other.energy > 40) continue; // only help those in need
-        const dx = other.x - org.x;
-        const dy = other.y - org.y;
-        if (dx * dx + dy * dy < 900) {
-          const share = Math.min(org.energy - 60, 15) * org.genome.altruism;
-          if (share > 1) {
-            org.energy -= share;
-            other.energy += share;
-            this.stats.altruismEvents++;
-          }
+        if (other.energy > 45) continue; // only help those in need
+
+        // Preferentially help colony Alpha leaders
+        const alphaMultiplier = other.socialRank === 'alpha' ? 1.4 : 1.0;
+        const share = Math.min(org.energy - 60, 15) * org.genome.altruism * alphaMultiplier;
+        if (share > 1) {
+          org.energy -= share;
+          other.energy += share;
+          this.stats.altruismEvents++;
+          break;
         }
       }
     }
 
-    // ── Competition: organisms compete for food when resources are scarce
+    // ── Competition: organisms compete for food when resources are scarce (O(n) via spatial grid)
     for (const org of this.organisms) {
       if (!org.alive || org.sporeMode) continue;
       if (org.genome.competitiveness < 0.3) continue;
 
-      for (const other of this.organisms) {
+      this.spatialGrid.getNearby(org.x, org.y, 20, this.nearbyScratch);
+      for (let i = 0; i < this.nearbyScratch.length; i++) {
+        const other = this.nearbyScratch[i];
         if (other === org || !other.alive) continue;
         if (other.speciesId === org.speciesId) continue;
-        const dx = other.x - org.x;
-        const dy = other.y - org.y;
-        if (dx * dx + dy * dy < 400) {
-          // Competitive organisms push rivals away and steal a small energy tax
-          if (org.genome.competitiveness > other.genome.competitiveness) {
-            const tax = (org.genome.competitiveness - other.genome.competitiveness) * 0.3;
-            other.energy -= tax;
-            this.stats.competitionEvents++;
-          }
+        if (other.socialRank === 'alpha') continue; // Alphas are immune to energy tax
+
+        // Competitive organisms push rivals away and steal a small energy tax
+        if (org.genome.competitiveness > other.genome.competitiveness) {
+          const tax = (org.genome.competitiveness - other.genome.competitiveness) * 0.3;
+          other.energy -= tax;
+          this.stats.competitionEvents++;
         }
       }
     }
@@ -863,9 +1067,12 @@ export class Simulation {
     if (org.reproductionCooldown > 0) org.reproductionCooldown--;
     if (org.buildCooldown > 0) org.buildCooldown--;
     if (org.knowledgeBoost > 0) org.knowledgeBoost -= 0.001;
+    if (org.leapTimer > 0) org.leapTimer--;
+    if (org.speciationTimer > 0) org.speciationTimer--;
 
-    // Track biome
-    const biome = this.biomeAt(org.x, org.y);
+    // Track biome & smooth blended environmental modifiers
+    const blend = this.biomeBlendAt(org.x, org.y);
+    const biome = blend.primaryBiome;
     org.biomeId = biome?.id ?? 0;
 
     const intel = Math.min(1, org.genome.intelligence + org.knowledgeBoost);
@@ -945,8 +1152,23 @@ export class Simulation {
 
     org.threatLevel = 0;
 
-    // Watchtower bonus + Observatory bonus
-    let effectiveSense = sense;
+    // ─── Adaptive Hibernation Behavior ──────────────────────────────
+    if (org.genome.hibernation > 0.3) {
+      if (org.energy < 30) org.hibernating = true;
+      else if (org.energy > 60) org.hibernating = false;
+    } else {
+      org.hibernating = false;
+    }
+
+    // ─── Adaptive Echolocation Sonar Boost ───────────────────────────
+    let echolocationBonus = 1;
+    if (org.genome.echolocation > 0.3) {
+      org.sonarPulse = (org.sonarPulse + 0.05) % (Math.PI * 2);
+      echolocationBonus = 1 + org.genome.echolocation * 0.6;
+    }
+
+    // Watchtower bonus + Observatory bonus + Echolocation
+    let effectiveSense = sense * echolocationBonus;
     if (org.colonyId !== null) {
       let hasObservatory = false;
       for (const s of this.structures) {
@@ -968,56 +1190,66 @@ export class Simulation {
     // The brain produces behavioral modifiers that tune instinct-driven
     // decisions. Smarter creatures get better at surviving through evolution.
     let brainSpeedMod = 1;
+    let brainAggressionMod = 0;
+    let brainCoopMod = 0;
     if (org.brain) {
       const inputs = this.collectBrainInputs(org, intel, effectiveSense, isCarnivore);
       const outputs = new Float32Array(N_OUTPUTS);
       evalBrain(org.brain, inputs, outputs);
       org.lastInputs = inputs;
       org.lastOutputs = outputs;
-      brainSpeedMod = 0.5 + outputs[2] * 0.5 + 0.5; // 0.5..1.5
+      brainSpeedMod = Math.max(0.4, Math.min(1.6, 1 + outputs[2] * 0.5));
+      brainAggressionMod = outputs[3] * 0.4;
+      brainCoopMod = outputs[4] * 0.4;
     }
 
-    // Threat detection (intel >= 0.2)
-    if (intel >= 0.2) {
-      let threatX = 0, threatY = 0, threatFound = false;
-      const fleeSense = effectiveSense * (0.6 + intel * 0.6);
+    const effectiveAggression = Math.max(0, Math.min(1, org.genome.aggression + brainAggressionMod));
+    const effectiveCooperation = Math.max(0, Math.min(1, org.genome.cooperation + brainCoopMod));
 
-      for (const other of this.organisms) {
-        if (other === org || !other.alive) continue;
-        if (other.genome.diet < 0.5 && other.genome.aggression < 0.6) continue;
-        if (other.genome.size < org.genome.size * 0.9) continue;
-        if (org.colonyId !== null && org.colonyId === other.colonyId) continue;
+    // Threat detection & flee reflex (decoupled from intel gate — all organisms have basic flee reflex)
+    let threatX = 0, threatY = 0, threatFound = false;
+    const fleeSense = effectiveSense * (0.4 + intel * 0.8);
 
-        const dx = other.x - org.x;
-        const dy = other.y - org.y;
-        const d2 = dx * dx + dy * dy;
-        const fleeRange = fleeSense * fleeSense;
+    this.spatialGrid.getNearby(org.x, org.y, fleeSense, this.nearbyScratch);
+    for (let i = 0; i < this.nearbyScratch.length; i++) {
+      const other = this.nearbyScratch[i];
+      if (other === org || !other.alive) continue;
+      if (other.genome.diet < 0.5 && other.genome.aggression < 0.6) continue;
+      if (other.genome.size < org.genome.size * 0.9) continue;
+      if (org.colonyId !== null && org.colonyId === other.colonyId) continue;
 
-        if (d2 < fleeRange) {
-          org.threatLevel = Math.max(org.threatLevel, 1 - d2 / fleeRange);
-          threatX -= dx / (Math.sqrt(d2) + 1);
-          threatY -= dy / (Math.sqrt(d2) + 1);
-          threatFound = true;
-        }
-      }
+      const dx = other.x - org.x;
+      const dy = other.y - org.y;
+      const d2 = dx * dx + dy * dy;
+      const camouflagedRange = fleeSense * (1 - org.genome.camouflage * 0.5);
+      const fleeRange = camouflagedRange * camouflagedRange;
 
-      if (threatFound && (org.energy > 40 || intel >= 0.5)) {
-        const fleeAngle = Math.atan2(threatY, threatX);
-        const juke = intel >= 0.6 ? this.rng.range(-0.5, 0.5) : 0;
-        org.angle = fleeAngle + juke;
-        this.moveOrganism(org, biome, brainSpeedMod);
-        this.applyEnergyCost(org, biome);
-        return;
+      if (d2 < fleeRange) {
+        org.threatLevel = Math.max(org.threatLevel, 1 - d2 / fleeRange);
+        threatX -= dx / (Math.sqrt(d2) + 1);
+        threatY -= dy / (Math.sqrt(d2) + 1);
+        threatFound = true;
       }
     }
 
-    // Hunting
-    if (isCarnivore || org.genome.aggression > 0.6) {
+    if (threatFound && (org.energy > 30 || intel >= 0.4)) {
+      const fleeAngle = Math.atan2(threatY, threatX);
+      const juke = intel >= 0.6 ? this.rng.range(-0.5, 0.5) : 0;
+      org.angle = fleeAngle + juke;
+      this.moveOrganism(org, biome, brainSpeedMod, blend.speedMod);
+      this.applyEnergyCost(org, biome, blend.energyDrain);
+      return;
+    }
+
+    // Hunting (O(n) via spatial grid)
+    if (isCarnivore || effectiveAggression > 0.5) {
       let bestPreyScore = -Infinity;
 
-      for (const other of this.organisms) {
+      this.spatialGrid.getNearby(org.x, org.y, effectiveSense, this.nearbyScratch);
+      for (let i = 0; i < this.nearbyScratch.length; i++) {
+        const other = this.nearbyScratch[i];
         if (other === org || !other.alive) continue;
-        if (org.colonyId !== null && org.colonyId === other.colonyId && org.genome.cooperation > 0.5) continue;
+        if (org.colonyId !== null && org.colonyId === other.colonyId && effectiveCooperation > 0.4) continue;
         if (other.genome.size > org.genome.size * 1.15) continue;
 
         // Sanctuary protection: skip prey inside a sanctuary
@@ -1056,6 +1288,9 @@ export class Simulation {
           other.alive = false;
           this.stats.kills++;
           this.stats.deaths++;
+          if (org.brain && org.lastInputs && org.lastOutputs) {
+            adaptBrainOnline(org.brain, org.lastInputs, org.lastOutputs, 0.8);
+          }
           this.spawnParticle(other.x, other.y, 'kill', other.genome.hue);
           if (other.genome.diet >= 0.5) this.stats.carnivores--;
           else this.stats.herbivores--;
@@ -1098,6 +1333,9 @@ export class Simulation {
         if (d2 < (org.genome.size + 4) * (org.genome.size + 4)) {
           org.energy += f.energy;
           f.energy = 0;
+          if (org.brain && org.lastInputs && org.lastOutputs) {
+            adaptBrainOnline(org.brain, org.lastInputs, org.lastOutputs, 0.4);
+          }
         }
       }
     }
@@ -1200,7 +1438,7 @@ export class Simulation {
     }
 
     // Colony cohesion
-    if (org.colonyId !== null && org.colonyRole === 'member' && org.genome.cooperation > 0.5) {
+    if (org.colonyId !== null && org.colonyRole === 'member' && effectiveCooperation > 0.4) {
       const colony = this.colonies.find((c) => c.id === org.colonyId);
       if (colony && targetX === null) { targetX = colony.centerX; targetY = colony.centerY; }
     }
@@ -1228,8 +1466,8 @@ export class Simulation {
       }
     }
 
-    this.moveOrganism(org, biome, brainSpeedMod);
-    this.applyEnergyCost(org, biome);
+    this.moveOrganism(org, biome, brainSpeedMod, blend.speedMod);
+    this.applyEnergyCost(org, biome, blend.energyDrain);
 
     // Death from old age / starvation leaves remains
     if (!org.alive && org.energy <= 0) {
@@ -1301,6 +1539,14 @@ export class Simulation {
       inputs[12] = nearestThreatX / len;
       inputs[13] = nearestThreatY / len;
     }
+    // [14] cooperation / effectiveCooperation
+    inputs[14] = Math.max(0, Math.min(1, org.genome.cooperation + (org.lastOutputs ? org.lastOutputs[4] * 0.4 : 0)));
+    // [15] altruism
+    inputs[15] = org.genome.altruism;
+    // [16] socialRank scalar (alpha=1.0, beta=0.6, omega=0.3, solitary=0.0)
+    inputs[16] = org.socialRank === 'alpha' ? 1.0 : org.socialRank === 'beta' ? 0.6 : org.socialRank === 'omega' ? 0.3 : 0.0;
+    // [17] local density / cluster indicator
+    inputs[17] = org.clusterId !== null ? 0.8 : 0.2;
     return inputs;
   }
 
@@ -1311,8 +1557,8 @@ export class Simulation {
     return a + diff * t;
   }
 
-  private moveOrganism(org: Organism, biome: Biome | undefined, speedMod = 1) {
-    const speed = org.genome.speed * (biome ? biome.speedMod : 1) * speedMod;
+  private moveOrganism(org: Organism, biome: Biome | undefined, speedMod = 1, blendSpeed = 1) {
+    const speed = org.genome.speed * blendSpeed * speedMod;
 
     if (org.genome.diet >= 0.5 || org.genome.aggression > 0.6) {
       for (const s of this.structures) {
@@ -1359,14 +1605,15 @@ export class Simulation {
     }
   }
 
-  private applyEnergyCost(org: Organism, biome: Biome | undefined) {
+  private applyEnergyCost(org: Organism, biome: Biome | undefined, blendDrain = 1) {
+    const intelCost = (org.genome.intelligence * 0.02 + hiddenForIntel(org.genome.intelligence) * 0.003) * org.genome.metabolism;
     let cost =
-      (org.genome.size * 0.01 + org.genome.speed * 0.04 + org.genome.senseRadius * 0.002) *
+      (org.genome.size * 0.01 + org.genome.speed * 0.04 + org.genome.senseRadius * 0.002 + intelCost) *
       org.genome.metabolism;
 
     // Biome energy drain, mitigated by adaptability
-    if (biome) {
-      const drainPenalty = Math.max(0, biome.energyDrain - 1);
+    if (blendDrain !== 1) {
+      const drainPenalty = Math.max(0, blendDrain - 1);
       cost *= 1 + drainPenalty * (1 - org.genome.adaptability);
     }
 
@@ -1565,15 +1812,16 @@ export class Simulation {
 
       let bestMate: Organism | null = null;
       let bestDist = Infinity;
-      for (const b of this.organisms) {
+      this.spatialGrid.getNearby(a.x, a.y, a.genome.senseRadius * 0.5, this.nearbyScratch);
+      for (let i = 0; i < this.nearbyScratch.length; i++) {
+        const b = this.nearbyScratch[i];
         if (b === a || !b.alive || b.reproductionCooldown > 0) continue;
         if (b.speciesId !== a.speciesId) continue;
         if (b.energy < this.settings.reproductionThreshold * 0.5) continue;
         const dx = b.x - a.x;
         const dy = b.y - a.y;
         const d2 = dx * dx + dy * dy;
-        const mateRange = (a.genome.senseRadius * 0.5) ** 2;
-        if (d2 < mateRange && d2 < bestDist) { bestDist = d2; bestMate = b; }
+        if (d2 < bestDist) { bestDist = d2; bestMate = b; }
       }
 
       if (bestMate) {
@@ -1596,7 +1844,8 @@ export class Simulation {
     parent.energy /= 2;
     parent.reproductionCooldown = 60;
     const childGenome = mutateGenome(parent.genome, this.settings.mutationRate, this.rng);
-    if (hadEvolutionLeap(parent.genome, childGenome)) {
+    const isLeap = hadEvolutionLeap(parent.genome, childGenome);
+    if (isLeap) {
       this.stats.evolutionLeaps++;
       const sp = this.species.find((s) => s.id === parent.speciesId);
       if (sp) sp.evolutionLeaps++;
@@ -1604,8 +1853,9 @@ export class Simulation {
     const childBrain = this.settings.neuralBrains
       ? mutateBrainForGenome(childGenome, parent.brain, this.settings.mutationRate, this.rng)
       : null;
+    const spRes = this.assignSpecies(childGenome);
     const child: Organism = {
-      id: this.nextId,
+      id: this.nextId++,
       x: parent.x + this.rng.range(-10, 10),
       y: parent.y + this.rng.range(-10, 10),
       vx: 0, vy: 0,
@@ -1613,7 +1863,7 @@ export class Simulation {
       energy: parent.energy, age: 0,
       generation: parent.generation + 1,
       genome: childGenome,
-      speciesId: this.assignSpecies(childGenome),
+      speciesId: spRes.id,
       alive: true, reproductionCooldown: 30,
       colonyId: null, colonyRole: 'solitary',
       threatLevel: 0, buildCooldown: 0,
@@ -1632,10 +1882,16 @@ export class Simulation {
       symbiosisPartner: null,
       socialRank: 'solitary',
       clusterId: null,
+      hibernating: false,
+      sonarPulse: 0,
+      leapTimer: isLeap ? 180 : 0,
+      speciationTimer: spRes.isNew ? 180 : 0,
     };
     this.stats.births++;
     this.stats.asexualReproductions++;
     this.spawnParticle(child.x, child.y, 'birth', childGenome.hue);
+    if (isLeap) this.spawnParticle(child.x, child.y, 'leap', childGenome.hue);
+    if (spRes.isNew) this.spawnParticle(child.x, child.y, 'speciation', childGenome.hue);
     return child;
   }
 
@@ -1655,7 +1911,8 @@ export class Simulation {
       buildSkill: (parentA.genome.buildSkill + parentB.genome.buildSkill) / 2,
     };
     childGenome = mutateGenome(childGenome, this.settings.mutationRate, this.rng);
-    if (hadEvolutionLeap(parentAvg, childGenome)) {
+    const isLeap = hadEvolutionLeap(parentAvg, childGenome);
+    if (isLeap) {
       this.stats.evolutionLeaps++;
       const sp = this.species.find((s) => s.id === parentA.speciesId);
       if (sp) sp.evolutionLeaps++;
@@ -1667,6 +1924,7 @@ export class Simulation {
 
     const midX = (parentA.x + parentB.x) / 2;
     const midY = (parentA.y + parentB.y) / 2;
+    const spRes = this.assignSpecies(childGenome);
     const child: Organism = {
       id: this.nextId++,
       x: midX + this.rng.range(-10, 10),
@@ -1676,7 +1934,7 @@ export class Simulation {
       energy: 60, age: 0,
       generation: Math.max(parentA.generation, parentB.generation) + 1,
       genome: childGenome,
-      speciesId: this.assignSpecies(childGenome),
+      speciesId: spRes.id,
       alive: true, reproductionCooldown: 30,
       colonyId: null, colonyRole: 'solitary',
       threatLevel: 0, buildCooldown: 0,
@@ -1695,10 +1953,16 @@ export class Simulation {
       symbiosisPartner: null,
       socialRank: 'solitary',
       clusterId: null,
+      hibernating: false,
+      sonarPulse: 0,
+      leapTimer: isLeap ? 180 : 0,
+      speciationTimer: spRes.isNew ? 180 : 0,
     };
     this.stats.births++;
     this.stats.sexualReproductions++;
-    this.spawnParticle(child.x, child.y, 'birth', child.genome.hue);
+    this.spawnParticle(child.x, child.y, 'birth', childGenome.hue);
+    if (isLeap) this.spawnParticle(child.x, child.y, 'leap', childGenome.hue);
+    if (spRes.isNew) this.spawnParticle(child.x, child.y, 'speciation', childGenome.hue);
     return child;
   }
 
@@ -1903,6 +2167,22 @@ export class Simulation {
     this.stats.avgPhotosynthesis = n > 0 ? totalPhoto / n : 0;
     this.stats.avgSymbiosis = n > 0 ? totalSymb / n : 0;
     this.stats.avgToxicity = n > 0 ? totalTox / n : 0;
+
+    // Ecosystem Mood calculation
+    const popHealth = Math.min(1, n / Math.max(1, this.settings.maxPopulation));
+    let domHue = 200;
+    if (dominant && dominant.representative) {
+      domHue = dominant.representative.hue;
+    }
+    let threatenedCount = 0;
+    for (const org of this.organisms) {
+      if (org.threatLevel > 0.3) threatenedCount++;
+    }
+    const stress = Math.min(1, (infectedCount * 1.5 + threatenedCount) / Math.max(1, n));
+
+    this.ecosystemMood.populationHealth = popHealth;
+    this.ecosystemMood.dominantHue = domHue;
+    this.ecosystemMood.stressLevel = stress;
 
     // Social & ecological stats
     let totalCluster = 0, totalAltruism = 0, totalDominance = 0;
