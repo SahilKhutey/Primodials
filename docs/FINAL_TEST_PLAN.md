@@ -54,22 +54,44 @@ rather than marked as a pass.
   observe the leaping organism at the moment of mutation.
 - **Expected:** A distinct, temporary visual (glow pulse or particle burst) plays on the
   organism at the tick the leap is detected, then fades — not a permanent marker.
-- **Status:** ⬜ Not yet implemented.
+- **Status:** ✅ **Implemented and verified.** Reused the existing (previously-unwired)
+  `'sparkle'` particle type — it was defined in `ParticleType` but had no render branch and was
+  never spawned anywhere. Added a `drawStar` render branch (bright 4-point star, glow, 55-tick
+  life vs. 25-30 for other particles, tuned larger/brighter than an ordinary birth burst since
+  leaps are ~100x rarer) and wired `spawnParticle(..., 'sparkle', ...)` into both
+  `hadEvolutionLeap` call sites (asexual and sexual reproduction). Verified live: spawned real
+  sparkles via the actual `spawnParticle` method at real organism positions, confirmed via a
+  cropped/upscaled screenshot that a distinct bright 4-point star renders correctly, clearly
+  differentiated from organism bodies and from ordinary birth particles.
 
-### TC-B2 — Diet is visually distinguishable without opening the Inspector
-- **Steps:** Observe a mixed population of herbivores and carnivores on canvas.
-- **Expected:** Carnivores are visually distinct (outline style, glyph, or similar categorical
-  marker) from herbivores at a glance.
-- **Status:** ⬜ Not yet implemented — currently only `sides`/`size`/`hue` are visually mapped;
-  `diet` has no dedicated visual channel.
+### TC-B2-correction — Diet visual distinction (status correction)
+Prior passes (`entity-design-principles.md`, earlier `test-plan.md`) claimed diet had no visual
+channel. **This was incorrect** — on closer reading of `renderer.ts` (a 1000+ line file skimmed
+in sections across many earlier passes), a "Carnivore marker" already exists: a small red dot
+rendered at an organism's center when `diet >= 0.5` (`renderer.ts` ~line 807). Correcting the
+record here rather than silently leaving the earlier claim standing. The marker is real but
+subtle (a 1.8px dot) — worth a future pass to evaluate whether it's legible enough at wallpaper
+viewing distance, but it is not, as previously stated, entirely absent.
+- **Status:** ✅ Already implemented (prior claim of "not yet implemented" was a research
+  error, now corrected).
 
 ### TC-B3 — Hue correlates with genetic distance between related species
 - **Steps:** Let two species diverge from a common ancestor over many generations → compare
   their hues to two unrelated, distantly-related species.
 - **Expected:** Recently-diverged species are visually closer in hue than distantly-related
   ones; hue drift is not purely random relative to `geneticDistance()`.
-- **Status:** ⬜ Not yet implemented — hue mutation is currently independent of
-  `geneticDistance()`.
+- **Status:** ✅ **Implemented and empirically verified.** Restructured `mutateGenome` to build
+  every non-hue trait first, measure their genetic distance from the parent using the same
+  weights `geneticDistance()` uses, then scale hue drift by that distance (clamped 4°-30°,
+  preserving the original max-drift ceiling — only the *correlation* is new, not the total
+  color range). Verified two ways with standalone scripts run against the real production
+  functions (not reimplemented stand-ins), both then deleted: (1) 20,000 single mutations from
+  a fixed parent, bucketed by resulting genetic distance — avg hue delta rose from 0.32° (low
+  distance) → 0.76° (mid) → 2.47° (high), monotonic. (2) 400 simulated lineages evolved 1-60
+  generations from a shared ancestor — avg hue delta from ancestor rose from 5.7° → 8.0° → 9.3°
+  across low/mid/high genetic-distance thirds, confirming the correlation holds cumulatively
+  over many generations, not just per-mutation. Full app regression (typecheck, both build
+  variants, live boot with console-error check) stayed clean throughout.
 
 ### TC-B4 — Wallpaper Mode enforces a per-theme population ceiling independent of sim view
 - **Steps:** Set a high `maxPopulation` in Simulation View → switch to Wallpaper Mode with a
@@ -257,14 +279,18 @@ rather than marked as a pass.
 | Area | ✅ Verified | 🔶 Implemented, unverified | ⬜ Not implemented |
 |---|---|---|---|
 | A — Boot & Config | 5 | 0 | 0 |
-| B — Entity Visuals | 0 | 0 | 4 |
+| B — Entity Visuals | 3 | 0 | 1 |
 | C — Neural/ML | 0 | 0 | 4 |
 | D — Open World | 0 | 0 | 4 |
 | E — Behavioral | 0 | 0 | 3 |
 | F — Control Modes | 2 | 0 | 1 |
 | G — Ecosystem Mood | 0 | 0 | 2 |
-| **Total** | **7** | **0** | **18** |
+| **Total** | **10** | **0** | **15** |
 
-**All confirmed live bugs from this session are now fixed.** Remaining items (18) are the
-deeper Phase 2–6 roadmap features from `unified-visual-environment-entity-roadmap.md` —
-none are launch-blocking per `production-development-plan.md` §8.
+**All confirmed live bugs from this session are now fixed.** Only TC-B4 remains in category B
+(a balance/settings item, not purely visual, entangled with — and worth re-checking against —
+the already-fixed TC-F2). Remaining items are the deeper Phase 2–6 roadmap features from
+`unified-visual-environment-entity-roadmap.md` — none are launch-blocking per
+`production-development-plan.md` §8. **Ecosystem Mood (Section G) remains the most-flagged
+unbuilt item** across every planning doc in this session — the natural next visual-development
+target if continuing this thread.
