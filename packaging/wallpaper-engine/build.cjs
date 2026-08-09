@@ -1,13 +1,19 @@
 const fs = require('fs');
 const path = require('path');
 
-const distDir = path.join(__dirname, '../../dist');
+const wallpaperDistDir = path.join(__dirname, '../../dist-wallpaper');
+const standardDistDir = path.join(__dirname, '../../dist');
+
+// Prefer dedicated dist-wallpaper build if present, fallback to standard dist
+const distDir = fs.existsSync(wallpaperDistDir) ? wallpaperDistDir : standardDistDir;
 const targetDir = path.join(__dirname, '../../dist-wallpaper-engine');
 
 if (!fs.existsSync(distDir)) {
-  console.error('Error: dist/ directory not found. Please run "npm run build" first.');
+  console.error('Error: neither dist-wallpaper/ nor dist/ found. Please run "npm run build:wallpaper" first.');
   process.exit(1);
 }
+
+console.log(`Packaging Wallpaper Engine artifact from ${path.basename(distDir)}...`);
 
 fs.rmSync(targetDir, { recursive: true, force: true });
 fs.mkdirSync(targetDir, { recursive: true });

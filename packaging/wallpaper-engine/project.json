@@ -1,5 +1,5 @@
 {
-  "title": "Polygonal Primordials",
+  "title": "Primordials — Living Wallpaper",
   "description": "Living digital ecosystem wallpaper. Watch polygonal organisms eat, mutate, form colonies, and evolve in real time.",
   "type": "web",
   "file": "index.html",
@@ -10,6 +10,49 @@
         "text": "Scheme Color",
         "type": "color",
         "value": "0.04 0.09 0.16"
+      },
+      "theme": {
+        "text": "Ecosystem Theme",
+        "type": "combo",
+        "value": "deep-sea",
+        "options": [
+          { "label": "Deep Sea", "value": "deep-sea" },
+          { "label": "Coral Reef", "value": "coral-reef" },
+          { "label": "Aurora", "value": "aurora" },
+          { "label": "Microorganisms", "value": "microorganisms" },
+          { "label": "Forest Floor", "value": "forest-floor" },
+          { "label": "Crystal Cave", "value": "crystal-cave" }
+        ]
+      },
+      "pacing": {
+        "text": "Simulation Pacing",
+        "type": "combo",
+        "value": "peaceful",
+        "options": [
+          { "label": "Peaceful (Slow / Serene)", "value": "peaceful" },
+          { "label": "Lively (Balanced)", "value": "lively" },
+          { "label": "Dynamic (Fast Evolution)", "value": "dynamic" }
+        ]
+      },
+      "chemicalField": {
+        "text": "Chemical Field Gradients",
+        "type": "bool",
+        "value": true
+      },
+      "microbialBehavior": {
+        "text": "Microbial & Bacterial Behaviors",
+        "type": "bool",
+        "value": true
+      },
+      "neuralBrains": {
+        "text": "Evolved Neural Brains",
+        "type": "bool",
+        "value": true
+      },
+      "worldExpansion": {
+        "text": "Dynamic World Expansion",
+        "type": "bool",
+        "value": true
       }
     }
   }

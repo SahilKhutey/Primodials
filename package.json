@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "build:wallpaper": "vite build --mode wallpaper --outDir dist-wallpaper",
+    "package:wallpaper": "npm run build:wallpaper && node packaging/wallpaper-engine/build.cjs",
     "preview:wallpaper": "vite preview --outDir dist-wallpaper",
     "lint": "eslint .",
     "preview": "vite preview",
