@@ -21,6 +21,7 @@ import { THEMES, getTheme, DEFAULT_THEME_ID, PACING_PRESETS, type WallpaperTheme
 import { EcosystemDiary } from '@/sim/diary';
 import { DiaryPanel } from '@/components/DiaryPanel';
 import { BookOpen } from 'lucide-react';
+import { installWallpaperEngineBridge } from '@/sim/wallpaperEngineBridge';
 
 function App() {
   const simRef = useRef(new Simulation(Date.now()));
@@ -84,6 +85,19 @@ function App() {
     setPacing(nextPacing);
     applyThemeAndPacing(themeId, nextPacing);
   };
+
+  // Only relevant for the Workshop build (WALLPAPER_ONLY) — a normal build
+  // running in an ordinary browser tab is never queried by Wallpaper Engine,
+  // so installing this there would just be dead weight, not a bug either way.
+  useEffect(() => {
+    if (!WALLPAPER_ONLY) return;
+    installWallpaperEngineBridge({
+      onThemeChange: handleThemeChange,
+      onPacingChange: handlePacingChange,
+      onToggleSetting: handleToggleSetting,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Re-render UI panels ~4x/sec to reflect sim state
   useEffect(() => {
@@ -240,9 +254,20 @@ function App() {
       symbiosisPartner: o.symbiosisPartner ?? null,
       socialRank: (o.socialRank as 'alpha' | 'beta' | 'omega' | 'solitary') ?? 'solitary',
       clusterId: o.clusterId ?? null,
+      hibernating: o.hibernating ?? false,
+      sonarPulse: o.sonarPulse ?? 0,
+      leapTimer: o.leapTimer ?? 0,
+      speciationTimer: o.speciationTimer ?? 0,
     }));
-    sim.species = snap.species.map((s: Species & { generations: number; avgIntelligence: number; rank: number; totalKills: number; structuresBuilt: number; civilizationLevel: number; knowledgeDiscovered: number; evolutionLeaps: number }) => ({
+    sim.species = snap.species.map((s) => ({
       ...s,
+      representative: {
+        ...s.representative,
+        camouflage: s.representative.camouflage ?? 0,
+        bioluminescence: s.representative.bioluminescence ?? 0,
+        echolocation: s.representative.echolocation ?? 0,
+        hibernation: s.representative.hibernation ?? 0,
+      },
       avgIntelligence: s.avgIntelligence ?? 0,
       rank: s.rank ?? 0,
       totalKills: s.totalKills ?? 0,

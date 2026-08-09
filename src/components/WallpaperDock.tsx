@@ -332,7 +332,7 @@ export function WallpaperDock({
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-white/5 px-2 py-1">
                   <span className="text-neutral-400">Structures</span>
-                  <span className={settings.structures ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>{settings.structures ? 'ON' : 'OFF'}</span>
+                  <span className={settings.structureBuilding ? 'text-emerald-400 font-bold' : 'text-neutral-500'}>{settings.structureBuilding ? 'ON' : 'OFF'}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-white/5 px-2 py-1">
                   <span className="text-neutral-400">Colonies</span>

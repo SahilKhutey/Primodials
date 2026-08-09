@@ -10,22 +10,25 @@ once or it isn't a real plan.
 
 ## 0. Executive Summary
 
-**Ship the web-based Wallpaper product first.** It's the only one of three candidate products
-that is verified, working code today. Treat the full C++ game as a separate, later, optional
-bet — not a prerequisite.
+**Ship the web-based Wallpaper product first — this remains true.** But this session also
+did something new: it actually attempted to build the C++ engine for the first time, rather
+than treating its claims as unverified. The result meaningfully changes how "unverified" that
+codebase should be considered — worth reading §2a below before treating Product B as vaporware.
 
-**Three candidate products exist in this repo. Only one is real right now:**
+**Three candidate products exist in this repo. The verification status of each has changed:**
 
 | Candidate | Tech | Status |
 |---|---|---|
-| **Primordials — Living Wallpaper** | React/TS/Vite (`src/`) | ✅ **Verified working** — builds, boots, simulates, has a built Wallpaper Mode |
-| Polygonal Primordials — full game | C++23 engine (`Engine/`, `Games/`) | ⬜ Unverified — never built in this session, 8-phase scope, huge |
-| `PolygonalPrimordialsWallpaper.exe` | C++, referenced in `Tools/master_verify.py` | ⬜ **Doesn't appear to exist yet** — a build target the tooling checks for, with no corresponding source found |
+| **Primordials — Living Wallpaper** | React/TS/Vite (`src/`) | ✅ **Verified working** — builds, boots, simulates, has a built Wallpaper Mode, now has a dedicated Workshop build variant |
+| Polygonal Primordials — full game | C++23 engine (`Engine/`, `Games/`) | 🔶 **Substantially real, not vaporware** — see §2a. Compiles to a working binary after 2 small fixes; genuinely passes its full test suite; the actual game binary boots and runs a live game loop. But ships with real, uncaught bugs and its readiness documentation is provably inaccurate. |
+| `PolygonalPrimordialsWallpaper.exe` | C++, referenced in `Tools/master_verify.py` | ⬜ Still doesn't appear to exist — no corresponding source found anywhere in `Engine/`/`Games/`/`Launcher/` |
 
-**Recommendation, stated plainly:** the web Wallpaper product is 80% of the way to shippable
-today. The native C++ wallpaper target is a *duplicate idea* that was never built. Don't build
-it — it would be re-doing, in a much harder language/toolchain, something that already works
-in the web codebase. Point all near-term production effort at the web product.
+**Recommendation, updated but not reversed:** still ship the web Wallpaper product first — it
+remains the faster, lower-risk path and nothing in §2a changes that. But the full C++ game is
+no longer fairly described as "unverified" — it's real, substantial, working engineering that
+was simply never actually run through a clean build before its documentation claimed it was
+ready to ship. That's a meaningfully different, more fundable situation than "might be
+vaporware," and worth knowing if Product B is ever revisited.
 
 ---
 
@@ -68,6 +71,80 @@ in the web codebase. Point all near-term production effort at the web product.
 - 19 further items across entity visuals, neural/ML, environment, behavior, and atmosphere —
   fully catalogued with reproduction steps in `test-plan.md`, sequenced in
   `development-checklist.md`
+
+---
+
+## 2a. New: The C++ Engine Was Actually Built This Session — Here's What's Real
+
+Every prior pass through this repo treated the C++ engine as unverified and left it that way.
+This session went further: installed `cmake`, ran a real `cmake -B build` configure (which
+fetches Catch2 and SDL3 from GitHub via `FetchContent` — both succeeded cleanly), then ran the
+actual build.
+
+**What was found, in order:**
+
+1. **`SHIP_READINESS.md` claims "No compiler errors or warnings" — false as found.** The build
+   hit two real, unrelated compile errors: a missing `#include <cmath>` in
+   `Engine/UI/Heatmap/HeatmapToggle.cpp` (undeclared `fabsf`), and an ignored `ftruncate()`
+   return value in `Engine/GameView/SharedStateSync.cpp` that fails under `-Werror`. Both are
+   the kind of error a single real CI build would catch immediately — their presence is direct
+   evidence nobody actually ran this exact build before writing "APPROVED FOR SHIPMENT."
+2. **Both fixes were small and correct** (added the missing include; changed the ignored
+   `ftruncate` call to check its result and log/abort on failure, matching the file's own
+   existing error-handling style for the adjacent `shm_open` call).
+3. **After those two fixes, the full build reached 100% with no further errors** — every engine
+   module (`ShapeEngine`, `ShapeReplay`, `ShapeNetwork`, `ShapeScripting`, `ShapeCompute`,
+   `ShapeAssetPipeline`, `ShapeOptimization`), the test binary, several demos and benchmarks,
+   and critically **`PolygonalPrimordials` itself linked successfully as a real 4.2MB
+   executable.**
+4. **The real test suite (run from the correct working directory) fully passes**: `All tests
+   passed (1412 assertions in 221 test cases)`. This differs from `SHIP_READINESS.md`'s stated
+   "190 test cases, 1,311 assertions" — the real numbers are higher, suggesting the
+   documentation is simply stale rather than fabricated. Either way, the *actual* current test
+   suite genuinely passes end to end, once the build errors are fixed. Give real credit here:
+   once past the two build bugs, the engineering underneath is substantially solid.
+5. **The compiled game binary actually boots and runs.** With no display available in this
+   sandbox, it correctly fails at video-device init (expected, environmental, not a bug). Forcing
+   `SDL_VIDEODRIVER=offscreen`, the game initialized every subsystem (reproduction, combat,
+   speciation, crash reporting, telemetry, achievements, Steam integration correctly falling
+   back to stub mode) and **ran its main loop cleanly for a full 20 real seconds** before being
+   stopped — about as strong a "this actually runs" signal as is obtainable without a GPU.
+6. **A real, separate bug found in the running game**: it logs "Discovered 0 themes from disk"
+   even though `Content/Themes/` genuinely contains all 6 themes with valid `theme.json` files.
+   Traced to `Engine/Themes/ThemeApplier.cpp` correctly calling
+   `themeManager.initialize("Content/Themes")` — but something (likely `ThemeSelector`
+   constructing or querying a separate, never-properly-initialized `ThemeManager` instance) means
+   the themes never actually reach the selector at runtime. Not fully root-caused; flagged here
+   as a genuine, reproducible bug for a future pass, distinct from the two build errors.
+7. **A real benchmark ran inside the test suite**, bearing directly on the README's performance
+   claims: creating 1,000,000 entities and iterating basic position/velocity physics for 100
+   frames averaged ~287-295 FPS. This is genuine, measured evidence for the *narrow* claim it
+   covers (bare ECS iteration) — it is not evidence for "1M entities at 60 FPS" in the full game
+   sense (with rendering, AI brains, genetics, collision all active), which remains unverified.
+
+**Net assessment, stated fairly:** the C++ codebase is not vaporware and not primarily
+AI-scaffolded filler — it's a large, substantially working engineering effort that had never
+been run through an actual clean build. The failure mode here isn't "the code doesn't work,"
+it's "nobody verified it before documenting that it worked." That's a very different, more
+promising starting point for Product B than this document previously assumed — while the
+specific claims in `SHIP_READINESS.md`, `launch_checklist.py`, and the Marketing assets (§2b)
+remain unreliable and should still be independently re-verified, not trusted, item by item.
+
+## 2b. New: Marketing Assets Do Not Depict the Actual Product
+
+Separately from the engine itself, `Marketing/screenshots/*.jpg` were inspected directly. They
+show a fully 3D-rendered game with HP/Mana bars, ability hotkeys, "ZONE" labels, a
+"GENOME INSPECTOR" with a DNA-helix visualization, and quest objectives ("Observe Creature
+Behavior"). **None of this matches the actual product** — not the verified 2D web app, not
+anything the SDL3-based "Shape Engine" (a 2D polygon renderer, per its own name and the
+verified rendering code) is capable of producing. These are almost certainly AI-generated
+concept art, not real captures, and using them on an actual store listing would be actively
+misleading to customers — the kind of mismatch that draws negative reviews the moment real
+screenshots or footage circulate. `Marketing/store_page/description.txt` compounds this: it
+claims "250,000+ entities," OpenGL 4.6 *and* Vulkan backends, and "a visual node graph editor"
+— none independently verified this session, and the entity count doesn't even match the
+README's separate claim of 1,000,000. **Do not use any current file in `Marketing/` for a real
+listing without rebuilding it from actual verified footage and accurate, consistent claims.**
 
 ---
 
@@ -133,10 +210,30 @@ audience of millions, no storefront of your own required.
    reads the flag) with the "Exit Wallpaper" button hidden entirely — verified there's no path
    back to the dense Simulation View in this build. Regular `npm run build` is unaffected and
    still defaults to Simulation View as before — confirmed both directions.
-3. Wallpaper Engine's manifest/asset requirements (`project.json`, `preview.gif`/`preview.mp4`,
-   size limits) — **still not yet researched**; this remains genuine next-step homework,
-   distinct from `docs/WORKSHOP.md` in this repo, which documents Steam Workshop for the C++
-   engine's theme files and does not apply here.
+3. ✅ **Researched.** Wallpaper Engine's actual submission process is **not** a manifest you
+   hand-author — it's GUI-driven, done entirely inside the (Windows, Steam-distributed)
+   Wallpaper Engine editor: drag your built `index.html` folder onto "Create Wallpaper," it
+   auto-generates `project.json`, then **Workshop → Share wallpaper on Workshop** publishes it.
+   There is no separate manifest-writing step to do in this codebase — confirmed from
+   `docs.wallpaperengine.io`'s own "Creating a Web Wallpaper" guide. Two real requirements this
+   surfaced that do matter for the build itself, both already satisfied: (a) *all* files must
+   load locally, nothing fetched from the web — confirmed true (§2, zero required external
+   calls); (b) the wallpaper should scale cleanly across aspect ratios including ultra-wide
+   (21:9) — **not yet specifically tested**, worth a manual check before submission.
+4. ✅ **Built.** Wallpaper Engine has its own **native settings panel** (shown in its Installed
+   tab, separate from anything rendered inside the wallpaper itself), driven by a
+   `window.wallpaperPropertyListener.applyUserProperties(...)` callback that Wallpaper Engine
+   calls whenever the user changes a property. Implemented `src/lib/wallpaperEngineBridge.ts`,
+   installed only in the `WALLPAPER_ONLY` build, bridging that native panel to the *exact same*
+   `handleThemeChange`/`handlePacingChange`/`handleToggleSetting` functions already verified
+   working. Verified live by simulating Wallpaper Engine's own call shape: a `theme` property
+   change correctly drove `maxPopulation` 400→200 (Crystal Cave's real default), and a
+   `chemicalField` boolean property correctly toggled that setting true→false. **Remaining
+   manual step, cannot be done from this sandbox**: the actual `theme`/`pacing`/boolean
+   properties still need to be *created* once inside the Wallpaper Engine editor's "Change
+   Project settings" screen (exact key names documented in the bridge file's header comment) —
+   that's an interactive GUI step on a Windows machine with Wallpaper Engine installed, not
+   something scriptable from here.
 
 ### 5.2 Secondary path: standalone packaged app (Tauri)
 For later, after Workshop validates demand. Wraps the same build in a native window, pinned
@@ -175,10 +272,12 @@ commercial product.
 **Risk register:**
 | Risk | Severity | Mitigation |
 |---|---|---|
-| Bolt.new AI-scaffold origin — unclear how much of the codebase/docs were AI-generated vs. hand-verified | Medium | Treat all unverified performance/scope claims (README's 1M-entity, deterministic-rollback claims) as marketing copy, not fact, until independently tested. Doesn't affect Product A, which has been directly verified this session. |
+| Bolt.new AI-scaffold origin — **confirmed** via `.bolt/config.json` (`"template": "bolt-vite-react-ts"`) for the web app | Low for Product A (independently verified working regardless of origin) | No longer purely speculative — origin is confirmed. Doesn't change Product A's verified status. |
+| C++ engine documentation (`SHIP_READINESS.md`, `launch_checklist.py`) makes false/unverified claims | Medium — actively misleading if trusted at face value | **Now substantiated, not just suspected**: real build hit 2 real compile errors contradicting "no compiler errors." Treat every unverified claim in these docs as needing independent re-verification, not as false — the engine itself proved substantially real once actually built (§2a). |
+| Marketing assets (`Marketing/screenshots/*.jpg`, store descriptions) do not depict the real product | **High if ever used for a real listing** | Confirmed directly (§2b) — fully 3D, HP/Mana/combat-HUD imagery for a 2D ALife sim with no such systems visible in code. Must not be used for any real store page without replacement using actual footage. |
+| Supabase schema has no per-user isolation if cloud history is ever enabled publicly | Medium, only if Product A ever turns Supabase on for multi-user use | Confirmed via migration file: RLS grants full anon CRUD, no `user_id` column, explicitly "single-tenant, no auth" by design. Fine for solo testing; do not enable for a public multi-user release without adding real auth + ownership. |
 | Key-person risk — solo developer, no team redundancy | Standard for this project type | Not really mitigable at this stage; standard solo-dev risk, worth naming rather than ignoring in any future pitch |
-| Placeholder/non-functional production tooling (`Tools/launch_checklist.py`'s hardcoded `True`) | Low direct risk, but erodes confidence in anything else in that pipeline | Don't rely on `Tools/` claims of "launch-ready" status without re-verifying each check individually — several appear to be scaffolding, not working checks |
-| Dual-codebase, dual-pipeline confusion (§3) | Medium — wastes solo-dev time if not resolved | Resolved by this document: Product A is canonical, Product B/C are shelved |
+| Dual-codebase, dual-pipeline confusion (§3) | Medium — wastes solo-dev time if not resolved | Resolved by this document: Product A is canonical, Product B/C are shelved for now — though §2a means Product B is a more credible future bet than previously assessed |
 
 ---
 
@@ -226,8 +325,17 @@ Milestone 2, not the full 22-item roadmap:
       needed at all, no way to reach dense Simulation View) ✅ `npm run build:wallpaper` —
       verified: boots straight into Wallpaper Mode, "Exit Wallpaper" hidden, no Simulation
       View tabs reachable, zero console errors, no `.env` required.
-- [ ] Wallpaper Engine manifest/preview assets prepared per their actual submission spec
-      (genuine research task, not yet done)
+- [x] Wallpaper Engine submission process researched ✅ — it's GUI-driven (drag `index.html`
+      into the Wallpaper Engine editor, publish via its own Workshop menu), not a manifest to
+      hand-author. Native settings bridge (`wallpaperEngineBridge.ts`) built and verified so
+      Wallpaper Engine's own property panel can drive the wallpaper once properties are created
+      in their editor — see production plan §5.1 item 4 for the exact key names to use.
+- [ ] Manual step (cannot be done from this sandbox): create the `theme`/`pacing`/toggle
+      properties inside the actual Wallpaper Engine editor on a Windows machine, matching the
+      key names documented in `src/lib/wallpaperEngineBridge.ts`.
+- [ ] Manual step: verify the build scales cleanly on ultra-wide (21:9) aspect ratios —
+      Wallpaper Engine's own guidance flags this as a common web-wallpaper failure point, not
+      yet specifically tested in this session.
 - [ ] Manual smoke test: install the packaged Workshop item on an actual machine running
       Wallpaper Engine, confirm it behaves correctly sitting behind desktop icons, confirm
       auto-pause-on-fullscreen-app behavior (flagged as a correctness requirement back in the

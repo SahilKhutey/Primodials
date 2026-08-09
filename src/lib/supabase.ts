@@ -202,6 +202,10 @@ export type SerializedOrganism = {
   symbiosisPartner: number | null;
   socialRank: string;
   clusterId: number | null;
+  hibernating: boolean;
+  sonarPulse: number;
+  leapTimer: number;
+  speciationTimer: number;
 };
 
 export type SerializedSpecies = {
@@ -286,4 +290,8 @@ export type Genome = {
   dominance: number;
   nicheBreadth: number;
   competitiveness: number;
+  camouflage: number;
+  bioluminescence: number;
+  echolocation: number;
+  hibernation: number;
 };

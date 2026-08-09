@@ -59,6 +59,11 @@ export class ChemicalField {
     return cy * this.cols + cx;
   }
 
+  deposit(x: number, y: number, attractantAmount: number, repellentAmount: number): void {
+    if (attractantAmount > 0) this.depositAttractant(x, y, attractantAmount);
+    if (repellentAmount > 0) this.depositRepellent(x, y, repellentAmount);
+  }
+
   depositAttractant(x: number, y: number, amount: number): void {
     const cx = Math.floor(x / this.cellSize);
     const cy = Math.floor(y / this.cellSize);

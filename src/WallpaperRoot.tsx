@@ -17,6 +17,7 @@ import { THEMES, getTheme, DEFAULT_THEME_ID, PACING_PRESETS, type PacingPreset }
 import { AmbientOrganismCard } from '@/components/AmbientOrganismCard';
 import { BookOpen, Monitor } from 'lucide-react';
 import { useWallpaperSettings } from '@/hooks/useWallpaperSettings';
+import { installWallpaperEngineBridge } from '@/sim/wallpaperEngineBridge';
 
 export function WallpaperRoot() {
   const simRef = useRef(new Simulation(Date.now()));
@@ -37,6 +38,21 @@ export function WallpaperRoot() {
 
   if (!cinematicRef.current) cinematicRef.current = new CinematicCamera(simRef.current);
   if (!diaryRef.current) diaryRef.current = new EcosystemDiary();
+
+  // Install Wallpaper Engine native property bridge
+  useEffect(() => {
+    installWallpaperEngineBridge({
+      onThemeChange: setThemeId,
+      onPacingChange: setPacing,
+      onToggleSetting: (key, value) => {
+        setSettings((prev) => {
+          const next = { ...prev, [key]: value };
+          simRef.current.settings = { ...next };
+          return next;
+        });
+      },
+    });
+  }, []);
 
   // Apply pacing + theme settings to sim
   useEffect(() => {

@@ -3,6 +3,7 @@
 #include "Core/Logger.hpp"
 #include <SDL3/SDL.h>
 #include <vector>
+#include <cmath>
 
 namespace ShapeEngine::UI {
 

@@ -82,6 +82,7 @@ export class Simulation {
   nextRemainsId = 1;
   nextKnowledgeId = 1;
   nextParticleId = 1;
+  nextBiomeId = 1;
 
   constructor(seed: number, settings: SimSettings = DEFAULT_SETTINGS) {
     this.rng = new Rng(seed);
@@ -329,13 +330,13 @@ export class Simulation {
 
   spawnOrganismGroupAt(x: number, y: number, count = 5) {
     const parentGenome = randomGenome(this.rng);
-    const spId = this.assignSpecies(parentGenome);
+    const spRes = this.assignSpecies(parentGenome);
     for (let i = 0; i < count; i++) {
-      const g = mutateGenome(parentGenome, this.rng, 0.15);
+      const g = mutateGenome(parentGenome, 0.15, this.rng);
       const ox = Math.max(10, Math.min(this.settings.worldWidth - 10, x + (Math.random() - 0.5) * 40));
       const oy = Math.max(10, Math.min(this.settings.worldHeight - 10, y + (Math.random() - 0.5) * 40));
       const org: Organism = {
-        id: this.nextOrgId++,
+        id: this.nextId++,
         x: ox,
         y: oy,
         vx: 0,
@@ -345,7 +346,7 @@ export class Simulation {
         age: 0,
         generation: 1,
         genome: g,
-        speciesId: spId,
+        speciesId: spRes.id,
         alive: true,
         reproductionCooldown: 30,
         colonyId: null,
@@ -2254,7 +2255,7 @@ export class Simulation {
         angle: this.rng.range(0, Math.PI * 2),
         energy: 80, age: 0, generation: 0,
         genome,
-        speciesId: this.assignSpecies(genome),
+        speciesId: this.assignSpecies(genome).id,
         alive: true, reproductionCooldown: 30,
         colonyId: null, colonyRole: 'solitary',
         threatLevel: 0, buildCooldown: 0,
@@ -2273,6 +2274,10 @@ export class Simulation {
         symbiosisPartner: null,
         socialRank: 'solitary',
         clusterId: null,
+        hibernating: false,
+        sonarPulse: 0,
+        leapTimer: 0,
+        speciationTimer: 0,
       };
       this.organisms.push(org);
       if (org.genome.diet >= 0.5) this.stats.carnivores++;

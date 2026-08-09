@@ -75,7 +75,11 @@ namespace ShapeEngine::GameView {
             return;
         }
         
-        ftruncate(fd, m_sharedMemorySize);
+        if (ftruncate(fd, m_sharedMemorySize) == -1) {
+            SHAPE_LOG_ERROR("Could not resize shared memory segment");
+            close(fd);
+            return;
+        }
         m_sharedMemory = mmap(nullptr, m_sharedMemorySize, 
                                 PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
         close(fd);
