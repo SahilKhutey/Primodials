@@ -114,10 +114,12 @@ Check an item only when its linked test case(s) pass.
 
 ## Phase 5 — Bigger Bets
 
-- [ ] Tie hue mutation/inheritance to `geneticDistance()` so visually similar color correlates
+- [x] Tie hue mutation/inheritance to `geneticDistance()` so visually similar color correlates
       with genetic closeness, not pure random drift.
-      **Files:** `src/sim/genetics.ts` (`mutateGenome`, `crossoverGenome`, hue logic)
-      **Verifies:** TC-B3
+      **Files:** `src/sim/genetics.ts` (`mutateGenome` — restructured, hue computed last from
+      a distance-scaled mutation amount)
+      **Verifies:** TC-B3 ✅ (empirically verified via two standalone statistical tests against
+      the real production functions, both directions: single-mutation and multi-generation)
 
 - [ ] Give the brain real strategic influence — expand inputs/outputs to cover prey-selection
       scoring and social genes (`altruism`, `competitiveness`, `dominance`, `cooperation`,
