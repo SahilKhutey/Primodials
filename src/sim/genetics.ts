@@ -69,10 +69,18 @@ export function mutateGenome(g: Genome, mutationRate: number, rng: Rng): Genome 
     else buildBoost = rng.range(0.05, 0.12);
   }
 
-  const child: Genome = {
+  // Build every trait except hue first. Hue is deliberately computed last so
+  // its drift can be scaled by how much the REST of the genome actually
+  // changed (see below) — a lineage that mutated very little elsewhere
+  // should look nearly identical to its parent; one that changed a lot
+  // (a bigger evolutionary step) can drift further in color too. Without
+  // this, hue was a fully independent random walk with no relationship to
+  // the rest of the genome, so two visually-similar-looking creatures could
+  // be genetically distant, and close relatives could look unrelated by pure
+  // chance — undermining "watch the family tree branch with your eyes."
+  const withoutHue: Omit<Genome, 'hue'> = {
     sides: clamp(Math.round(m(g.sides, 3, 8, 2)), 3, 8),
     size: clamp(m(g.size, 4, 18, 3), 4, 18),
-    hue: g.hue, // calculated below via genetic distance drift
     speed: clamp(m(g.speed, 0.2, 2.4, 0.3), 0.2, 2.4),
     senseRadius: clamp(m(g.senseRadius, 30, 160, 25), 30, 160),
     diet: rng.next() < mutationRate * 0.3 ? (g.diet === 0 ? 1 : 0) : g.diet,
@@ -108,17 +116,32 @@ export function mutateGenome(g: Genome, mutationRate: number, rng: Rng): Genome 
     hibernation: clamp(m(g.hibernation, 0, 1, 0.08), 0, 1),
   };
 
-  // Phylogenetic Hue Inheritance: hue drift scales with genetic distance from parent
-  const dist = geneticDistance(g, child);
-  if (rng.next() < mutationRate * 1.2) {
-    const shiftDir = rng.next() < 0.5 ? 1 : -1;
-    const hueDrift = Math.min(45, Math.max(2, dist * 12)) * shiftDir;
-    child.hue = (g.hue + hueDrift + 360) % 360;
-  } else {
-    child.hue = g.hue;
-  }
+  // Distance contributed by everything except hue, using the same weights
+  // geneticDistance() uses (duplicated rather than imported to avoid a
+  // circular dependency, since geneticDistance operates on full Genomes).
+  // A typical single mutation event (only a few traits actually change,
+  // since each is gated by mutationRate independently) lands well under 1.0
+  // on this scale; a rare multi-trait jump or evolution leap lands higher.
+  const nonHueDistance =
+    Math.abs(g.sides - withoutHue.sides) / 5 * 1.5 +
+    Math.abs(g.size - withoutHue.size) / 14 * 2 +
+    Math.abs(g.speed - withoutHue.speed) / 2.4 * 1.5 +
+    Math.abs(g.senseRadius - withoutHue.senseRadius) / 130 * 1 +
+    Math.abs(g.diet - withoutHue.diet) * 4 +
+    Math.abs(g.intelligence - withoutHue.intelligence) * 3 +
+    Math.abs(g.buildSkill - withoutHue.buildSkill) * 2 +
+    Math.abs(g.socialGene - withoutHue.socialGene) * 2;
 
-  return child;
+  // Small non-hue change → small hue drift (stays visually close to parent).
+  // Larger change → allowed to drift further, up to the original 30° ceiling
+  // so overall population color variety over time is unchanged — only the
+  // *correlation* with ancestry is new, not the total range of possible hues.
+  const hueMutAmount = clamp(4 + nonHueDistance * 22, 4, 30);
+
+  return {
+    ...withoutHue,
+    hue: (m(g.hue, 0, 360, hueMutAmount) + 360) % 360,
+  };
 }
 
 export function hadEvolutionLeap(parent: Genome, child: Genome): boolean {
