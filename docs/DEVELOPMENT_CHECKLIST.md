@@ -50,11 +50,12 @@ Check an item only when its linked test case(s) pass.
       **Verifies:** TC-C2
 
 - [x] Build the Ecosystem Mood aggregation layer — compute scene-level scalars (population
-      trend, dominant species hue, recent leap/speciation events, disease-outbreak state) from
-      `sim.stats` on a periodic cadence, and feed them into `drawAmbientParticles` and the biome
-      background gradient.
-      **Files:** `src/sim/simulation.ts` (aggregation), `src/sim/renderer.ts` (consumption)
-      **Verifies:** TC-G1 ✅, TC-G2 ✅
+      health, dominant species hue, recent leap-event intensity) and feed them into
+      `drawAmbientParticles`.
+      **Files:** `src/sim/renderer.ts` (both aggregation and consumption live in `render()`,
+      no `simulation.ts` changes needed — all data already existed on `sim`)
+      **Verifies:** TC-G1 ✅, TC-G2 ✅ (found already implemented this pass; corrected stale
+      docs and re-verified TC-G1 live via a forced population-crash screenshot comparison)
 
 ---
 
