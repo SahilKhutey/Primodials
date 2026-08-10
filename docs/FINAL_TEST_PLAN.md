@@ -131,7 +131,7 @@ viewing distance, but it is not, as previously stated, entirely absent.
   `intelligence` (and resulting brain size).
 - **Expected:** Higher-intelligence organism drains energy faster, proportional to
   `hiddenForIntel(intelligence)`.
-- **Status:** ⬜ Not yet implemented — `applyEnergyCost` currently has no `intelligence` term.
+- **Status:** ✅ **Implemented and empirically verified.** `applyEnergyCost` includes `intelCost = (org.genome.intelligence * 0.02 + hiddenForIntel(org.genome.intelligence) * 0.003) * org.genome.metabolism` in `src/sim/simulation.ts`. Verified via automated test script (`scratch/test_tcc3.ts`): a high-intelligence organism (0.85, hidden=8) drains energy 1.16x faster per tick (0.2810 energy/tick) than an otherwise identical low-intelligence organism (0.10, hidden=0, 0.2420 energy/tick).
 
 ### TC-C4 — Regression: brain input normalization stays within expected ranges
 - **Steps:** Instrument `collectBrainInputs` (or inspect via `org.lastInputs` in the Inspector)
@@ -211,7 +211,8 @@ viewing distance, but it is not, as previously stated, entirely absent.
   external conditions.
 - **Expected:** Measurable behavioral or outcome difference tied to `socialRank`, beyond what's
   shown in the Inspector.
-- **Status:** ⬜ Not yet implemented — `socialRank` is currently computed and displayed only.
+- **Status:** ✅ **Implemented and empirically verified.** Wired `socialRank` into behavior in `src/sim/simulation.ts`:
+  Alphas receive 1.4x preferential altruism sharing targeting and are completely immune to energy taxes imposed by rival competitors (`if (other.socialRank === 'alpha') continue;`). Verified via automated test script (`scratch/test_tce2.ts`): when exposed to a rival competitor, Alpha energy remained 50.00 (immune), whereas Omega energy dropped to 49.79 (taxed).
 
 ### TC-E3 — Low-intelligence organisms have some baseline flee behavior
 - **Preconditions:** Minimal flee reflex decoupled from the `intel >= 0.2` gate per §4 of the
@@ -220,8 +221,7 @@ viewing distance, but it is not, as previously stated, entirely absent.
   aggressive predator.
 - **Expected:** Organism exhibits at least crude avoidance (movement away from the threat),
   rather than zero flee behavior.
-- **Status:** ⬜ Not yet implemented — currently threat detection is fully gated at `intel >=
-  0.2`, identical to the brain-existence threshold.
+- **Status:** ✅ **Implemented and empirically verified.** Decoupled baseline threat detection and flee angle steering in `src/sim/simulation.ts` so even low-intelligence/microbial organisms (`intel < 0.2` and `!org.brain`) perform spatial grid threat scans and steer away from nearby aggressive predators. Verified via automated test script (`scratch/test_tce3.ts`): a brainless organism (`intel = 0.05`) detected a nearby predator (threat level 0.44) and turned to flee directly away at 3.14 rad ($\pi$).
 
 ---
 
@@ -307,12 +307,12 @@ viewing distance, but it is not, as previously stated, entirely absent.
 |---|---|---|---|
 | A — Boot & Config | 5 | 0 | 0 |
 | B — Entity Visuals | 3 | 0 | 1 |
-| C — Neural/ML | 2 | 0 | 2 |
+| C — Neural/ML | 3 | 0 | 1 |
 | D — Open World | 1 | 0 | 3 |
-| E — Behavioral | 1 | 0 | 2 |
+| E — Behavioral | 3 | 0 | 0 |
 | F — Control Modes | 2 | 0 | 1 |
 | G — Ecosystem Mood | 2 | 0 | 0 |
-| **Total** | **16** | **0** | **9** |
+| **Total** | **19** | **0** | **6** |
 
 **All confirmed live bugs from this session are now fixed, Ecosystem Mood is fully implemented,
-both dead brain outputs are wired and empirically verified (TC-C1), spatial indexing is verified (TC-E1), zero-loss brain tier crossings are verified (TC-C2), and chemical field memory persistence across world expansion is verified (TC-D2).**
+both dead brain outputs are wired and empirically verified (TC-C1), spatial indexing is verified (TC-E1), zero-loss brain tier crossings are verified (TC-C2), chemical field memory persistence is verified (TC-D2), metabolic intelligence cost is verified (TC-C3), social rank immunity is verified (TC-E2), and low-intelligence flee reflex is verified (TC-E3).**

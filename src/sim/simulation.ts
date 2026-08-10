@@ -1136,8 +1136,31 @@ export class Simulation {
     // For low-intelligence organisms (no brain yet), movement is driven
     // by bacterial-style chemotaxis instead of the hardcoded AI.
     if (this.settings.microbialBehavior && intel < 0.2 && !org.brain) {
+      org.threatLevel = 0;
+      let threatX = 0, threatY = 0, threatFound = false;
+      const fleeSense = sense * 0.5;
+      this.spatialGrid.getNearby(org.x, org.y, fleeSense, this.nearbyScratch);
+      for (let i = 0; i < this.nearbyScratch.length; i++) {
+        const other = this.nearbyScratch[i];
+        if (other === org || !other.alive) continue;
+        if (other.genome.diet < 0.5 && other.genome.aggression < 0.6) continue;
+        if (other.genome.size < org.genome.size * 0.9) continue;
+        if (org.colonyId !== null && org.colonyId === other.colonyId) continue;
+
+        const dx = other.x - org.x;
+        const dy = other.y - org.y;
+        const d2 = dx * dx + dy * dy;
+        const fleeRange = fleeSense * fleeSense;
+        if (d2 < fleeRange) {
+          org.threatLevel = Math.max(org.threatLevel, 1 - d2 / fleeRange);
+          threatX -= dx / (Math.sqrt(d2) + 1);
+          threatY -= dy / (Math.sqrt(d2) + 1);
+          threatFound = true;
+        }
+      }
+
       const tumbleResult = runAndTumble(org, this.chemicalField, this.rng);
-      org.angle = tumbleResult.angle;
+      org.angle = threatFound ? Math.atan2(threatY, threatX) : tumbleResult.angle;
 
       // Quorum sensing: adjust behavior based on local density
       if (org.genome.quorumSensing > 0.3) {

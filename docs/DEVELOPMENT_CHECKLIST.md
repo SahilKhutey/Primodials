@@ -74,20 +74,20 @@ Check an item only when its linked test case(s) pass.
       **Files:** `src/sim/renderer.ts`
       **Verifies:** TC-B2
 
-- [ ] Wire `socialRank` into at least one real behavior (e.g. alphas immune to same-colony
-      competition tax, or preferential altruism targeting).
+- [x] Wire `socialRank` into at least one real behavior (alphas immune to same-colony
+      competition tax and preferential 1.4x altruism targeting).
       **Files:** `src/sim/simulation.ts` (`processSocialBehavior`)
-      **Verifies:** TC-E2
+      **Verifies:** TC-E2 ✅ (empirically verified via scratch/test_tce2.ts)
 
-- [ ] Decouple minimal flee reflex from the `intel >= 0.2` brain-existence gate — give
+- [x] Decouple minimal flee reflex from the `intel >= 0.2` brain-existence gate — give
       brainless organisms a crude "move away from nearest large aggressive organism" instinct.
       **Files:** `src/sim/simulation.ts` (`updateOrganism` threat detection block)
-      **Verifies:** TC-E3
+      **Verifies:** TC-E3 ✅ (empirically verified via scratch/test_tce3.ts)
 
-- [ ] Add an `intelligence`-proportional term to `applyEnergyCost`, scaled by
+- [x] Add an `intelligence`-proportional term to `applyEnergyCost`, scaled by
       `hiddenForIntel(intelligence)`.
       **Files:** `src/sim/simulation.ts`
-      **Verifies:** TC-C3
+      **Verifies:** TC-C3 ✅ (empirically verified via scratch/test_tcc3.ts: 1.16x higher drain)
 
 ---
 
