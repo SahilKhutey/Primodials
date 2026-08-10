@@ -17,10 +17,10 @@ Check an item only when its linked test case(s) pass.
 
 ## Phase 1 — Correctness Fixes (no design tradeoffs, any order, do first)
 
-- [ ] Fix `ChemicalField.resize()` to copy forward existing `attractant`/`repellent` data
+- [x] Fix `ChemicalField.resize()` to copy forward existing `attractant`/`repellent` data
       instead of reallocating empty arrays.
       **Files:** `src/sim/chemicalField.ts`
-      **Verifies:** TC-D2
+      **Verifies:** TC-D2 ✅ (empirically verified via scratch/test_tcd2.ts with 0% data loss)
 
 - [x] Fix Wallpaper Mode settings-clobbering bug — replaced the passive `useEffect` with
       explicit `handleThemeChange`/`handlePacingChange` handlers; settings now only change on

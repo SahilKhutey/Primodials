@@ -164,8 +164,11 @@ viewing distance, but it is not, as previously stated, entirely absent.
   immediately after.
 - **Expected:** Previously-deposited gradient values at unchanged coordinates are preserved,
   not zeroed.
-- **Status:** ⬜ Not yet implemented — current `resize()` reallocates fresh empty
-  `Float32Array`s unconditionally.
+- **Status:** ✅ **Implemented and empirically verified.** `ChemicalField.resize()` copies forward
+  existing cell coordinates (`this.attractant[newIdx] = oldAtt[oldIdx]`, `this.repellent[newIdx] = oldRep[oldIdx]`)
+  into the newly-dimensioned grid arrays when the world expands (`expandWorld()`). Verified with an automated test
+  script (`scratch/test_tcd2.ts`): deposited attractant (5.5) and repellent (2.3) values prior to resizing from
+  400x300 to 600x450, and confirmed values were preserved with 0% data loss across expansion.
 
 ### TC-D3 — Camera "whole world" framing adapts as the world grows
 - **Preconditions:** Zoom-scaling fix from §3 of the open-world doc applied.
@@ -305,11 +308,11 @@ viewing distance, but it is not, as previously stated, entirely absent.
 | A — Boot & Config | 5 | 0 | 0 |
 | B — Entity Visuals | 3 | 0 | 1 |
 | C — Neural/ML | 2 | 0 | 2 |
-| D — Open World | 0 | 0 | 4 |
+| D — Open World | 1 | 0 | 3 |
 | E — Behavioral | 1 | 0 | 2 |
 | F — Control Modes | 2 | 0 | 1 |
 | G — Ecosystem Mood | 2 | 0 | 0 |
-| **Total** | **15** | **0** | **10** |
+| **Total** | **16** | **0** | **9** |
 
 **All confirmed live bugs from this session are now fixed, Ecosystem Mood is fully implemented,
-both dead brain outputs are wired and empirically verified (TC-C1), spatial indexing is verified (TC-E1), and zero-loss brain tier crossings are verified (TC-C2).**
+both dead brain outputs are wired and empirically verified (TC-C1), spatial indexing is verified (TC-E1), zero-loss brain tier crossings are verified (TC-C2), and chemical field memory persistence across world expansion is verified (TC-D2).**
