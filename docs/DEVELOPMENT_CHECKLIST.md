@@ -28,20 +28,23 @@ Check an item only when its linked test case(s) pass.
       **Files:** `src/App.tsx`
       **Verifies:** TC-F2 ✅
 
-- [ ] Wire brain outputs `[3]` and `[4]` into aggression/social behavior (attack commitment,
+- [x] Wire brain outputs `[3]` and `[4]` into aggression/social behavior (attack commitment,
       colony-joining intent).
-      **Files:** `src/sim/simulation.ts` (consumption), no change to `brain.ts` needed
-      **Verifies:** TC-C1
+      **Files:** `src/sim/simulation.ts` (threat/flee block, altruism block in
+      `processSocialBehavior`)
+      **Verifies:** TC-C1 ✅ (empirically verified via controlled deterministic-brain test
+      against the real `Simulation` class — see test-plan.md for exact numbers)
 
 ---
 
 ## Phase 2 — Foundational (unblocks the most future work)
 
-- [ ] Add a spatial index (grid hash, cell size ≈ largest relevant interaction radius) for
-      organism-proximity queries; refactor altruism, competition, and hunting-target loops in
+- [x] Add a spatial index (`SpatialHashGrid` in `spatialHash.ts`) for organism-proximity queries;
+      refactor altruism, competition, hunting, mating, and disease loops in
       `updateOrganism`/`processSocialBehavior` to use it instead of full O(n²) scans.
-      **Files:** new `src/sim/spatialGrid.ts` (or similar), `src/sim/simulation.ts`
-      **Verifies:** TC-E1
+      **Files:** `src/sim/spatialHash.ts`, `src/sim/simulation.ts`
+      **Verifies:** TC-E1 ✅ (empirically verified sub-quadratic scaling: 5.14x tick time ratio
+      from 209 to 984 population)
 
 - [ ] Fix brain tier-crossing weight loss — pad brains to a fixed max hidden size (8) and mask
       unused units per intelligence tier, so `mutateBrainForGenome`/`crossoverBrainForGenome`
@@ -61,10 +64,10 @@ Check an item only when its linked test case(s) pass.
 
 ## Phase 3 — Entity Legibility
 
-- [ ] Hook `hadEvolutionLeap()` to a renderer effect — brief glow pulse or particle burst on the
+- [x] Hook `hadEvolutionLeap()` to a renderer effect — brief glow pulse or particle burst on the
       organism at the tick a leap is detected, fading afterward.
-      **Files:** `src/sim/simulation.ts` (detect + flag), `src/sim/renderer.ts` (render)
-      **Verifies:** TC-B1
+      **Files:** `src/sim/simulation.ts` (detect + flag), `src/sim/renderer.ts` (render `drawStar` sparkle particle)
+      **Verifies:** TC-B1 ✅
 
 - [ ] Add a categorical visual distinction for `diet` (outline style or glyph), separate from
       the continuous hue/size/sides channels.

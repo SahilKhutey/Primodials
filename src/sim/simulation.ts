@@ -620,21 +620,21 @@ export class Simulation {
   // ─── Particle system ─────────────────────────────────────────────────
   spawnParticle(x: number, y: number, type: ParticleType, hue: number) {
     if (this.particles.length > 400) return;
-    const count = type === 'speciation' ? 16 : type === 'leap' ? 12 : type === 'kill' ? 8 : type === 'death' ? 6 : type === 'birth' ? 5 : 4;
+    const count = type === 'speciation' ? 16 : type === 'leap' ? 12 : type === 'kill' ? 8 : type === 'death' ? 6 : type === 'birth' ? 5 : type === 'sparkle' ? 10 : 4;
     for (let i = 0; i < count; i++) {
       const angle = (i / count) * Math.PI * 2 + this.rng.range(0, 0.5);
-      const speed = type === 'speciation' ? this.rng.range(3, 5.5) : type === 'leap' ? this.rng.range(2.5, 4.5) : type === 'kill' ? this.rng.range(1.5, 3) : this.rng.range(0.5, 1.5);
+      const speed = type === 'speciation' ? this.rng.range(3, 5.5) : type === 'leap' ? this.rng.range(2.5, 4.5) : type === 'kill' ? this.rng.range(1.5, 3) : type === 'sparkle' ? this.rng.range(0.8, 2.2) : this.rng.range(0.5, 1.5);
       const particleHue = type === 'leap' ? 48 : type === 'speciation' ? (i % 2 === 0 ? 190 : 310) : hue;
       this.particles.push({
         x,
         y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
-        life: type === 'speciation' ? 55 : type === 'leap' ? 45 : type === 'kill' ? 40 : type === 'birth' ? 30 : 25,
-        maxLife: type === 'speciation' ? 55 : type === 'leap' ? 45 : type === 'kill' ? 40 : type === 'birth' ? 30 : 25,
+        life: type === 'speciation' ? 55 : type === 'leap' ? 45 : type === 'kill' ? 40 : type === 'birth' ? 30 : type === 'sparkle' ? 55 : 25,
+        maxLife: type === 'speciation' ? 55 : type === 'leap' ? 45 : type === 'kill' ? 40 : type === 'birth' ? 30 : type === 'sparkle' ? 55 : 25,
         hue: particleHue,
         type,
-        size: type === 'speciation' || type === 'leap' ? 4 : type === 'kill' ? 3 : 2,
+        size: type === 'speciation' || type === 'leap' ? 4 : type === 'sparkle' ? 3.5 : type === 'kill' ? 3 : 2,
       });
     }
   }
@@ -926,9 +926,18 @@ export class Simulation {
         if (other.speciesId !== org.speciesId) continue;
         if (other.energy > 45) continue; // only help those in need
 
+        // Brain output[4]: social/sharing intent. The genome's `altruism`
+        // gene still gates whether an organism shares AT ALL (line above —
+        // this is deliberately not brain-overridable, altruism capacity
+        // stays a genetic trait) but a brain can now learn to modulate HOW
+        // MUCH it shares in the moment, roughly 0.5x-1.5x of the baseline
+        // genetic amount, instead of every organism with the same
+        // `altruism` gene sharing an identical, context-blind amount.
+        const socialMult =
+          org.brain && org.lastOutputs ? 1 + org.lastOutputs[4] * 0.5 : 1;
         // Preferentially help colony Alpha leaders
         const alphaMultiplier = other.socialRank === 'alpha' ? 1.4 : 1.0;
-        const share = Math.min(org.energy - 60, 15) * org.genome.altruism * alphaMultiplier;
+        const share = Math.min(org.energy - 60, 15) * org.genome.altruism * alphaMultiplier * socialMult;
         if (share > 1) {
           org.energy -= share;
           other.energy += share;
@@ -1261,12 +1270,26 @@ export class Simulation {
     }
 
     if (threatFound && (org.energy > 30 || intel >= 0.4)) {
-      const fleeAngle = Math.atan2(threatY, threatX);
-      const juke = intel >= 0.6 ? this.rng.range(-0.5, 0.5) : 0;
-      org.angle = fleeAngle + juke;
-      this.moveOrganism(org, biome, brainSpeedMod, blend.speedMod);
-      this.applyEnergyCost(org, biome, blend.energyDrain);
-      return;
+      // Brain output[3]: fight/flee intent. Previously this decision was
+      // pure instinct (flee whenever a threat is sensed, no exceptions).
+      // A brain-equipped organism that has evolved a confident output[3]
+      // AND has real aggression to back it up can now choose to stand its
+      // ground instead — giving two organisms with identical genomes but
+      // different evolved brain weights a genuinely different, observable
+      // response to the same threat, rather than only differing in how
+      // smoothly they flee.
+      const standGround =
+        org.brain && org.lastOutputs
+          ? org.lastOutputs[3] > 0.4 && org.genome.aggression > 0.5
+          : false;
+      if (!standGround) {
+        const fleeAngle = Math.atan2(threatY, threatX);
+        const juke = intel >= 0.6 ? this.rng.range(-0.5, 0.5) : 0;
+        org.angle = fleeAngle + juke;
+        this.moveOrganism(org, biome, brainSpeedMod, blend.speedMod);
+        this.applyEnergyCost(org, biome, blend.energyDrain);
+        return;
+      }
     }
 
     // Hunting (O(n) via spatial grid)
@@ -1880,6 +1903,7 @@ export class Simulation {
       this.stats.evolutionLeaps++;
       const sp = this.species.find((s) => s.id === parent.speciesId);
       if (sp) sp.evolutionLeaps++;
+      this.spawnParticle(parent.x, parent.y, 'sparkle', childGenome.hue);
     }
     const childBrain = this.settings.neuralBrains
       ? mutateBrainForGenome(childGenome, parent.brain, this.settings.mutationRate, this.rng)
@@ -1947,6 +1971,7 @@ export class Simulation {
       this.stats.evolutionLeaps++;
       const sp = this.species.find((s) => s.id === parentA.speciesId);
       if (sp) sp.evolutionLeaps++;
+      this.spawnParticle(parentA.x, parentA.y, 'sparkle', childGenome.hue);
     }
 
     const childBrain = this.settings.neuralBrains

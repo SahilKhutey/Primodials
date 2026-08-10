@@ -708,6 +708,27 @@ function drawStructure(ctx: CanvasRenderingContext2D, sim: Simulation, s: Struct
   }
 }
 
+function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, spikes: number, outerRadius: number, innerRadius: number) {
+  let rot = (Math.PI / 2) * 3;
+  const step = Math.PI / spikes;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - outerRadius);
+  for (let i = 0; i < spikes; i++) {
+    let x = cx + Math.cos(rot) * outerRadius;
+    let y = cy + Math.sin(rot) * outerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+
+    x = cx + Math.cos(rot) * innerRadius;
+    y = cy + Math.sin(rot) * innerRadius;
+    ctx.lineTo(x, y);
+    rot += step;
+  }
+  ctx.lineTo(cx, cy - outerRadius);
+  ctx.closePath();
+}
+
 function drawParticles(ctx: CanvasRenderingContext2D, particles: Particle[]) {
   ctx.save();
   for (const p of particles) {
@@ -735,6 +756,13 @@ function drawParticles(ctx: CanvasRenderingContext2D, particles: Particle[]) {
       ctx.shadowColor = `hsla(48, 100%, 60%, ${alpha * 0.8})`;
       ctx.beginPath();
       ctx.arc(p.x, p.y, size * 1.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else if (p.type === 'sparkle') {
+      ctx.fillStyle = `hsla(${p.hue}, 95%, 85%, ${alpha * 0.95})`;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = `hsla(${p.hue}, 100%, 75%, ${alpha * 0.85})`;
+      drawStar(ctx, p.x, p.y, 4, size * 2.2, size * 0.8);
       ctx.fill();
       ctx.shadowBlur = 0;
     } else if (p.type === 'speciation') {
