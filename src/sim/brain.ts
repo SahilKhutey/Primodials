@@ -14,6 +14,11 @@ export type Brain = {
 
 export const N_INPUTS = 18;
 export const N_OUTPUTS = 5;
+// Every brain is stored at this fixed hidden-layer size regardless of the
+// owning genome's current intelligence tier — see evalBrain's `activeHidden`
+// param and hiddenForIntel below for how effective capacity still tracks
+// intelligence without ever discarding evolved weights.
+export const MAX_HIDDEN = 8;
 
 export function brainSize(nInputs: number, nHidden: number, nOutputs: number): number {
   return nHidden + nInputs * nHidden + nOutputs + nHidden * nOutputs;
@@ -63,17 +68,28 @@ export function crossoverBrain(a: Brain, b: Brain, rng: Rng): Brain {
 // Uses a pre-allocated hidden buffer to avoid GC pressure.
 const hiddenBuf = new Float32Array(64);
 
-export function evalBrain(b: Brain, inputs: Float32Array, outputs: Float32Array): void {
+// activeHidden limits how many of the brain's nHidden units actually
+// contribute to the output this call (see hiddenForIntel) — units beyond
+// this count still get their weight slots read (to keep the flat weight
+// array's indexing correct for every later layer) but are zeroed out
+// instead of applying their tanh activation, so they influence nothing.
+// This lets a brain be stored at a fixed maximum size while its
+// *effective* capacity tracks the genome's current intelligence tier —
+// weights for currently-inactive units stay intact and keep mutating in
+// the background rather than being discarded, so they're instantly usable
+// (not reset to noise) if intelligence rises enough to reactivate them.
+export function evalBrain(b: Brain, inputs: Float32Array, outputs: Float32Array, activeHidden?: number): void {
   const { nInputs, nHidden, nOutputs, weights } = b;
+  const active = activeHidden === undefined ? nHidden : Math.min(activeHidden, nHidden);
   let idx = 0;
 
-  // Hidden layer: bias + weighted sum, then tanh
+  // Hidden layer: bias + weighted sum, then tanh (only for active units)
   for (let h = 0; h < nHidden; h++) {
     let sum = weights[idx++]; // hidden bias
     for (let i = 0; i < nInputs; i++) {
       sum += inputs[i] * weights[idx++];
     }
-    hiddenBuf[h] = Math.tanh(sum);
+    hiddenBuf[h] = h < active ? Math.tanh(sum) : 0;
   }
 
   // Output layer: bias + weighted sum from hidden, then tanh

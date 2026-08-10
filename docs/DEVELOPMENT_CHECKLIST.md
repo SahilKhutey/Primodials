@@ -46,11 +46,11 @@ Check an item only when its linked test case(s) pass.
       **Verifies:** TC-E1 ✅ (empirically verified sub-quadratic scaling: 5.14x tick time ratio
       from 209 to 984 population)
 
-- [ ] Fix brain tier-crossing weight loss — pad brains to a fixed max hidden size (8) and mask
-      unused units per intelligence tier, so `mutateBrainForGenome`/`crossoverBrainForGenome`
+- [x] Fix brain tier-crossing weight loss — pad brains to a fixed max hidden size (MAX_HIDDEN = 8) and mask
+      unused units per intelligence tier (`activeHidden`), so `mutateBrainForGenome`/`crossoverBrainForGenome`
       never need to discard evolved weights on a size mismatch.
-      **Files:** `src/sim/brain.ts`, `src/sim/genetics.ts`
-      **Verifies:** TC-C2
+      **Files:** `src/sim/brain.ts`, `src/sim/genetics.ts`, `src/sim/simulation.ts`, `src/components/InspectorPanel.tsx`
+      **Verifies:** TC-C2 ✅
 
 - [x] Build the Ecosystem Mood aggregation layer — compute scene-level scalars (population
       health, dominant species hue, recent leap-event intensity) and feed them into

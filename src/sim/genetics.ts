@@ -1,6 +1,6 @@
 import { Rng } from './rng';
 import type { Genome } from './types';
-import { makeBrain, mutateBrain, crossoverBrain, cloneBrain, hiddenForIntel, resizeBrain, N_INPUTS, N_OUTPUTS, type Brain } from './brain';
+import { makeBrain, mutateBrain, crossoverBrain, cloneBrain, hiddenForIntel, resizeBrain, N_INPUTS, N_OUTPUTS, MAX_HIDDEN, type Brain } from './brain';
 
 export function randomGenome(rng: Rng): Genome {
   return {
@@ -44,9 +44,13 @@ export function randomGenome(rng: Rng): Genome {
 }
 
 export function makeBrainForGenome(genome: Genome, rng: Rng): Brain | null {
-  const hidden = hiddenForIntel(genome.intelligence);
-  if (hidden === 0) return null;
-  return makeBrain(14, hidden, 5, rng);
+  // hiddenForIntel still gates whether a brain exists at all (intel < 0.2 =
+  // no brain, pure instinct) but no longer determines the STORED size —
+  // every brain that exists is allocated at MAX_HIDDEN so a later
+  // intelligence change never requires resizing (see evalBrain's
+  // activeHidden param for how effective capacity still tracks intelligence).
+  if (hiddenForIntel(genome.intelligence) === 0) return null;
+  return makeBrain(N_INPUTS, MAX_HIDDEN, N_OUTPUTS, rng);
 }
 
 function clamp(v: number, min: number, max: number): number {
@@ -289,13 +293,17 @@ export function geneticDistance(a: Genome, b: Genome): number {
 export const SPECIATION_THRESHOLD = 3.5;
 
 export function mutateBrainForGenome(parent: Genome, parentBrain: Brain | null, mutationRate: number, rng: Rng): Brain | null {
-  const newHidden = hiddenForIntel(parent.intelligence);
-  if (newHidden === 0) return null;
-  if (parentBrain) {
-    const resized = resizeBrain(parentBrain, newHidden, rng);
-    return mutateBrain(resized, mutationRate, rng);
-  }
-  return makeBrain(N_INPUTS, newHidden, N_OUTPUTS, rng);
+  // No brain at this intelligence tier at all — stays null, same as before.
+  if (hiddenForIntel(parent.intelligence) === 0) return null;
+  // Brain already exists: every stored brain is MAX_HIDDEN-sized (see
+  // makeBrainForGenome), so this always preserves and mutates the real
+  // evolved weights now — no more discarding on a tier crossing, since
+  // there's no longer a size to mismatch.
+  if (parentBrain) return mutateBrain(parentBrain, mutationRate, rng);
+  // Only reachable the moment intelligence first crosses into brain range
+  // (parent had no brain at all yet) — a genuinely fresh brain is correct
+  // here, there's nothing prior to preserve.
+  return makeBrain(N_INPUTS, MAX_HIDDEN, N_OUTPUTS, rng);
 }
 
 export function crossoverBrainForGenome(
@@ -304,18 +312,15 @@ export function crossoverBrainForGenome(
   rng: Rng,
 ): Brain | null {
   const avgIntel = (genomeA.intelligence + genomeB.intelligence) / 2;
-  const newHidden = hiddenForIntel(avgIntel);
-  if (newHidden === 0) return null;
-
-  const rA = brainA ? resizeBrain(brainA, newHidden, rng) : null;
-  const rB = brainB ? resizeBrain(brainB, newHidden, rng) : null;
-
-  if (rA && rB) {
-    return crossoverBrain(rA, rB, rng);
-  }
-  if (rA) return mutateBrain(rA, mutationRateForCrossover(0.05), rng);
-  if (rB) return mutateBrain(rB, mutationRateForCrossover(0.05), rng);
-  return makeBrain(N_INPUTS, newHidden, N_OUTPUTS, rng);
+  if (hiddenForIntel(avgIntel) === 0) return null;
+  // Both parents' brains are always MAX_HIDDEN-sized once they exist, so a
+  // real weight-mixing crossover is now always possible when both exist —
+  // no more silently falling back to cloning one parent because sizes used
+  // to differ.
+  if (brainA && brainB) return crossoverBrain(brainA, brainB, rng);
+  if (brainA) return cloneBrain(brainA);
+  if (brainB) return cloneBrain(brainB);
+  return makeBrain(N_INPUTS, MAX_HIDDEN, N_OUTPUTS, rng);
 }
 
 function mutationRateForCrossover(val: number): number {

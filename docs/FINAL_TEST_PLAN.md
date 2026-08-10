@@ -119,8 +119,11 @@ viewing distance, but it is not, as previously stated, entirely absent.
   `hiddenForIntel` tier boundary (e.g. intelligence 0.39 → 0.41).
 - **Expected:** Pre-crossing evolved weights are preserved (or meaningfully carried forward),
   not replaced with a fresh random brain.
-- **Status:** ⬜ Not yet implemented — current `mutateBrainForGenome`/`crossoverBrainForGenome`
-  discard weights entirely on any hidden-layer size mismatch.
+- **Status:** ✅ **Implemented and verified.** Allocated all stored brains at `MAX_HIDDEN = 8` (`brain.ts`,
+  `genetics.ts`) regardless of tier, while adding `activeHidden` masking to `evalBrain` so effective capacity
+  still tracks `hiddenForIntel(intelligence)`. Inactive hidden unit weights remain allocated and continue mutating/crossing
+  over in the background. On an intelligence tier crossing (e.g. 0.39 → 0.41), 100% of accumulated weights are
+  preserved and active capacity instantly expands without discarding evolved weights or re-initializing to random noise.
 
 ### TC-C3 — Intelligence has a measurable metabolic cost
 - **Preconditions:** Cost term added to `applyEnergyCost` per §3 of the ML doc.
@@ -301,13 +304,12 @@ viewing distance, but it is not, as previously stated, entirely absent.
 |---|---|---|---|
 | A — Boot & Config | 5 | 0 | 0 |
 | B — Entity Visuals | 3 | 0 | 1 |
-| C — Neural/ML | 1 | 0 | 3 |
+| C — Neural/ML | 2 | 0 | 2 |
 | D — Open World | 0 | 0 | 4 |
 | E — Behavioral | 1 | 0 | 2 |
 | F — Control Modes | 2 | 0 | 1 |
 | G — Ecosystem Mood | 2 | 0 | 0 |
-| **Total** | **14** | **0** | **11** |
+| **Total** | **15** | **0** | **10** |
 
 **All confirmed live bugs from this session are now fixed, Ecosystem Mood is fully implemented,
-both dead brain outputs are wired and empirically verified (TC-C1), and spatial indexing is verified (TC-E1).**
-Remaining highest-leverage candidate: **TC-C2** (preserving evolved brain weights across intelligence tier boundaries).
+both dead brain outputs are wired and empirically verified (TC-C1), spatial indexing is verified (TC-E1), and zero-loss brain tier crossings are verified (TC-C2).**

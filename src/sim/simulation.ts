@@ -1232,7 +1232,7 @@ export class Simulation {
     if (org.brain) {
       const inputs = this.collectBrainInputs(org, intel, effectiveSense, isCarnivore);
       const outputs = new Float32Array(N_OUTPUTS);
-      evalBrain(org.brain, inputs, outputs);
+      evalBrain(org.brain, inputs, outputs, hiddenForIntel(org.genome.intelligence));
       org.lastInputs = inputs;
       org.lastOutputs = outputs;
       brainSpeedMod = Math.max(0.4, Math.min(1.6, 1 + outputs[2] * 0.5));

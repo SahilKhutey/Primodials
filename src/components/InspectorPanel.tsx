@@ -11,6 +11,7 @@ import {
 import type { Organism, Genome, BiomeType } from '@/sim/types';
 import { intelligenceTier, civilizationLevel, BIOME_INFO } from '@/sim/types';
 import type { Simulation } from '@/sim/simulation';
+import { hiddenForIntel } from '@/sim/brain';
 
 type Props = {
   sim: Simulation;
@@ -213,7 +214,7 @@ export function InspectorPanel({ sim, selectedId, onClear }: Props) {
         <NeuralActivityCard
           inputs={selected.lastInputs}
           outputs={selected.lastOutputs}
-          nHidden={selected.brain.nHidden}
+          nHidden={hiddenForIntel(selected.genome.intelligence)}
         />
       )}
 
