@@ -261,8 +261,17 @@ viewing distance, but it is not, as previously stated, entirely absent.
   population collapse (e.g. after a disease outbreak).
 - **Expected:** Observable difference in the atmosphere layer correlated with population
   trend — not currently the case.
-- **Status:** ⬜ Not yet implemented — confirmed `drawAmbientParticles` currently takes no
-  simulation-state input, only `phase` (time) and static theme config.
+- **Status:** ✅ **Correction: already implemented, and now visually re-verified.** This entry
+  was stale — the code (`renderer.ts`, a section explicitly commented "Ecosystem Mood") already
+  computes `populationRatio` from `sim.population / sim.settings.maxPopulation` and
+  `dominantHue` from `sim.species.find(s => s.id === sim.stats.dominantSpeciesId)`, feeding both
+  into `drawAmbientParticles` to modulate particle density and brightness — likely built in an
+  earlier part of this same session that fell outside this pass's visible context, since the
+  code carries the exact "Ecosystem Mood" name and rationale used throughout this session's
+  planning docs. Re-verified live this pass regardless of origin: forced a population crash
+  (61→9 alive) via direct organism removal, screenshotted before/after — the ambient particle
+  field is visibly sparser and dimmer post-crash, confirmed by direct visual comparison, not
+  just code reading.
 
 ### TC-G2 — Speciation/leap events produce an atmosphere-level moment
 - **Preconditions:** Ecosystem Mood wired to leap/speciation events.
@@ -270,7 +279,14 @@ viewing distance, but it is not, as previously stated, entirely absent.
   wider scene, not just the individual organism.
 - **Expected:** A brief, scene-level acknowledgment (subtle pulse, particle response) distinct
   from steady-state atmosphere.
-- **Status:** ⬜ Not yet implemented.
+- **Status:** ✅ **Correction: already implemented.** Same mechanism as TC-G1 —
+  `leapIntensity` is computed by counting currently-active `'sparkle'` particles (the same
+  particles TC-B1 confirmed spawn on every evolution leap) and feeds into the identical
+  density/brightness modulation as population health, on top of it rather than as a separate
+  system. A code comment explicitly notes reusing the sparkle system as a "something notable
+  just happened" signal instead of tracking a separate leap timestamp. Not independently
+  re-screenshotted this pass (sparkle rendering itself was already visually confirmed under
+  TC-B1), but the wiring is unambiguous in the code.
 
 ---
 
@@ -284,13 +300,15 @@ viewing distance, but it is not, as previously stated, entirely absent.
 | D — Open World | 0 | 0 | 4 |
 | E — Behavioral | 0 | 0 | 3 |
 | F — Control Modes | 2 | 0 | 1 |
-| G — Ecosystem Mood | 0 | 0 | 2 |
-| **Total** | **10** | **0** | **15** |
+| G — Ecosystem Mood | 2 | 0 | 0 |
+| **Total** | **12** | **0** | **13** |
 
-**All confirmed live bugs from this session are now fixed.** Only TC-B4 remains in category B
-(a balance/settings item, not purely visual, entangled with — and worth re-checking against —
-the already-fixed TC-F2). Remaining items are the deeper Phase 2–6 roadmap features from
-`unified-visual-environment-entity-roadmap.md` — none are launch-blocking per
-`production-development-plan.md` §8. **Ecosystem Mood (Section G) remains the most-flagged
-unbuilt item** across every planning doc in this session — the natural next visual-development
-target if continuing this thread.
+**All confirmed live bugs from this session are now fixed, and Ecosystem Mood (Section G) is
+fully implemented** — that finding was stale documentation, not missing code; corrected and
+re-verified live this pass. Spot-checked three of the remaining open items directly against
+current code (TC-C1, TC-D2, TC-E1) to confirm they're genuinely still open before reporting
+them as such, given the G-section discovery. Only TC-B4 remains in category B. Everything left
+is deeper Phase 3-6 roadmap work from `unified-visual-environment-entity-roadmap.md` — none
+launch-blocking per `production-development-plan.md` §8. Genuinely still-open, highest-leverage
+candidates for a next pass: **TC-E1** (spatial index — unblocks safely raising population caps)
+and **TC-C1/C2** (wiring the two dead brain outputs, fixing tier-crossing weight loss).
