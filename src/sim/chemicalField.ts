@@ -29,10 +29,13 @@ export class ChemicalField {
 
   resize(width: number, height: number): void {
     if (width === this.width && height === this.height) return;
+
+    // Preserve the old grid before it's overwritten below — this is what
+    // gets copied forward into the new, larger grid.
     const oldCols = this.cols;
     const oldRows = this.rows;
-    const oldAtt = this.attractant;
-    const oldRep = this.repellent;
+    const oldAttractant = this.attractant;
+    const oldRepellent = this.repellent;
 
     this.width = width;
     this.height = height;
@@ -44,13 +47,24 @@ export class ChemicalField {
     this.nextAttractant = new Float32Array(n);
     this.nextRepellent = new Float32Array(n);
 
-    // Copy existing grid cell values so chemical memory & trails persist across expansions
+    // Copy every old cell's value into its matching position in the new
+    // grid instead of discarding it. The field only ever grows (world
+    // expansion never shrinks it — see simulation.ts's expandWorld), so
+    // every old cell has a valid (cx,cy) position in the new grid. A flat
+    // array copy would NOT work here: a cell's flat index is
+    // `cy * cols + cx`, and `cols` just changed, so the same flat index
+    // means a different cell before and after — each cell has to be
+    // remapped through its 2D coordinates, not copied by raw index.
+    // Previously this method just allocated fresh empty arrays every call,
+    // silently erasing all accumulated pheromone gradients on every world
+    // expansion (every ~40s by default) — the chemotaxis/quorumSensing gene
+    // family's intended long-term effect never actually had time to persist.
     for (let cy = 0; cy < oldRows; cy++) {
       for (let cx = 0; cx < oldCols; cx++) {
         const oldIdx = cy * oldCols + cx;
         const newIdx = cy * this.cols + cx;
-        this.attractant[newIdx] = oldAtt[oldIdx];
-        this.repellent[newIdx] = oldRep[oldIdx];
+        this.attractant[newIdx] = oldAttractant[oldIdx];
+        this.repellent[newIdx] = oldRepellent[oldIdx];
       }
     }
   }
