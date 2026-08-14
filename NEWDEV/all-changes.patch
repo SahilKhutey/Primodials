@@ -1,0 +1,995 @@
+diff --git a/Engine/GameView/SharedStateSync.cpp b/Engine/GameView/SharedStateSync.cpp
+index bdee1c2..d9f11c3 100644
+--- a/Engine/GameView/SharedStateSync.cpp
++++ b/Engine/GameView/SharedStateSync.cpp
+@@ -75,7 +75,11 @@ namespace ShapeEngine::GameView {
+             return;
+         }
+         
+-        ftruncate(fd, m_sharedMemorySize);
++        if (ftruncate(fd, m_sharedMemorySize) == -1) {
++            SHAPE_LOG_ERROR("Could not resize shared memory segment");
++            close(fd);
++            return;
++        }
+         m_sharedMemory = mmap(nullptr, m_sharedMemorySize, 
+                                 PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+         close(fd);
+diff --git a/Engine/UI/Heatmap/HeatmapToggle.cpp b/Engine/UI/Heatmap/HeatmapToggle.cpp
+index 00fbcce..934e243 100644
+--- a/Engine/UI/Heatmap/HeatmapToggle.cpp
++++ b/Engine/UI/Heatmap/HeatmapToggle.cpp
+@@ -3,6 +3,7 @@
+ #include "Core/Logger.hpp"
+ #include <SDL3/SDL.h>
+ #include <vector>
++#include <cmath>
+ 
+ namespace ShapeEngine::UI {
+ 
+diff --git a/Games/PolygonalPrimordials/src/main.cpp b/Games/PolygonalPrimordials/src/main.cpp
+index 551400c..166f191 100644
+--- a/Games/PolygonalPrimordials/src/main.cpp
++++ b/Games/PolygonalPrimordials/src/main.cpp
+@@ -11,7 +11,14 @@ int main(int argc, char* argv[]) {
+     // Automatic asset path resolution
+     const char* base_path = SDL_GetBasePath();
+     if (base_path) {
+-        std::filesystem::path exe_dir(base_path);
++        // SDL_GetBasePath() always returns a path with a trailing separator.
++        // std::filesystem::path::parent_path() on a trailing-slash path only
++        // strips the trailing slash on its FIRST call rather than going up a
++        // real directory level — so a naive "parent_path().parent_path()"
++        // chain intended to go up two directories actually only goes up one.
++        // lexically_normal() collapses the trailing slash so parent_path()
++        // chains behave the way the three branches below assume.
++        std::filesystem::path exe_dir = std::filesystem::path(base_path).lexically_normal();
+ 
+         if (std::filesystem::exists(exe_dir / "Content") || std::filesystem::exists(exe_dir / "data")) {
+             std::filesystem::current_path(exe_dir);
+diff --git a/package.json b/package.json
+index 57a13e0..95ec692 100644
+--- a/package.json
++++ b/package.json
+@@ -6,6 +6,8 @@
+   "scripts": {
+     "dev": "vite",
+     "build": "vite build",
++    "build:wallpaper": "vite build --mode wallpaper --outDir dist-wallpaper",
++    "preview:wallpaper": "vite preview --outDir dist-wallpaper",
+     "lint": "eslint .",
+     "preview": "vite preview",
+     "typecheck": "tsc --noEmit -p tsconfig.app.json"
+diff --git a/src/App.tsx b/src/App.tsx
+index 21d6aaf..46773bd 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -14,6 +14,8 @@ import { InspectorPanel } from '@/components/InspectorPanel';
+ import { EvolutionChart } from '@/components/EvolutionChart';
+ import { AmbientHUD } from '@/components/AmbientHUD';
+ import { WallpaperDock } from '@/components/WallpaperDock';
++import { WallpaperInfoPopover } from '@/components/WallpaperInfoPopover';
++import { installWallpaperEngineBridge } from '@/lib/wallpaperEngineBridge';
+ import { CinematicCamera } from '@/sim/cinematicCamera';
+ import { supabase, type SnapshotRow } from '@/lib/supabase';
+ import { THEMES, getTheme, DEFAULT_THEME_ID, PACING_PRESETS, type WallpaperTheme, type PacingPreset } from '@/sim/themes';
+@@ -33,7 +35,13 @@ function App() {
+   const [activeTab, setActiveTab] = useState<'species' | 'inspector' | 'evolution' | 'history' | 'settings'>('species');
+   const [selectedId, setSelectedId] = useState<number | null>(null);
+   const [settings, setSettings] = useState<SimSettings>(DEFAULT_SETTINGS);
+-  const [wallpaperMode, setWallpaperMode] = useState(false);
++  // Set via .env.wallpaper (VITE_WALLPAPER_ONLY=true), loaded automatically when built with
++  // `npm run build:wallpaper` (vite --mode wallpaper). Produces a build that boots straight
++  // into Wallpaper Mode with no path back to the dense Simulation View — the correct shape
++  // for a Wallpaper Engine Workshop item, which should never expose the full editor UI.
++  const WALLPAPER_ONLY = import.meta.env.VITE_WALLPAPER_ONLY === 'true';
++
++  const [wallpaperMode, setWallpaperMode] = useState(WALLPAPER_ONLY);
+   const [isFullscreen, setIsFullscreen] = useState(false);
+   const [themeId, setThemeId] = useState(DEFAULT_THEME_ID);
+   const [pacing, setPacing] = useState<PacingPreset>('peaceful');
+@@ -51,18 +59,32 @@ function App() {
+     cinematicRef.current = new CinematicCamera(simRef.current);
+   }
+ 
+-  // Apply pacing to simulation settings when theme or pacing changes
+-  useEffect(() => {
+-    if (!wallpaperMode) return;
+-    const pacingCfg = PACING_PRESETS[pacing];
++  // Apply a theme+pacing combination's derived settings to the simulation.
++  // IMPORTANT: this is only ever called from explicit user actions (picking a
++  // theme or a pacing preset in the Wallpaper dock) — never as a passive side
++  // effect of switching into Wallpaper Mode. Simply entering Wallpaper Mode
++  // must not silently discard settings the user tuned in Simulation View.
++  const applyThemeAndPacing = (nextThemeId: string, nextPacing: PacingPreset) => {
++    const nextTheme = getTheme(nextThemeId);
++    const pacingCfg = PACING_PRESETS[nextPacing];
+     const sim = simRef.current;
+     sim.settings = {
+       ...sim.settings,
+-      maxPopulation: Math.round(theme.maxPopulation * pacingCfg.maxPopulationMod),
+-      foodGrowthRate: Math.round(theme.foodRate * pacingCfg.foodRateMod),
++      maxPopulation: Math.round(nextTheme.maxPopulation * pacingCfg.maxPopulationMod),
++      foodGrowthRate: Math.round(nextTheme.foodRate * pacingCfg.foodRateMod),
+       mutationRate: 0.15 * pacingCfg.mutationMod,
+     };
+-  }, [themeId, pacing, wallpaperMode]);
++  };
++
++  const handleThemeChange = (nextThemeId: string) => {
++    setThemeId(nextThemeId);
++    applyThemeAndPacing(nextThemeId, pacing);
++  };
++
++  const handlePacingChange = (nextPacing: PacingPreset) => {
++    setPacing(nextPacing);
++    applyThemeAndPacing(themeId, nextPacing);
++  };
+ 
+   // Re-render UI panels ~4x/sec to reflect sim state
+   useEffect(() => {
+@@ -100,6 +122,7 @@ function App() {
+   }, []);
+ 
+   const loadHistory = useCallback(async () => {
++    if (!supabase) return;
+     setLoadingHistory(true);
+     const { data, error } = await supabase
+       .from('simulation_snapshots')
+@@ -118,6 +141,7 @@ function App() {
+   const registerAutoCheckpoint = (sim: Simulation) => {
+     sim.onAutoCheckpoint = async (cycle: number, tick: number) => {
+       if (!sim.settings.autoCheckpoint) return;
++      if (!supabase) return;
+       const snapshot = {
+         name: `Auto-checkpoint · Cycle ${cycle}`,
+         tick,
+@@ -262,6 +286,19 @@ function App() {
+     simRef.current.settings = { ...next };
+   };
+ 
++  // Only relevant for the Workshop build (WALLPAPER_ONLY) — a normal build
++  // running in an ordinary browser tab is never queried by Wallpaper Engine,
++  // so installing this there would just be dead weight, not a bug either way.
++  useEffect(() => {
++    if (!WALLPAPER_ONLY) return;
++    installWallpaperEngineBridge({
++      onThemeChange: handleThemeChange,
++      onPacingChange: handlePacingChange,
++      onToggleSetting: handleToggleSetting,
++    });
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, []);
++
+   const toggleFullscreen = () => {
+     if (!document.fullscreenElement) {
+       document.documentElement.requestFullscreen().catch(() => {});
+@@ -290,13 +327,14 @@ function App() {
+           speed={speed}
+           showSense={showSense}
+           selectedId={selectedId}
+-          onSelect={(id) => { setSelectedId(id); if (id !== null) setActiveTab('inspector'); }}
++          onSelect={setSelectedId}
+           showColonies={showColonies}
+           wallpaperMode
+           cinematic={cinematicRef.current!}
+           theme={theme}
+         />
+         <AmbientHUD sim={sim} visible />
++        <WallpaperInfoPopover sim={sim} selectedId={selectedId} onClose={() => setSelectedId(null)} />
+         <WallpaperDock
+           sim={sim}
+           running={running}
+@@ -308,9 +346,9 @@ function App() {
+           onToggleFullscreen={toggleFullscreen}
+           isFullscreen={isFullscreen}
+           themeId={themeId}
+-          onThemeChange={setThemeId}
++          onThemeChange={handleThemeChange}
+           pacing={pacing}
+-          onPacingChange={setPacing}
++          onPacingChange={handlePacingChange}
+         />
+         {/* Diary button — top left, below HUD */}
+         <button
+@@ -326,14 +364,17 @@ function App() {
+           )}
+         </button>
+ 
+-        {/* Exit wallpaper mode button — top right, subtle */}
+-        <button
+-          onClick={() => setWallpaperMode(false)}
+-          className="fixed right-6 top-6 z-30 flex items-center gap-2 rounded-xl bg-neutral-950/60 px-3 py-2 text-xs font-semibold text-neutral-400 ring-1 ring-white/10 backdrop-blur-md transition hover:bg-neutral-900/80 hover:text-neutral-200"
+-        >
+-          <Monitor size={15} />
+-          Exit Wallpaper
+-        </button>
++        {/* Exit wallpaper mode button — top right, subtle. Hidden entirely in
++            wallpaper-only builds: there's no Simulation View to exit into. */}
++        {!WALLPAPER_ONLY && (
++          <button
++            onClick={() => setWallpaperMode(false)}
++            className="fixed right-6 top-6 z-30 flex items-center gap-2 rounded-xl bg-neutral-950/60 px-3 py-2 text-xs font-semibold text-neutral-400 ring-1 ring-white/10 backdrop-blur-md transition hover:bg-neutral-900/80 hover:text-neutral-200"
++          >
++            <Monitor size={15} />
++            Exit Wallpaper
++          </button>
++        )}
+ 
+         {/* Diary panel modal */}
+         <DiaryPanel
+diff --git a/src/components/HistoryPanel.tsx b/src/components/HistoryPanel.tsx
+index 9a7bbae..f640634 100644
+--- a/src/components/HistoryPanel.tsx
++++ b/src/components/HistoryPanel.tsx
+@@ -1,7 +1,7 @@
+ import { useState } from 'react';
+ import { Save, FolderOpen, Trash2, Loader2 } from 'lucide-react';
+ import type { SnapshotRow } from '@/lib/supabase';
+-import { supabase } from '@/lib/supabase';
++import { supabase, supabaseEnabled } from '@/lib/supabase';
+ import type { Simulation } from '@/sim/simulation';
+ 
+ type Props = {
+@@ -25,7 +25,7 @@ export function HistoryPanel({
+   const [saving, setSaving] = useState(false);
+ 
+   const handleSave = async () => {
+-    if (sim.population === 0) return;
++    if (!supabase || sim.population === 0) return;
+     setSaving(true);
+     const snapshot = {
+       name: name.trim() || `Experiment @ tick ${sim.tick}`,
+@@ -44,6 +44,7 @@ export function HistoryPanel({
+   };
+ 
+   const handleDelete = async (id: string) => {
++    if (!supabase) return;
+     const { error } = await supabase.from('simulation_snapshots').delete().eq('id', id);
+     if (!error) onDeleted();
+   };
+@@ -59,7 +60,8 @@ export function HistoryPanel({
+         />
+         <button
+           onClick={handleSave}
+-          disabled={saving || sim.population === 0}
++          disabled={!supabaseEnabled || saving || sim.population === 0}
++          title={!supabaseEnabled ? 'Cloud history is not configured (no Supabase project set)' : undefined}
+           className="flex items-center gap-2 rounded-lg bg-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-white disabled:opacity-50 active:scale-95"
+         >
+           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+@@ -67,7 +69,12 @@ export function HistoryPanel({
+         </button>
+       </div>
+ 
+-      {loading ? (
++      {!supabaseEnabled ? (
++        <p className="text-sm text-neutral-500 italic">
++          Cloud history is disabled — this build isn't connected to a Supabase project. The
++          simulation itself runs fully offline; only save/load of past experiments is unavailable.
++        </p>
++      ) : loading ? (
+         <div className="flex items-center justify-center py-6 text-neutral-500">
+           <Loader2 className="animate-spin" size={20} />
+         </div>
+diff --git a/src/components/InspectorPanel.tsx b/src/components/InspectorPanel.tsx
+index 767344d..619ced3 100644
+--- a/src/components/InspectorPanel.tsx
++++ b/src/components/InspectorPanel.tsx
+@@ -10,6 +10,7 @@ import {
+ import type { Organism, Genome, BiomeType } from '@/sim/types';
+ import { intelligenceTier, civilizationLevel, BIOME_INFO } from '@/sim/types';
+ import type { Simulation } from '@/sim/simulation';
++import { hiddenForIntel } from '@/sim/brain';
+ 
+ type Props = {
+   sim: Simulation;
+@@ -212,7 +213,7 @@ export function InspectorPanel({ sim, selectedId, onClear }: Props) {
+         <NeuralActivityCard
+           inputs={selected.lastInputs}
+           outputs={selected.lastOutputs}
+-          nHidden={selected.brain.nHidden}
++          nHidden={hiddenForIntel(selected.genome.intelligence)}
+         />
+       )}
+ 
+diff --git a/src/lib/supabase.ts b/src/lib/supabase.ts
+index 978c9f8..49eaa3f 100644
+--- a/src/lib/supabase.ts
++++ b/src/lib/supabase.ts
+@@ -1,9 +1,16 @@
+-import { createClient } from '@supabase/supabase-js';
++import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+ 
+ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+ 
+-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
++// Cloud history/checkpoints are optional. If no Supabase project is
++// configured, the sim still runs fully offline — history saving/loading
++// is simply disabled instead of crashing the app on boot.
++export const supabaseEnabled = Boolean(supabaseUrl && supabaseAnonKey);
++
++export const supabase: SupabaseClient | null = supabaseEnabled
++  ? createClient(supabaseUrl, supabaseAnonKey)
++  : null;
+ 
+ export type SnapshotRow = {
+   id: string;
+diff --git a/src/sim/brain.ts b/src/sim/brain.ts
+index 45b0a84..40908a7 100644
+--- a/src/sim/brain.ts
++++ b/src/sim/brain.ts
+@@ -14,6 +14,11 @@ export type Brain = {
+ 
+ export const N_INPUTS = 14;
+ export const N_OUTPUTS = 5;
++// Every brain is stored at this fixed hidden-layer size regardless of the
++// owning genome's current intelligence tier — see evalBrain's `activeHidden`
++// param and hiddenForIntel below for how effective capacity still tracks
++// intelligence without ever discarding evolved weights.
++export const MAX_HIDDEN = 8;
+ 
+ export function brainSize(nInputs: number, nHidden: number, nOutputs: number): number {
+   return nHidden + nInputs * nHidden + nOutputs + nHidden * nOutputs;
+@@ -63,17 +68,28 @@ export function crossoverBrain(a: Brain, b: Brain, rng: Rng): Brain {
+ // Uses a pre-allocated hidden buffer to avoid GC pressure.
+ const hiddenBuf = new Float32Array(64);
+ 
+-export function evalBrain(b: Brain, inputs: Float32Array, outputs: Float32Array): void {
++// activeHidden limits how many of the brain's nHidden units actually
++// contribute to the output this call (see hiddenForIntel) — units beyond
++// this count still get their weight slots read (to keep the flat weight
++// array's indexing correct for every later layer) but are zeroed out
++// instead of applying their tanh activation, so they influence nothing.
++// This lets a brain be stored at a fixed maximum size while its
++// *effective* capacity tracks the genome's current intelligence tier —
++// weights for currently-inactive units stay intact and keep mutating in
++// the background rather than being discarded, so they're instantly usable
++// (not reset to noise) if intelligence rises enough to reactivate them.
++export function evalBrain(b: Brain, inputs: Float32Array, outputs: Float32Array, activeHidden?: number): void {
+   const { nInputs, nHidden, nOutputs, weights } = b;
++  const active = activeHidden === undefined ? nHidden : Math.min(activeHidden, nHidden);
+   let idx = 0;
+ 
+-  // Hidden layer: bias + weighted sum, then tanh
++  // Hidden layer: bias + weighted sum, then tanh (only for active units)
+   for (let h = 0; h < nHidden; h++) {
+     let sum = weights[idx++]; // hidden bias
+     for (let i = 0; i < nInputs; i++) {
+       sum += inputs[i] * weights[idx++];
+     }
+-    hiddenBuf[h] = Math.tanh(sum);
++    hiddenBuf[h] = h < active ? Math.tanh(sum) : 0;
+   }
+ 
+   // Output layer: bias + weighted sum from hidden, then tanh
+diff --git a/src/sim/chemicalField.ts b/src/sim/chemicalField.ts
+index 143e758..f4065dc 100644
+--- a/src/sim/chemicalField.ts
++++ b/src/sim/chemicalField.ts
+@@ -29,6 +29,14 @@ export class ChemicalField {
+ 
+   resize(width: number, height: number): void {
+     if (width === this.width && height === this.height) return;
++
++    // Preserve the old grid before it's overwritten below — this is what
++    // gets copied forward into the new, larger grid.
++    const oldCols = this.cols;
++    const oldRows = this.rows;
++    const oldAttractant = this.attractant;
++    const oldRepellent = this.repellent;
++
+     this.width = width;
+     this.height = height;
+     this.cols = Math.ceil(width / this.cellSize);
+@@ -38,6 +46,27 @@ export class ChemicalField {
+     this.repellent = new Float32Array(n);
+     this.nextAttractant = new Float32Array(n);
+     this.nextRepellent = new Float32Array(n);
++
++    // Copy every old cell's value into its matching position in the new
++    // grid instead of discarding it. The field only ever grows (world
++    // expansion never shrinks it — see simulation.ts's expandWorld), so
++    // every old cell has a valid (cx,cy) position in the new grid. A flat
++    // array copy would NOT work here: a cell's flat index is
++    // `cy * cols + cx`, and `cols` just changed, so the same flat index
++    // means a different cell before and after — each cell has to be
++    // remapped through its 2D coordinates, not copied by raw index.
++    // Previously this method just allocated fresh empty arrays every call,
++    // silently erasing all accumulated pheromone gradients on every world
++    // expansion (every ~40s by default) — the chemotaxis/quorumSensing gene
++    // family's intended long-term effect never actually had time to persist.
++    for (let cy = 0; cy < oldRows; cy++) {
++      for (let cx = 0; cx < oldCols; cx++) {
++        const oldIdx = cy * oldCols + cx;
++        const newIdx = cy * this.cols + cx;
++        this.attractant[newIdx] = oldAttractant[oldIdx];
++        this.repellent[newIdx] = oldRepellent[oldIdx];
++      }
++    }
+   }
+ 
+   private idx(cx: number, cy: number): number {
+diff --git a/src/sim/genetics.ts b/src/sim/genetics.ts
+index 3fd2c13..f51fd13 100644
+--- a/src/sim/genetics.ts
++++ b/src/sim/genetics.ts
+@@ -1,6 +1,6 @@
+ import { Rng } from './rng';
+ import type { Genome } from './types';
+-import { makeBrain, mutateBrain, crossoverBrain, cloneBrain, hiddenForIntel, type Brain } from './brain';
++import { makeBrain, mutateBrain, crossoverBrain, cloneBrain, hiddenForIntel, MAX_HIDDEN, type Brain } from './brain';
+ 
+ export function randomGenome(rng: Rng): Genome {
+   return {
+@@ -40,9 +40,13 @@ export function randomGenome(rng: Rng): Genome {
+ }
+ 
+ export function makeBrainForGenome(genome: Genome, rng: Rng): Brain | null {
+-  const hidden = hiddenForIntel(genome.intelligence);
+-  if (hidden === 0) return null;
+-  return makeBrain(14, hidden, 5, rng);
++  // hiddenForIntel still gates whether a brain exists at all (intel < 0.2 =
++  // no brain, pure instinct) but no longer determines the STORED size —
++  // every brain that exists is allocated at MAX_HIDDEN so a later
++  // intelligence change never requires resizing (see evalBrain's
++  // activeHidden param for how effective capacity still tracks intelligence).
++  if (hiddenForIntel(genome.intelligence) === 0) return null;
++  return makeBrain(14, MAX_HIDDEN, 5, rng);
+ }
+ 
+ function clamp(v: number, min: number, max: number): number {
+@@ -65,10 +69,18 @@ export function mutateGenome(g: Genome, mutationRate: number, rng: Rng): Genome
+     else buildBoost = rng.range(0.05, 0.12);
+   }
+ 
+-  return {
++  // Build every trait except hue first. Hue is deliberately computed last so
++  // its drift can be scaled by how much the REST of the genome actually
++  // changed (see below) — a lineage that mutated very little elsewhere
++  // should look nearly identical to its parent; one that changed a lot
++  // (a bigger evolutionary step) can drift further in color too. Without
++  // this, hue was a fully independent random walk with no relationship to
++  // the rest of the genome, so two visually-similar-looking creatures could
++  // be genetically distant, and close relatives could look unrelated by pure
++  // chance — undermining "watch the family tree branch with your eyes."
++  const withoutHue: Omit<Genome, 'hue'> = {
+     sides: clamp(Math.round(m(g.sides, 3, 8, 2)), 3, 8),
+     size: clamp(m(g.size, 4, 18, 3), 4, 18),
+-    hue: (m(g.hue, 0, 360, 30) + 360) % 360,
+     speed: clamp(m(g.speed, 0.2, 2.4, 0.3), 0.2, 2.4),
+     senseRadius: clamp(m(g.senseRadius, 30, 160, 25), 30, 160),
+     diet: rng.next() < mutationRate * 0.3 ? (g.diet === 0 ? 1 : 0) : g.diet,
+@@ -99,6 +111,33 @@ export function mutateGenome(g: Genome, mutationRate: number, rng: Rng): Genome
+     nicheBreadth: clamp(m(g.nicheBreadth, 0, 1, 0.08), 0, 1),
+     competitiveness: clamp(m(g.competitiveness, 0, 1, 0.06), 0, 1),
+   };
++
++  // Distance contributed by everything except hue, using the same weights
++  // geneticDistance() uses (duplicated rather than imported to avoid a
++  // circular dependency, since geneticDistance operates on full Genomes).
++  // A typical single mutation event (only a few traits actually change,
++  // since each is gated by mutationRate independently) lands well under 1.0
++  // on this scale; a rare multi-trait jump or evolution leap lands higher.
++  const nonHueDistance =
++    Math.abs(g.sides - withoutHue.sides) / 5 * 1.5 +
++    Math.abs(g.size - withoutHue.size) / 14 * 2 +
++    Math.abs(g.speed - withoutHue.speed) / 2.4 * 1.5 +
++    Math.abs(g.senseRadius - withoutHue.senseRadius) / 130 * 1 +
++    Math.abs(g.diet - withoutHue.diet) * 4 +
++    Math.abs(g.intelligence - withoutHue.intelligence) * 3 +
++    Math.abs(g.buildSkill - withoutHue.buildSkill) * 2 +
++    Math.abs(g.socialGene - withoutHue.socialGene) * 2;
++
++  // Small non-hue change → small hue drift (stays visually close to parent).
++  // Larger change → allowed to drift further, up to the original 30° ceiling
++  // so overall population color variety over time is unchanged — only the
++  // *correlation* with ancestry is new, not the total range of possible hues.
++  const hueMutAmount = clamp(4 + nonHueDistance * 22, 4, 30);
++
++  return {
++    ...withoutHue,
++    hue: (m(g.hue, 0, 360, hueMutAmount) + 360) % 360,
++  };
+ }
+ 
+ export function hadEvolutionLeap(parent: Genome, child: Genome): boolean {
+@@ -236,12 +275,17 @@ export function geneticDistance(a: Genome, b: Genome): number {
+ export const SPECIATION_THRESHOLD = 3.5;
+ 
+ export function mutateBrainForGenome(parent: Genome, parentBrain: Brain | null, mutationRate: number, rng: Rng): Brain | null {
+-  const newHidden = hiddenForIntel(parent.intelligence);
+-  if (newHidden === 0) return null;
+-  if (parentBrain && parentBrain.nHidden === newHidden) {
+-    return mutateBrain(parentBrain, mutationRate, rng);
+-  }
+-  return makeBrain(14, newHidden, 5, rng);
++  // No brain at this intelligence tier at all — stays null, same as before.
++  if (hiddenForIntel(parent.intelligence) === 0) return null;
++  // Brain already exists: every stored brain is MAX_HIDDEN-sized (see
++  // makeBrainForGenome), so this always preserves and mutates the real
++  // evolved weights now — no more discarding on a tier crossing, since
++  // there's no longer a size to mismatch.
++  if (parentBrain) return mutateBrain(parentBrain, mutationRate, rng);
++  // Only reachable the moment intelligence first crosses into brain range
++  // (parent had no brain at all yet) — a genuinely fresh brain is correct
++  // here, there's nothing prior to preserve.
++  return makeBrain(14, MAX_HIDDEN, 5, rng);
+ }
+ 
+ export function crossoverBrainForGenome(
+@@ -250,12 +294,13 @@ export function crossoverBrainForGenome(
+   rng: Rng,
+ ): Brain | null {
+   const avgIntel = (genomeA.intelligence + genomeB.intelligence) / 2;
+-  const newHidden = hiddenForIntel(avgIntel);
+-  if (newHidden === 0) return null;
+-  if (brainA && brainB && brainA.nHidden === brainB.nHidden && brainA.nHidden === newHidden) {
+-    return crossoverBrain(brainA, brainB, rng);
+-  }
+-  if (brainA && brainA.nHidden === newHidden) return cloneBrain(brainA);
+-  if (brainB && brainB.nHidden === newHidden) return cloneBrain(brainB);
+-  return makeBrain(14, newHidden, 5, rng);
++  if (hiddenForIntel(avgIntel) === 0) return null;
++  // Both parents' brains are always MAX_HIDDEN-sized once they exist, so a
++  // real weight-mixing crossover is now always possible when both exist —
++  // no more silently falling back to cloning one parent because sizes used
++  // to differ.
++  if (brainA && brainB) return crossoverBrain(brainA, brainB, rng);
++  if (brainA) return cloneBrain(brainA);
++  if (brainB) return cloneBrain(brainB);
++  return makeBrain(14, MAX_HIDDEN, 5, rng);
+ }
+diff --git a/src/sim/renderer.ts b/src/sim/renderer.ts
+index 64c610e..d368d88 100644
+--- a/src/sim/renderer.ts
++++ b/src/sim/renderer.ts
+@@ -28,6 +28,29 @@ function drawPolygon(
+   ctx.closePath();
+ }
+ 
++// A simple 4-point star (alternating outer/inner radius), used for the
++// evolution-leap sparkle particle. Assumes the canvas is already translated
++// to the star's center (see the 'sparkle' branch in drawParticles).
++function drawStar(
++  ctx: CanvasRenderingContext2D,
++  cx: number,
++  cy: number,
++  outerRadius: number,
++  innerRadius: number,
++) {
++  const points = 4;
++  ctx.beginPath();
++  for (let i = 0; i < points * 2; i++) {
++    const r = i % 2 === 0 ? outerRadius : innerRadius;
++    const a = (i / (points * 2)) * Math.PI * 2;
++    const px = cx + Math.cos(a) * r;
++    const py = cy + Math.sin(a) * r;
++    if (i === 0) ctx.moveTo(px, py);
++    else ctx.lineTo(px, py);
++  }
++  ctx.closePath();
++}
++
+ export function render(
+   ctx: CanvasRenderingContext2D,
+   sim: Simulation,
+@@ -231,7 +254,27 @@ export function render(
+ 
+   // ── Ambient floating particles (wallpaper mode) ─────────────────────
+   if (wallpaperMode) {
+-    drawAmbientParticles(ctx, width, height, phase, theme);
++    // Ecosystem Mood: derive a few scene-level signals from real simulation
++    // state so the atmosphere isn't purely decorative. All three reuse data
++    // that already exists — no new state added to the Simulation class.
++    const dominantSpecies = sim.stats.dominantSpeciesId !== null
++      ? sim.species.find((s) => s.id === sim.stats.dominantSpeciesId)
++      : undefined;
++    const populationRatio = sim.settings.maxPopulation > 0
++      ? Math.max(0, Math.min(1, sim.population / sim.settings.maxPopulation))
++      : 0;
++    // Active 'sparkle' particles are already spawned exactly on evolution
++    // leaps (see spawnParticle calls in simulation.ts) — reusing that as a
++    // "something notable just happened" signal instead of tracking a
++    // separate leap timestamp.
++    let activeLeapSparkles = 0;
++    for (const p of sim.particles) if (p.type === 'sparkle') activeLeapSparkles++;
++
++    drawAmbientParticles(ctx, width, height, phase, theme, {
++      populationRatio,
++      dominantHue: dominantSpecies?.hue ?? null,
++      leapIntensity: Math.min(1, activeLeapSparkles / 6),
++    });
+   }
+ 
+   // ── Vignette (wallpaper mode) ────────────────────────────────────────
+@@ -728,6 +771,24 @@ function drawParticles(ctx: CanvasRenderingContext2D, particles: Particle[]) {
+       ctx.beginPath();
+       ctx.arc(p.x, p.y, size * 2, 0, Math.PI * 2);
+       ctx.stroke();
++    } else if (p.type === 'sparkle') {
++      // Evolution leap — a rare, beneficial mutation event. Deliberately more
++      // prominent than an ordinary birth particle (bigger, brighter, longer-
++      // lived, a 4-point star rather than a plain dot) since this marks a
++      // genuinely rare moment (EVOLUTION_LEAP_CHANCE ≈ 0.3% per mutation),
++      // not routine population turnover. Spin is derived from the particle's
++      // own life + position (not a global phase, which isn't available
++      // here) so simultaneous sparkles don't all rotate in lockstep.
++      const spin = (p.maxLife - p.life) * 0.15 + (p.x + p.y) * 0.01;
++      ctx.save();
++      ctx.translate(p.x, p.y);
++      ctx.rotate(spin);
++      ctx.shadowBlur = 8 * alpha;
++      ctx.shadowColor = `hsla(${p.hue}, 90%, 85%, ${alpha})`;
++      ctx.fillStyle = `hsla(${p.hue}, 40%, 92%, ${alpha})`;
++      drawStar(ctx, 0, 0, size * 1.8, size * 0.5);
++      ctx.fill();
++      ctx.restore();
+     }
+   }
+   ctx.restore();
+@@ -962,23 +1023,54 @@ const AMBIENT_PARTICLES = Array.from({ length: 80 }, (_, i) => ({
+   driftAngle: Math.random() * Math.PI * 2,
+ }));
+ 
++// Scene-level signals derived from real simulation state (see call site),
++// used to make the ambient atmosphere reactive instead of purely decorative.
++type EcosystemMood = {
++  populationRatio: number;   // 0 (empty) .. 1 (at capacity)
++  dominantHue: number | null; // hue of the current apex/dominant species, if any
++  leapIntensity: number;     // 0..1, rises briefly right after an evolution leap
++};
++
+ function drawAmbientParticles(
+   ctx: CanvasRenderingContext2D,
+   width: number,
+   height: number,
+   phase: number,
+   theme: WallpaperTheme | null = null,
++  mood: EcosystemMood | null = null,
+ ) {
+   if (!theme || theme.particleStyle === 'none') return;
+-  const count = Math.min(AMBIENT_PARTICLES.length, theme.particleCount);
++
++  // A sparse, empty-feeling world still gets a visible baseline (0.45) so
++  // the wallpaper never looks broken at low population — it just visibly
++  // fills in as the ecosystem grows toward its cap. leapIntensity adds a
++  // brief boost on top, independent of population, since a leap is a
++  // moment-in-time event rather than a standing population state.
++  const populationRatio = mood?.populationRatio ?? 1;
++  const leapIntensity = mood?.leapIntensity ?? 0;
++  const densityMult = 0.45 + populationRatio * 0.55 + leapIntensity * 0.25;
++  const brightnessMult = 0.85 + populationRatio * 0.25 + leapIntensity * 0.4;
++
++  const count = Math.min(AMBIENT_PARTICLES.length, Math.round(theme.particleCount * densityMult));
+   const [hueMin, hueMax] = theme.particleHueRange;
+   const [sizeMin, sizeMax] = theme.particleSizeRange;
+   const hueRange = hueMax - hueMin;
+   const sizeRange = sizeMax - sizeMin;
+ 
++  // Blend the theme's own particle hue range toward the dominant species'
++  // color — subtle (25% weight) so each theme keeps its own identity, the
++  // atmosphere just visibly leans toward whichever lineage is winning right
++  // now rather than being fully independent of the ecosystem it surrounds.
++  const dominantHue = mood?.dominantHue;
++  const hueBlend = dominantHue !== null && dominantHue !== undefined ? 0.25 : 0;
++
+   for (let i = 0; i < count; i++) {
+     const p = AMBIENT_PARTICLES[i];
+-    const hue = hueMin + (p.hue / 360) * hueRange;
++    let hue = hueMin + (p.hue / 360) * hueRange;
++    if (hueBlend > 0 && dominantHue !== null && dominantHue !== undefined) {
++      const d = ((dominantHue - hue + 540) % 360) - 180; // shortest angular distance
++      hue = (hue + d * hueBlend + 360) % 360;
++    }
+     const pSize = sizeMin + p.size * sizeRange;
+     let x: number, y: number, alpha: number;
+ 
+diff --git a/src/sim/simulation.ts b/src/sim/simulation.ts
+index 1d725db..f1f6c21 100644
+--- a/src/sim/simulation.ts
++++ b/src/sim/simulation.ts
+@@ -33,7 +33,8 @@ import {
+   crossoverBrainForGenome,
+   SPECIATION_THRESHOLD,
+ } from './genetics';
+-import { evalBrain, N_INPUTS, N_OUTPUTS, type Brain } from './brain';
++import { evalBrain, N_INPUTS, N_OUTPUTS, hiddenForIntel, type Brain } from './brain';
++import { SpatialGrid } from './spatialGrid';
+ import { ChemicalField } from './chemicalField';
+ import {
+   runAndTumble, quorumSense, updateBiofilms, trySporulation, tryHGT, applyHGT,
+@@ -66,6 +67,11 @@ export class Simulation {
+   chemicalField: ChemicalField | null = null;
+   biofilms: BiofilmCluster[] = [];
+   nextBiofilmId = 1;
++  // Rebuilt once per step() from organism positions at the start of that
++  // step — used by the hunting/threat-detection/altruism/competition loops
++  // to avoid scanning every organism for every organism. See spatialGrid.ts
++  // for the (deliberate, documented) staleness trade-off this implies.
++  private readonly organismGrid = new SpatialGrid(40);
+   stats: SimStats;
+   tick = 0;
+   history: HistoryPoint[] = [];
+@@ -294,6 +300,15 @@ export class Simulation {
+       }
+     }
+ 
++    // Rebuild once per step from current positions — every organism-proximity
++    // query this step (threat detection, hunting) reads from this same
++    // snapshot rather than re-scanning the population. Rebuilt again,
++    // defensively, inside processSocialBehavior() below — the organisms
++    // array gets reshaped (dead removed, newborns appended) partway through
++    // step(), which would otherwise leave this snapshot's indices stale by
++    // the time social behavior runs.
++    this.rebuildOrganismGrid();
++
+     for (const org of this.organisms) {
+       if (!org.alive) continue;
+       this.updateOrganism(org);
+@@ -409,20 +424,20 @@ export class Simulation {
+   // ─── Particle system ─────────────────────────────────────────────────
+   spawnParticle(x: number, y: number, type: ParticleType, hue: number) {
+     if (this.particles.length > 300) return;
+-    const count = type === 'kill' ? 8 : type === 'death' ? 6 : type === 'birth' ? 5 : 4;
++    const count = type === 'kill' ? 8 : type === 'death' ? 6 : type === 'birth' ? 5 : type === 'sparkle' ? 10 : 4;
+     for (let i = 0; i < count; i++) {
+       const angle = (i / count) * Math.PI * 2 + this.rng.range(0, 0.5);
+-      const speed = type === 'kill' ? this.rng.range(1.5, 3) : this.rng.range(0.5, 1.5);
++      const speed = type === 'kill' ? this.rng.range(1.5, 3) : type === 'sparkle' ? this.rng.range(0.8, 2.2) : this.rng.range(0.5, 1.5);
+       this.particles.push({
+         x,
+         y,
+         vx: Math.cos(angle) * speed,
+         vy: Math.sin(angle) * speed,
+-        life: type === 'kill' ? 40 : type === 'birth' ? 30 : 25,
+-        maxLife: type === 'kill' ? 40 : type === 'birth' ? 30 : 25,
++        life: type === 'kill' ? 40 : type === 'birth' ? 30 : type === 'sparkle' ? 55 : 25,
++        maxLife: type === 'kill' ? 40 : type === 'birth' ? 30 : type === 'sparkle' ? 55 : 25,
+         hue,
+         type,
+-        size: type === 'kill' ? 3 : 2,
++        size: type === 'kill' ? 3 : type === 'sparkle' ? 3.5 : 2,
+       });
+     }
+   }
+@@ -674,9 +689,23 @@ export class Simulation {
+ 
+   // ─── Social behavior: clustering, hierarchy, altruism, competition ─────
+   private socialTimer = 0;
++  private rebuildOrganismGrid(): void {
++    this.organismGrid.clear();
++    for (let i = 0; i < this.organisms.length; i++) {
++      const o = this.organisms[i];
++      if (o.alive) this.organismGrid.insert(i, o.x, o.y);
++    }
++  }
++
+   private processSocialBehavior() {
+     this.socialTimer++;
+ 
++    // The organisms array may have been reshaped (dead filtered out,
++    // newborns appended) since step()'s earlier build — rebuild fresh so
++    // indices are guaranteed valid for this array, not whatever shape it
++    // was in earlier this step.
++    this.rebuildOrganismGrid();
++
+     // ── Spatial clustering: group organisms by proximity ──────────────
+     // Run every ~3 seconds to reduce CPU cost
+     if (this.socialTimer % 90 === 0) {
+@@ -689,14 +718,43 @@ export class Simulation {
+       if (!org.alive || org.sporeMode) continue;
+       if (org.genome.altruism < 0.2 || org.energy < 80) continue;
+ 
+-      for (const other of this.organisms) {
++      const candidates = this.organismGrid.queryRadius(org.x, org.y, 30);
++      for (const idx of candidates) {
++        const other = this.organisms[idx];
+         if (other === org || !other.alive) continue;
+         if (other.speciesId !== org.speciesId) continue;
+         if (other.energy > 40) continue; // only help those in need
+         const dx = other.x - org.x;
+         const dy = other.y - org.y;
+         if (dx * dx + dy * dy < 900) {
+-          const share = Math.min(org.energy - 60, 15) * org.genome.altruism;
++          // Brain output[4]: social/sharing intent. The genome's `altruism`
++          // gene still gates whether an organism shares AT ALL (line above —
++          // this is deliberately not brain-overridable, altruism capacity
++          // stays a genetic trait) but a brain can now learn to modulate HOW
++          // MUCH it shares in the moment, roughly 0.5x-1.5x of the baseline
++          // genetic amount, instead of every organism with the same
++          // `altruism` gene sharing an identical, context-blind amount.
++          const socialMult =
++            org.brain && org.lastOutputs ? 1 + org.lastOutputs[4] * 0.5 : 1;
++          // socialRank (assignHierarchy, above) was previously computed and
++          // displayed but had no behavioral effect anywhere — alpha/beta/
++          // omega looked identical to every system in the simulation. Real
++          // social hierarchies preferentially support their dominant
++          // members: a needy alpha gets prioritized help from colony-mates,
++          // a needy omega gets deprioritized. This is the recipient's rank,
++          // not the giver's — it's about who the group chooses to invest in.
++          const rankMult =
++            other.socialRank === 'alpha' ? 1.5 : other.socialRank === 'omega' ? 0.6 : 1;
++          let share = Math.min(org.energy - 60, 15) * org.genome.altruism * socialMult * rankMult;
++          // Safety: the multipliers above are applied after the original
++          // Math.min cap, so without this they could push a donation past
++          // what the donor can safely afford (e.g. rankMult=1.5 combined
++          // with a maxed brain socialMult). Re-clamp so a donor's energy
++          // can never drop below 60 from a single donation, regardless of
++          // how the multipliers combine — preserves the original safety
++          // invariant while still letting rank/brain meaningfully scale
++          // the amount up to that ceiling.
++          share = Math.min(share, org.energy - 60);
+           if (share > 1) {
+             org.energy -= share;
+             other.energy += share;
+@@ -711,7 +769,9 @@ export class Simulation {
+       if (!org.alive || org.sporeMode) continue;
+       if (org.genome.competitiveness < 0.3) continue;
+ 
+-      for (const other of this.organisms) {
++      const candidates = this.organismGrid.queryRadius(org.x, org.y, 20);
++      for (const idx of candidates) {
++        const other = this.organisms[idx];
+         if (other === org || !other.alive) continue;
+         if (other.speciesId === org.speciesId) continue;
+         const dx = other.x - org.x;
+@@ -922,6 +982,43 @@ export class Simulation {
+         return; // entered spore mode, skip rest
+       }
+ 
++      // Crude threat reflex: even a brainless, sub-tumble organism should
++      // have SOME avoidance of an immediate, obvious danger — real
++      // low-cognition biology still has basic taxis away from harmful
++      // stimuli. This branch's `return` below used to mean these organisms
++      // got zero threat response of any kind under the default settings
++      // (microbialBehavior is on by default), since the main threat-
++      // detection block further down was never reached. Deliberately
++      // simple: no juke, no fight/flee brain decision (there's no brain
++      // here to consult) — just override the tumble angle to point away
++      // from a close, genuinely dangerous organism, at a smaller radius
++      // than full threat detection to keep this feeling like instinct, not
++      // strategy.
++      {
++        const microThreatSense = sense * 0.6;
++        const candidates = this.organismGrid.queryRadius(org.x, org.y, microThreatSense);
++        let threatX = 0, threatY = 0, threatFound = false;
++        for (const idx of candidates) {
++          const other = this.organisms[idx];
++          if (other === org || !other.alive) continue;
++          if (other.genome.diet < 0.5 && other.genome.aggression < 0.6) continue;
++          if (other.genome.size < org.genome.size * 0.9) continue;
++          if (org.colonyId !== null && org.colonyId === other.colonyId) continue;
++          const dx = other.x - org.x;
++          const dy = other.y - org.y;
++          const d2 = dx * dx + dy * dy;
++          if (d2 < microThreatSense * microThreatSense) {
++            org.threatLevel = Math.max(org.threatLevel, 1 - d2 / (microThreatSense * microThreatSense));
++            threatX -= dx;
++            threatY -= dy;
++            threatFound = true;
++          }
++        }
++        if (threatFound) {
++          org.angle = Math.atan2(threatY, threatX);
++        }
++      }
++
+       this.moveOrganism(org, biome, biofilmSpeedMod);
+       this.applyEnergyCost(org, biome);
+ 
+@@ -971,18 +1068,30 @@ export class Simulation {
+     if (org.brain) {
+       const inputs = this.collectBrainInputs(org, intel, effectiveSense, isCarnivore);
+       const outputs = new Float32Array(N_OUTPUTS);
+-      evalBrain(org.brain, inputs, outputs);
++      evalBrain(org.brain, inputs, outputs, hiddenForIntel(org.genome.intelligence));
+       org.lastInputs = inputs;
+       org.lastOutputs = outputs;
+       brainSpeedMod = 0.5 + outputs[2] * 0.5 + 0.5; // 0.5..1.5
+     }
+ 
+-    // Threat detection (intel >= 0.2)
+-    if (intel >= 0.2) {
++    // Threat detection. Previously gated behind `intel >= 0.2` — the same
++    // threshold that gates brain existence — meaning an organism below that
++    // threshold had literally zero avoidance behavior of any kind, brain or
++    // instinct. Real low-cognition biology still has basic taxis away from
++    // danger (even bacteria move away from harmful stimuli); a brainless
++    // organism should have some crude reflex, not none. No gate needed here:
++    // `fleeSense` already scales down naturally at low intelligence
++    // (0.6x at intel=0 vs up to 1.2x at intel=1), and `standGround` below
++    // already defaults to "always flee" when there's no brain to consult —
++    // so removing the outer gate alone is enough to give every organism a
++    // baseline reflex while smarter ones still flee more skillfully.
++    {
+       let threatX = 0, threatY = 0, threatFound = false;
+       const fleeSense = effectiveSense * (0.6 + intel * 0.6);
+ 
+-      for (const other of this.organisms) {
++      const candidates = this.organismGrid.queryRadius(org.x, org.y, fleeSense);
++      for (const idx of candidates) {
++        const other = this.organisms[idx];
+         if (other === org || !other.alive) continue;
+         if (other.genome.diet < 0.5 && other.genome.aggression < 0.6) continue;
+         if (other.genome.size < org.genome.size * 0.9) continue;
+@@ -1002,12 +1111,26 @@ export class Simulation {
+       }
+ 
+       if (threatFound && (org.energy > 40 || intel >= 0.5)) {
+-        const fleeAngle = Math.atan2(threatY, threatX);
+-        const juke = intel >= 0.6 ? this.rng.range(-0.5, 0.5) : 0;
+-        org.angle = fleeAngle + juke;
+-        this.moveOrganism(org, biome, brainSpeedMod);
+-        this.applyEnergyCost(org, biome);
+-        return;
++        // Brain output[3]: fight/flee intent. Previously this decision was
++        // pure instinct (flee whenever a threat is sensed, no exceptions).
++        // A brain-equipped organism that has evolved a confident output[3]
++        // AND has real aggression to back it up can now choose to stand its
++        // ground instead — giving two organisms with identical genomes but
++        // different evolved brain weights a genuinely different, observable
++        // response to the same threat, rather than only differing in how
++        // smoothly they flee.
++        const standGround =
++          org.brain && org.lastOutputs
++            ? org.lastOutputs[3] > 0.4 && org.genome.aggression > 0.5
++            : false;
++        if (!standGround) {
++          const fleeAngle = Math.atan2(threatY, threatX);
++          const juke = intel >= 0.6 ? this.rng.range(-0.5, 0.5) : 0;
++          org.angle = fleeAngle + juke;
++          this.moveOrganism(org, biome, brainSpeedMod);
++          this.applyEnergyCost(org, biome);
++          return;
++        }
+       }
+     }
+ 
+@@ -1015,7 +1138,9 @@ export class Simulation {
+     if (isCarnivore || org.genome.aggression > 0.6) {
+       let bestPreyScore = -Infinity;
+ 
+-      for (const other of this.organisms) {
++      const candidates = this.organismGrid.queryRadius(org.x, org.y, effectiveSense);
++      for (const idx of candidates) {
++        const other = this.organisms[idx];
+         if (other === org || !other.alive) continue;
+         if (org.colonyId !== null && org.colonyId === other.colonyId && org.genome.cooperation > 0.5) continue;
+         if (other.genome.size > org.genome.size * 1.15) continue;
+@@ -1360,8 +1485,17 @@ export class Simulation {
+   }
+ 
+   private applyEnergyCost(org: Organism, biome: Biome | undefined) {
++    // Intelligence previously had zero metabolic cost — every other major
++    // trait (size, speed, senseRadius) already has an explicit tradeoff
++    // here, so nothing was holding intelligence back from being maximized
++    // by evolution regardless of whether it was actually adaptive in a
++    // given environment. Scaled by hiddenForIntel (not raw intelligence)
++    // so the cost tracks actual brain size — a tier that doesn't grow the
++    // brain (e.g. 0.15 -> 0.19, both below the 0.2 brain-existence
++    // threshold) correctly costs nothing extra.
+     let cost =
+-      (org.genome.size * 0.01 + org.genome.speed * 0.04 + org.genome.senseRadius * 0.002) *
++      (org.genome.size * 0.01 + org.genome.speed * 0.04 + org.genome.senseRadius * 0.002 +
++        hiddenForIntel(org.genome.intelligence) * 0.01) *
+       org.genome.metabolism;
+ 
+     // Biome energy drain, mitigated by adaptability
+@@ -1600,6 +1734,7 @@ export class Simulation {
+       this.stats.evolutionLeaps++;
+       const sp = this.species.find((s) => s.id === parent.speciesId);
+       if (sp) sp.evolutionLeaps++;
++      this.spawnParticle(parent.x, parent.y, 'sparkle', childGenome.hue);
+     }
+     const childBrain = this.settings.neuralBrains
+       ? mutateBrainForGenome(childGenome, parent.brain, this.settings.mutationRate, this.rng)
+@@ -1659,6 +1794,7 @@ export class Simulation {
+       this.stats.evolutionLeaps++;
+       const sp = this.species.find((s) => s.id === parentA.speciesId);
+       if (sp) sp.evolutionLeaps++;
++      this.spawnParticle(parentA.x, parentA.y, 'sparkle', childGenome.hue);
+     }
+ 
+     const childBrain = this.settings.neuralBrains

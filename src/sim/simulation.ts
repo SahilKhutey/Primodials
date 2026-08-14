@@ -935,9 +935,13 @@ export class Simulation {
         // `altruism` gene sharing an identical, context-blind amount.
         const socialMult =
           org.brain && org.lastOutputs ? 1 + org.lastOutputs[4] * 0.5 : 1;
-        // Preferentially help colony Alpha leaders
-        const alphaMultiplier = other.socialRank === 'alpha' ? 1.4 : 1.0;
-        const share = Math.min(org.energy - 60, 15) * org.genome.altruism * alphaMultiplier * socialMult;
+        // socialRank (assignHierarchy) preferentially supports dominant members:
+        // a needy alpha gets prioritized help (1.5x), a needy omega gets deprioritized (0.6x).
+        const rankMult =
+          other.socialRank === 'alpha' ? 1.5 : other.socialRank === 'omega' ? 0.6 : 1.0;
+        let share = Math.min(org.energy - 60, 15) * org.genome.altruism * rankMult * socialMult;
+        // Re-clamp so a donor's energy can never drop below 60 from a single donation
+        share = Math.min(share, org.energy - 60);
         if (share > 1) {
           org.energy -= share;
           other.energy += share;
