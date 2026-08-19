@@ -1,0 +1,138 @@
+# ─────────────────────────────────────────────
+# Primordials — CI/CD Pipeline
+# ─────────────────────────────────────────────
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BUILD_TYPE: Release
+  CACHE_VERSION: v2
+
+jobs:
+  # ─── C++ Engine Tests ───────────────────────
+  engine-linux:
+    name: "C++ Engine — Ubuntu"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build g++-13 \
+            libsdl3-dev libsdl3-ttf-dev \
+            catch2
+      - name: Cache build
+        uses: actions/cache@v4
+        with:
+          path: build/test
+          key: ${{ env.CACHE_VERSION }}-linux-test-${{ hashFiles('**/CMakeLists.txt') }}
+          restore-keys: |
+            ${{ env.CACHE_VERSION }}-linux-test-
+      - name: Configure
+        run: cmake -G Ninja -S . -B build/test -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_TESTING=ON
+      - name: Build
+        run: cmake --build build/test --config ${{ env.BUILD_TYPE }} -j$(nproc)
+      - name: Test
+        run: ctest --test-dir build/test --output-on-failure --verbose
+      - name: Lint (clang-tidy)
+        run: |
+          if [ -f .clang-tidy ]; then
+            run-clang-tidy -p build/test -j$(nproc) Engine/ Games/
+          fi
+        continue-on-error: true
+
+  engine-macos:
+    name: "C++ Engine — macOS"
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          brew install cmake ninja sdl3 catch2
+      - name: Configure
+        run: cmake -G Ninja -S . -B build/test -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_TESTING=ON
+      - name: Build
+        run: cmake --build build/test --config ${{ env.BUILD_TYPE }} -j$(sysctl -n hw.ncpu)
+      - name: Test
+        run: ctest --test-dir build/test --output-on-failure
+
+  engine-windows:
+    name: "C++ Engine — Windows"
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Install vcpkg dependencies
+        run: |
+          vcpkg install sdl3:x64-windows catch2:x64-windows
+      - name: Configure
+        run: cmake -G "Visual Studio 17 2022" -A x64 -S . -B build/test -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_TESTING=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake"
+      - name: Build
+        run: cmake --build build/test --config ${{ env.BUILD_TYPE }} -j
+      - name: Test
+        run: ctest --test-dir build/test -C ${{ env.BUILD_TYPE }} --output-on-failure
+
+  # ─── Web App ────────────────────────────────
+  web:
+    name: "Web App — Lint, Test, Build"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist/
+          retention-days: 7
+
+  # ─── Documentation ──────────────────────────
+  docs:
+    name: "Docs — Spell & Lint Check"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install codespell
+        run: pip install codespell
+      - name: Run codespell
+        run: codespell --skip=".git,build,node_modules,dist,*.lock,*.json" --ignore-words-list="teh,nd,wnat"

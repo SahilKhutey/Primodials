@@ -1,0 +1,38 @@
+cff-version: 1.2.0
+message: "If you use Primordials in academic or pedagogical work, please cite it as below."
+title: "Primordials: Real-Time Artificial Life Simulation for the Desktop"
+abstract: >
+  A real-time artificial life simulation running on the desktop, built on a custom
+  C++23 Entity-Component-System engine and a modern React/TypeScript web application.
+  Implements continuous Lotka-Volterra predator-prey dynamics with deterministic
+  lockstep networking, supporting up to 250,000 entities at 60 frames per second.
+  Open source under the MIT license.
+type: software
+date-released: 2024-08-14
+version: 2.0.0
+license: MIT
+url: "https://github.com/SahilKhutey/Primodials"
+repository-code: "https://github.com/SahilKhutey/Primodials"
+keywords:
+  - artificial-life
+  - simulation
+  - ecosystem
+  - predator-prey
+  - lotka-volterra
+  - live-wallpaper
+  - entity-component-system
+  - cpp23
+  - typescript
+  - react
+authors:
+  - family-names: Khutey
+    given-names: Sahil
+    affiliation: Gensouls Lab
+preferred-citation:
+  type: software
+  title: "Primordials: A Real-Time Artificial Life Simulation for the Desktop"
+  authors:
+    - family-names: Khutey
+      given-names: Sahil
+  year: 2026
+  url: "https://github.com/SahilKhutey/Primodials"

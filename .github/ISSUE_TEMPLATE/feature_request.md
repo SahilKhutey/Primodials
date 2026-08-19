@@ -1,19 +1,19 @@
 ---
-name: Feature request
-about: Suggest an idea or feature for ShapeEngine
-title: '[FEATURE] '
-labels: 'enhancement'
-assignees: ''
+name: 💡 Feature Request
+about: Propose an idea or enhancement for Primordials
+title: "[FEATURE] "
+labels: ["enhancement", "triage"]
+assignees: []
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## 💡 Feature Summary
+A clear, concise summary of the proposed feature.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+## 🎯 Problem It Solves
+What problem or limitation does this solve?
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## 🛠️ Proposed Solution
+Describe how you imagine this feature working in practice.
 
-**Additional context**
-Add any other context, architectural diagrams, or screenshots about the feature request here.
+## 🔄 Alternatives Considered
+Any other designs or approaches you've evaluated.

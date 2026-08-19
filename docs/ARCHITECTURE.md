@@ -1,61 +1,50 @@
-# Architecture Overview
-
-Deep dive into Polygonal Primordials' system design.
+# 📐 Primordials — System Architecture
 
 ---
 
-## 🎯 Design Goals
+## 1. Overview
 
-1. **Performance**: Handle 250K entities @ 60 FPS
-2. **Determinism**: Reproducible simulation (critical for lockstep replays)
-3. **Modularity**: Easy to extend and modify
-4. **Portability**: Run on Windows, Linux, macOS identically
-5. **Data-Oriented**: Cache-friendly, minimal allocations
-6. **Open Source**: MIT licensed, learnable codebase
-
----
-
-## 🏗️ High-Level Architecture
+Primordials is organized into two primary tiers:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                       Application Layer                     │
-│  ├─ Game Mode (full UI, simulation controls, editor)        │
-│  └─ Wallpaper Mode (WorkerW window, ambient controls)       │
-├─────────────────────────────────────────────────────────────┤
-│                         Engine Systems                      │
-│  ├─ ECS2 (Archetype-based Entity Component System)          │
-│  ├─ Spatial Hash Broadphase (O(1) neighbor queries)         │
-│  ├─ Renderer (SDL3 Renderer & OpenGL 4.6 backend)           │
-│  ├─ Audio (SDL_mixer ambient player wrapper)               │
-│  ├─ Scripting (Lua 5.4 sandboxed environment)              │
-│  └─ Steam Integration (Workshop, Cloud, Achievements)       │
-├─────────────────────────────────────────────────────────────┤
-│                         Core Libraries                      │
-│   SDL3  │  Dear ImGui  │  GLM  │  Sol2  │  zstd  │  Lua     │
-└─────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│               1. Consumer / Web Edition                │
+│       React 18 + TypeScript + Vite + Canvas 2D         │
+│  - Live desktop wallpaper & Wallpaper Engine Bridge    │
+│  - Neural sensory agent behaviors                      │
+│  - Spatial hash grid collision detection               │
+└──────────────────────────┬─────────────────────────────┘
+                           │
+┌──────────────────────────▼─────────────────────────────┐
+│             2. Laboratory Research Engine              │
+│                 Modern C++23 + SDL3                    │
+│  - Custom data-oriented Entity-Component-System (ECS)  │
+│  - Continuous differential equation ecology solvers    │
+│  - Lockstep deterministic networking and replay        │
+│  - High entity throughput (250,000+ entities @ 60 FPS) │
+└────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🧩 Core Systems
+## 2. Mathematical Ecology Model
 
-### 1. Archetype Entity Component System (`ECS2`)
-Entities are compact numerical IDs (`EntityId`). Components are flat C++ structs registered in `ComponentRegistry`. Entities sharing identical component sets reside in dense `Archetype` memory chunks, yielding ~1ns per entity cache iteration.
+Both implementations simulate populations using continuous differential equations based on Lotka-Volterra predator-prey dynamics:
 
-### 2. Spatial Broadphase
-Uses uniform 50x50 spatial hash grids to resolve neighbor queries in O(1) time instead of O(N²), keeping 250,000 entity interactions performing at 60 FPS.
+$$\frac{dx}{dt} = \alpha x - \beta x y$$
 
-### 3. Rendering Pipeline
-Uses instanced draw calls to push 250,000 entities in 1 draw call to GPU VRAM, combined with camera frustum culling.
+$$\frac{dy}{dt} = \delta x y - \gamma y$$
 
-### 4. Deterministic Simulation
-Uses deterministic fixed 60Hz tick rates and bit-exact pseudo-random number generators (`XorShiftRNG`) for repeatable evolution trajectories.
+Where:
+- $x$: Prey population density
+- $y$: Predator population density
+- $\alpha$: Prey natural growth rate
+- $\beta$: Predation rate coefficient
+- $\delta$: Predator reproduction efficiency per consumed prey
+- $\gamma$: Predator natural mortality rate
 
 ---
 
-## 🔌 Extension Points
+## 3. Spatial Partitioning
 
-- **New Component**: Register struct in `ComponentRegistry::register_type<T>()`.
-- **New Theme**: Create JSON file in `Content/Themes/<name>/theme.json`.
-- **New Lua Mod**: Add script in `Content/Mods/<name>/scripts/main.lua`.
+To maintain 60 FPS across tens of thousands of entities, continuous 2D space is partitioned into a uniform spatial grid. Neighbor queries for foraging and threat detection execute in $O(1)$ amortized time per entity rather than naive $O(N^2)$ pairwise checking.

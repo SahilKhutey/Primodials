@@ -1,0 +1,51 @@
+# ─────────────────────────────────────────────
+# Primordials — Git attributes
+# ─────────────────────────────────────────────
+
+# Auto-detect text files
+* text=auto eol=lf
+
+# Force LF for shell scripts regardless of platform
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+
+# Windows builds need CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Force LF for C++ sources
+*.cpp text eol=lf
+*.hpp text eol=lf
+*.h text eol=lf
+*.cc text eol=lf
+*.cxx text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.icns binary
+*.webm binary
+*.mp4 binary
+*.mov binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
+
+# Linguist overrides
+Engine/* linguist-language=C++
+Games/* linguist-language=C++
+src/* linguist-language=TypeScript
+tests/*.ts linguist-language=TypeScript
+
+# Markdown rendering
+*.md linguist-detectable=true
+README.md linguist-documentation=true
+docs/*.md linguist-documentation=true

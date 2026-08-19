@@ -1,0 +1,165 @@
+# ─────────────────────────────────────────────
+# Primordials — Release Pipeline
+# Triggered when a tag like v2.1.0 is pushed
+# ─────────────────────────────────────────────
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (e.g., 2.1.0)"
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  # ─── Build native installers ────────────────
+  build-linux:
+    name: "Build — Linux (.deb + AppImage)"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake ninja-build g++-13 \
+            libsdl3-dev libfuse2 \
+            wget
+      - name: Configure
+        run: cmake -G Ninja -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DBUILD_GAME=ON
+      - name: Build
+        run: cmake --build build/release -j$(nproc)
+      - name: Package .deb
+        run: |
+          mkdir -p dist/deb/DEBIAN
+          mkdir -p dist/deb/usr/local/bin
+          mkdir -p dist/deb/usr/share/applications
+          mkdir -p dist/deb/usr/share/icons/hicolor/256x256/apps
+          cp build/release/PolygonalPrimordials dist/deb/usr/local/bin/ || true
+          if [ -f installer/linux/control ]; then cp installer/linux/control dist/deb/DEBIAN/; fi
+          if [ -f installer/linux/primordials.desktop ]; then cp installer/linux/primordials.desktop dist/deb/usr/share/applications/; fi
+          if [ -f assets/logo/logo-icon.svg ]; then cp assets/logo/logo-icon.svg dist/deb/usr/share/icons/hicolor/256x256/apps/primordials.svg; fi
+          dpkg-deb --build dist/deb dist/polygonal-primordials_${GITHUB_REF_NAME#v}_amd64.deb || true
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-installers
+          path: |
+            dist/*.deb
+            dist/*.AppImage
+        continue-on-error: true
+
+  build-macos:
+    name: "Build — macOS (.pkg)"
+    runs-on: macos-14
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: brew install cmake ninja sdl3
+      - name: Configure
+        run: cmake -G Ninja -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DBUILD_GAME=ON
+      - name: Build
+        run: cmake --build build/release -j$(sysctl -n hw.ncpu)
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: dist/*.pkg
+        continue-on-error: true
+
+  build-windows:
+    name: "Build — Windows (.exe)"
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Install dependencies
+        run: vcpkg install sdl3:x64-windows
+      - name: Configure
+        run: cmake -G "Visual Studio 17 2022" -A x64 -S . -B build/release -DCMAKE_BUILD_TYPE=Release -DBUILD_GAME=ON -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake"
+      - name: Build
+        run: cmake --build build/release --config Release -j
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: installer/windows/Output/*.exe
+        continue-on-error: true
+
+  build-web:
+    name: "Build — Web Packages"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run package:all
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: dist-itch/
+
+  # ─── Create GitHub Release ──────────────────
+  release:
+    name: "Create GitHub Release"
+    needs: [build-web]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          find . -type f \( -name "*.exe" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.pkg" -o -name "*.zip" \) -exec sha256sum {} \; > SHA256SUMS.txt || true
+          cat SHA256SUMS.txt || true
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Primordials ${{ github.ref_name }}"
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') }}
+          generate_release_notes: true
+          files: |
+            artifacts/**/*.zip
+            artifacts/**/SHA256SUMS.txt
+          body: |
+            ## 🌿 Primordials Release
+            Welcome to the latest release of Primordials!
+
+            ### 📦 Downloads Included
+            - **Browser & Wallpaper Packages:** Check the attached ZIP archives below.
+            - **Wallpaper Engine:** Ready-to-import bundle.
+
+            ### 🔐 Verification
+            Verify checksums using:
+            ```bash
+            sha256sum -c SHA256SUMS.txt
+            ```

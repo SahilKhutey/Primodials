@@ -1,0 +1,49 @@
+name: Final Validation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Validate Package
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install system dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build \
+            libsdl3-dev libsdl3-ttf-dev libsdl3-mixer-dev \
+            libsdl3-image-dev libfreetype6-dev libgl1-mesa-dev \
+            python3 python3-pip python3-venv
+      
+      - name: Install system dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install cmake ninja sdl3 sdl3_ttf sdl3_mixer sdl3_image python3
+      
+      - name: Install system dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install -y cmake ninja python3
+      
+      - name: Build project
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DSHAPE_BUILD_TESTS=ON
+          cmake --build build --config Release --target ShapeEngineTests
+      
+      - name: Run validation tests
+        run: |
+          build/bin/ShapeEngineTests.exe "[validation]" || build/Release/ShapeEngineTests.exe "[validation]" || build/EngineTests/ShapeEngineTests "[validation]"

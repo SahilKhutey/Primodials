@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────
+# Primordials — Stale Issue & PR Bot
+# ─────────────────────────────────────────────
+name: Stale
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Daily at midnight UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # Issue settings
+          days-before-issue-stale: 30
+          days-before-issue-close: 14
+          stale-issue-label: "stale"
+          stale-issue-message: |
+            👋 This issue has been idle for 30 days. If it's still relevant, please add a comment to keep it open. Otherwise, it'll be closed in 14 days. If you have more context, please provide it. Otherwise, feel free to close this and re-open later if needed.
+          close-issue-message: |
+            🔒 Closing due to inactivity. If this is still relevant, please open a new issue with up-to-date context.
+
+          # PR settings
+          days-before-pr-stale: 45
+          days-before-pr-close: 30
+          stale-pr-label: "stale"
+          stale-pr-message: |
+            👋 This PR has been idle for 45 days. Please update it or close it if no longer needed.
+          close-pr-message: |
+            🔒 Closing stale PR. Feel free to re-open if you pick this back up.
+
+          # Exemptions
+          exempt-issue-labels: "pinned,security,roadmap,in-progress"
+          exempt-pr-labels: "pinned,security,wip"
+          operations-per-run: 100

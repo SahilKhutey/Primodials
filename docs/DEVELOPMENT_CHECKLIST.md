@@ -69,10 +69,10 @@ Check an item only when its linked test case(s) pass.
       **Files:** `src/sim/simulation.ts` (detect + flag), `src/sim/renderer.ts` (render `drawStar` sparkle particle)
       **Verifies:** TC-B1 ✅
 
-- [ ] Add a categorical visual distinction for `diet` (outline style or glyph), separate from
+- [x] Add a categorical visual distinction for `diet` (outline style or glyph), separate from
       the continuous hue/size/sides channels.
       **Files:** `src/sim/renderer.ts`
-      **Verifies:** TC-B2
+      **Verifies:** TC-B2 ✅ (carnivore double outer stroke, corner tooth spikes, and inner polygon vs. herbivore smooth membrane)
 
 - [x] Wire `socialRank` into at least one real behavior (alphas immune to same-colony
       competition tax and preferential 1.4x altruism targeting).
@@ -93,22 +93,22 @@ Check an item only when its linked test case(s) pass.
 
 ## Phase 4 — Environment Depth
 
-- [ ] Remove directional bias in `expandWorld()` — alternate or randomize which
+- [x] Remove directional bias in `expandWorld()` — alternate or randomize which
       quadrant/direction each expansion grows into, and/or randomize new-biome placement across
       the full map rather than only the newest 40%.
       **Files:** `src/sim/simulation.ts` (`expandWorld`)
-      **Verifies:** TC-D1
+      **Verifies:** TC-D1 ✅ (biome placement uniform across full world)
 
-- [ ] Make `CinematicCamera`'s idle/auto zoom a function of current `worldWidth`/`worldHeight`
+- [x] Make `CinematicCamera`'s idle/auto zoom a function of current `worldWidth`/`worldHeight`
       instead of a fixed constant.
       **Files:** `src/sim/cinematicCamera.ts`
-      **Verifies:** TC-D3
+      **Verifies:** TC-D3 ✅ (monotonic decrease verified across 10 expansions with floor-clamping)
 
-- [ ] Add falloff-based biome edge blending — interpolate `energyDrain`/`speedMod`/visual hue
+- [x] Add falloff-based biome edge blending — interpolate `energyDrain`/`speedMod`/visual hue
       across a boundary zone instead of snapping at `radius`.
-      **Files:** `src/sim/simulation.ts` (`biomeAt` and stat application), `src/sim/renderer.ts`
-      (visual blending)
-      **Verifies:** TC-D4
+      **Files:** `src/sim/simulation.ts` (`biomeBlendAt` and stat application), `src/sim/renderer.ts`
+      (`drawBiomeBoundaryBlend` visual blending)
+      **Verifies:** TC-D4 ✅ (smooth quadratic falloff for energy/speed + soft hue-blend radial gradient overlay)
 
 - [ ] (Stretch) Add a day/night or seasonal light cycle animating the existing per-biome
       `light` scalar over time, consumed by `photosynthesis`.
@@ -125,19 +125,18 @@ Check an item only when its linked test case(s) pass.
       **Verifies:** TC-B3 ✅ (empirically verified via two standalone statistical tests against
       the real production functions, both directions: single-mutation and multi-generation)
 
-- [ ] Give the brain real strategic influence — expand inputs/outputs to cover prey-selection
+- [x] Give the brain real strategic influence — expand inputs/outputs to cover prey-selection
       scoring and social genes (`altruism`, `competitiveness`, `dominance`, `cooperation`,
       `socialGene`), so evolved weights can affect *who*/*whether* decisions, not just movement.
       **Files:** `src/sim/brain.ts` (`N_INPUTS`/`N_OUTPUTS`), `src/sim/genetics.ts`,
-      `src/sim/simulation.ts` (`collectBrainInputs`, hunting/social loops)
-      **Note:** changes brain shape — sequence after Phase 2's tier-crossing fix is validated,
-      since this touches the same weight-compatibility system.
+      `src/sim/simulation.ts` (`collectBrainInputs`, hunting/social loops), `src/components/InspectorPanel.tsx`
+      **Verifies:** Phase 5a ✅ (N_INPUTS: 22, N_OUTPUTS: 7; output[5] biases prey selection strategy, output[6] controls colony formation and joining willingness)
 
-- [ ] Build the entity→environment feedback loop — colony/population activity locally alters
+- [x] Build the entity→environment feedback loop — colony/population activity locally alters
       biome stats over time (overgrazing lowers local `foodRate`, colony density raises local
       `energyDrain`, etc.), instead of biomes only ever affecting entities.
-      **Files:** `src/sim/simulation.ts`, `src/sim/types.ts` (`Biome` may need mutable
-      per-instance state distinct from `BIOME_INFO` template values)
+      **Files:** `src/sim/simulation.ts` (`updateBiomeFeedback`)
+      **Verifies:** Phase 5b ✅ (herbivore grazing reduces foodRate down to 0.3x, density raises energyDrain up to 2.0x, photosynthesis boosts foodRate up to 1.8x, with 3x asymmetric recovery lag)
 
 ---
 
@@ -149,21 +148,21 @@ Check an item only when its linked test case(s) pass.
       **Files:** `src/App.tsx`, `src/components/WallpaperInfoPopover.tsx`
       **Verifies:** TC-F3 ✅
 
-- [ ] Surface a read-only summary in Wallpaper Mode of which sim-only settings are currently
+- [x] Surface a read-only summary in Wallpaper Mode of which sim-only settings are currently
       active (knowledge nodes, structures, disease events, etc.).
       **Files:** `src/components/WallpaperDock.tsx` or `AmbientHUD.tsx`
-      **Verifies:** TC-F1
+      **Verifies:** TC-F1 ✅
 
 ---
 
 ## Cross-Cutting Reminders (apply throughout, not phase-specific)
 
-- [ ] Run `npm run typecheck` and `npm run build` after every change in this checklist —
-      both must stay clean (per TC-A2/TC-A3) before moving to the next item.
-- [ ] Any new/promoted genome trait gets an assigned visual channel before it ships (per the
+- [x] Run `npm run typecheck` and `npm run build` after every change in this checklist —
+      both must stay clean (per TC-A2/TC-A3) before moving to the next item. (Verified clean: 0 TS errors, clean production bundle)
+- [x] Any new/promoted genome trait gets an assigned visual channel before it ships (per the
       entity-design doc's channel-allocation table) — don't add invisible traits.
-- [ ] Any new togglable feature extends the existing `SimSettings` type and
+- [x] Any new togglable feature extends the existing `SimSettings` type and
       `onToggleSetting(key, value)` pattern — no parallel settings systems.
-- [ ] Any new Wallpaper Mode UI element matches the existing glassmorphic tokens
+- [x] Any new Wallpaper Mode UI element matches the existing glassmorphic tokens
       (`bg-neutral-950/70`, `backdrop-blur-xl`, `ring-1 ring-white/10`) and the idle-fade
       behavior already used by `AmbientHUD`/`WallpaperDock`.

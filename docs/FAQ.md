@@ -1,21 +1,15 @@
-# Frequently Asked Questions (FAQ)
+# ❓ Primordials — Frequently Asked Questions (FAQ)
 
 ---
 
-## ❓ General Questions
+### Q: Is Primordials a game or a wallpaper?
+**A:** Both! In Wallpaper Mode (`?wallpaper=1` or via Steam Wallpaper Engine), it functions as an unobtrusive, relaxing digital terrarium. In windowed mode, it is an interactive sandbox where you can inject food, spawn predators, change environmental gravity, and observe evolutionary genetics.
 
-### Is Polygonal Primordials free?
-Yes! The game and live wallpaper engine are free (Pay What You Want) on itch.io and open source under the MIT License on GitHub.
+### Q: Will running Primordials as a wallpaper drain my laptop battery or GPU?
+**A:** No. The rendering engine is optimized with dirty-rectangle checks and throttles down to low frame rates or pauses entirely when fullscreen apps/games are running. Modern multi-core CPUs typically report `<1.5%` CPU utilization.
 
-### Can I run it as my desktop background?
-Yes! Launch `PolygonalPrimordialsWallpaper.exe` to run the live wallpaper mode. It integrates into the Windows system tray and WorkerW desktop layer.
+### Q: Does it require an internet connection?
+**A:** No. Primordials is **100% offline-first**. All simulation equations run on your local machine. Supabase cloud-sync is strictly an optional toggle for users who want to back up custom biome parameters across devices.
 
-### What are the heritable traits?
-Speed, Size, Vision Radius, Aggression, Defense, Metabolism, Reproduction Rate, and Lifespan.
-
----
-
-## 💻 Technical Questions
-
-### How does it handle 250,000 entities?
-Using an archetype-based Entity Component System (`ECS2`), uniform grid spatial hash broadphase, and OpenGL instanced draw calls.
+### Q: Can I use this in my classroom or research paper?
+**A:** Yes! The project is open-source under the MIT license and includes a `CITATION.cff` for academic attribution.

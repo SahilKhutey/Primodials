@@ -110,8 +110,7 @@ viewing distance, but it is not, as previously stated, entirely absent.
 - **Steps:** Compare two organisms with identical genomes except divergent evolved weights on
   outputs 3/4 → observe behavior difference (e.g. attack commitment, colony-joining tendency).
 - **Expected:** Measurable behavioral difference attributable to those two outputs.
-- **Status:** ⬜ Not yet implemented — currently outputs 3/4 are computed every tick and never
-  read anywhere in `simulation.ts`.
+- **Status:** ✅ **Implemented and verified.** Output `[3]` is wired into fight vs. flee commitment (`standGround` override in `updateOrganism`), and output `[4]` is wired into altruism energy donation scaling (`socialMult` in `processSocialBehavior`). Further expanded in Phase 5a with output `[5]` (prey-selection strategy) and output `[6]` (colony formation and joining intent).
 
 ### TC-C2 — Brain weights survive an intelligence tier crossing
 - **Preconditions:** Padding or weight-preserving resize implemented per §2 of the ML doc.
@@ -154,8 +153,8 @@ viewing distance, but it is not, as previously stated, entirely absent.
   centers across all expansions.
 - **Expected:** New biomes distributed roughly evenly around the existing world, not clustered
   in one quadrant.
-- **Status:** ⬜ Not yet implemented — current `expandWorld()` always grows worldWidth/Height
-  upward and places new biomes in the `[0.6×, 1.0×]` range of the new dimensions.
+- **Status:** ✅ **Implemented and verified.** In `expandWorld()`, new biomes are uniformly spawned
+  across the full map dimensions rather than being confined only to the newly expanded perimeter strip.
 
 ### TC-D2 — Chemical field data survives a world expansion
 - **Preconditions:** `ChemicalField.resize()` updated to copy forward existing cell data.
@@ -176,7 +175,9 @@ viewing distance, but it is not, as previously stated, entirely absent.
   and after.
 - **Expected:** Zoom level adjusts so a meaningfully larger fraction of the world remains
   visible as world size grows, rather than staying fixed at the original `0.85`.
-- **Status:** ⬜ Not yet implemented.
+- **Status:** ✅ **Implemented and verified.** In `src/sim/cinematicCamera.ts`, `DEFAULT_AUTO_ZOOM`
+  dynamically scales proportionally with current world dimensions (`baseDimension / Math.max(worldWidth, worldHeight)`),
+  monotonically scaling down zoom as world expands while clamped to a safe floor.
 
 ### TC-D4 — Biome transitions are not hard stat snaps
 - **Preconditions:** Edge-blending implemented per §4.1 of the open-world doc.
@@ -184,7 +185,10 @@ viewing distance, but it is not, as previously stated, entirely absent.
   `energyDrain`/`speedMod` at several points near the edge.
 - **Expected:** Stats interpolate smoothly across a falloff zone rather than flipping instantly
   at the boundary radius.
-- **Status:** ⬜ Not yet implemented.
+- **Status:** ✅ **Implemented and verified.** In `src/sim/simulation.ts`, `biomeBlendAt(x, y)` computes
+  smooth quadratic distance falloff weighting across all overlapping biomes, applying blended `energyDrain`
+  and `speedMod` to organism movement and energy drain. In `src/sim/renderer.ts`, `drawBiomeBoundaryBlend()`
+  renders a matching soft radial gradient hue-blend overlay across all intersecting biome boundary zones.
 
 ---
 
@@ -233,7 +237,7 @@ viewing distance, but it is not, as previously stated, entirely absent.
   Wallpaper Mode.
 - **Expected:** Wallpaper Mode UI indicates Disease Events is active, even though there's no
   toggle for it there.
-- **Status:** ⬜ Not yet implemented.
+- **Status:** ✅ **Implemented and verified.** A read-only "Active features" summary panel in `AmbientHUD.tsx` / `WallpaperDock.tsx` dynamically surfaces active sim-only features (knowledge nodes, structures, disease events, biofilms, etc.) in Wallpaper Mode matching the ambient glass aesthetic.
 
 ### TC-F2 — Entering Wallpaper Mode does not silently overwrite tuned sim settings
 - **Preconditions:** Fix from §3 of the control-modes doc applied.

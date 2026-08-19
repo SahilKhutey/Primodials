@@ -1,29 +1,31 @@
 ---
-name: Bug report
-about: Create a report to help us improve ShapeEngine
-title: '[BUG] '
-labels: 'bug'
-assignees: ''
+name: 🐛 Bug Report
+about: Report a defect to help improve Primordials
+title: "[BUG] "
+labels: ["bug", "triage"]
+assignees: []
 ---
 
-**Describe the bug**
+## 🐛 Bug Description
 A clear and concise description of what the bug is.
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
+## 📋 Steps to Reproduce
+1. Open Primordials in [Desktop App / Browser / Wallpaper Mode]
+2. Select Biome '...'
+3. Adjust slider or trigger event '...'
 4. See error
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## ✅ Expected Behavior
+What should happen under normal conditions.
 
-**Environment (please complete the following information):**
- - OS: [e.g. Windows 11, Ubuntu 22.04]
- - Compiler: [e.g. LLVM-MinGW Clang 16, GCC 13, MSVC 2022]
- - Build Type: [Debug / Release]
- - Graphics Backend: [OpenGL 4.6 / SDL3]
+## ❌ Actual Behavior
+What actually happened.
 
-**Additional context**
-Add any other context, stack traces, or log outputs about the problem here.
+## 🖥️ Environment
+- **OS:** [e.g. Windows 11, Ubuntu 24.04, macOS 14]
+- **Version:** [e.g. 2.0.0 or commit SHA]
+- **Mode:** [Live Wallpaper / Screensaver / Windowed]
+- **Hardware:** [CPU / GPU]
+
+## 📸 Screenshots / Video
+If applicable, attach images or video demonstrating the bug.
