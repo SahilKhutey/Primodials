@@ -1,0 +1,107 @@
+import type { Biome } from '@/types/biome';
+
+export const algaeBloom: Biome = {
+  id: 'algae-bloom',
+  version: '2.0.0',
+  name: 'Algae Bloom',
+  description: 'A teeming pond surface at dawn — green algae flourish, daphnia graze, copepods hunt.',
+  author: 'Gensouls Lab',
+  tags: ['freshwater', 'peaceful', 'default', 'beginner'],
+  world: {
+    width: 1920,
+    height: 1080,
+    wrap: true,
+    temperature: 22.0,
+  },
+  species: [
+    {
+      id: 'algae',
+      name: 'Green Algae',
+      type: 'producer',
+      color: '#4ECDC4',
+      shape: 'circle',
+      size: 4,
+      initial: 400,
+      behavior: {
+        movement: { type: 'wander', speed: 1.5, turnRate: 1.0 },
+        feeding: { diet: [], consumptionRate: 0.1, hungerRate: 0, maxHunger: 1 },
+        reproduction: {
+          rate: 0.04,
+          threshold: 0.7,
+          offspring: 1,
+          maturityAge: 20,
+        },
+      },
+      stats: { maxEnergy: 1.0, metabolism: 0.005, lifespan: 600, vision: 20 },
+    },
+    {
+      id: 'daphnia',
+      name: 'Daphnia',
+      type: 'grazer',
+      color: '#FFE66D',
+      shape: 'hexagon',
+      size: 5,
+      initial: 150,
+      behavior: {
+        movement: { type: 'flee', speed: 12.0, turnRate: 3.0 },
+        feeding: {
+          diet: ['algae'],
+          consumptionRate: 0.05,
+          hungerRate: 0.02,
+          maxHunger: 1.0,
+          huntSuccess: 1.0,
+        },
+        reproduction: {
+          rate: 0.03,
+          threshold: 0.6,
+          offspring: 2,
+          maturityAge: 30,
+        },
+      },
+      stats: { maxEnergy: 1.0, metabolism: 0.012, lifespan: 240, vision: 60 },
+    },
+    {
+      id: 'copepod',
+      name: 'Copepod',
+      type: 'predator',
+      color: '#FF6B6B',
+      shape: 'triangle',
+      size: 7,
+      initial: 12,
+      behavior: {
+        movement: { type: 'seek', speed: 25.0, turnRate: 5.0 },
+        feeding: {
+          diet: ['daphnia'],
+          consumptionRate: 0.08,
+          hungerRate: 0.025,
+          maxHunger: 1.0,
+          huntSuccess: 0.35,
+          preferredPreySize: 0.5,
+        },
+        reproduction: {
+          rate: 0.015,
+          threshold: 0.8,
+          offspring: 1,
+          maturityAge: 45,
+        },
+      },
+      stats: {
+        maxEnergy: 1.0,
+        metabolism: 0.02,
+        lifespan: 180,
+        vision: 80,
+        speedMultiplier: 1.5,
+      },
+    },
+  ],
+  rules: {
+    carryingCapacity: 800,
+    extinctionThreshold: 5,
+    respawnDelay: 60,
+  },
+  visuals: {
+    background: '#0F3D3E',
+    gradient: ['#0A2E2F', '#0F3D3E', '#1A4D4E'],
+    particles: { enabled: true, count: 100, type: 'plankton' },
+  },
+};
