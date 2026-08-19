@@ -1,4 +1,4 @@
-import { X, Dna, Brain, Zap, Shield, Crown } from 'lucide-react';
+import { X, Dna, Brain, Zap, Crown } from 'lucide-react';
 import type { Organism } from '@/sim/types';
 
 type Props = {

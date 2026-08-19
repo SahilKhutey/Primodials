@@ -1,6 +1,6 @@
 import { Rng } from './rng';
 import type { Genome } from './types';
-import { makeBrain, mutateBrain, crossoverBrain, cloneBrain, hiddenForIntel, resizeBrain, N_INPUTS, N_OUTPUTS, MAX_HIDDEN, type Brain } from './brain';
+import { makeBrain, mutateBrain, crossoverBrain, cloneBrain, hiddenForIntel, N_INPUTS, N_OUTPUTS, MAX_HIDDEN, type Brain } from './brain';
 
 export function randomGenome(rng: Rng): Genome {
   return {
@@ -321,8 +321,4 @@ export function crossoverBrainForGenome(
   if (brainA) return cloneBrain(brainA);
   if (brainB) return cloneBrain(brainB);
   return makeBrain(N_INPUTS, MAX_HIDDEN, N_OUTPUTS, rng);
-}
-
-function mutationRateForCrossover(val: number): number {
-  return val;
 }

@@ -2,7 +2,6 @@
 // and surfaces them to the user as a timeline.
 
 import type { Simulation } from './simulation';
-import type { Species } from './types';
 
 export type DiaryEventType =
   | 'first_spawn'

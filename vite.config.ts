@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
@@ -13,4 +14,10 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  test: {
+    globals: true,
+    include: ['tests/**/*.test.ts'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/devlopmentnext/**', '**/build/**'],
+  },
 });
+

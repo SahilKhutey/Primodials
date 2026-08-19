@@ -34,7 +34,7 @@ import {
   crossoverBrainForGenome,
   SPECIATION_THRESHOLD,
 } from './genetics';
-import { evalBrain, adaptBrainOnline, hiddenForIntel, N_INPUTS, N_OUTPUTS, type Brain } from './brain';
+import { evalBrain, adaptBrainOnline, hiddenForIntel, N_INPUTS, N_OUTPUTS } from './brain';
 import { ChemicalField } from './chemicalField';
 import { SpatialHashGrid } from './spatialHash';
 import {
@@ -1040,7 +1040,7 @@ export class Simulation {
     // Flood-fill adjacent cells to form clusters
     const visited = new Set<string>();
     let clusterCount = 0;
-    for (const [key, ids] of grid) {
+    for (const [key] of grid) {
       if (visited.has(key)) continue;
       // BFS to find all connected cells
       const queue = [key];
@@ -1083,7 +1083,7 @@ export class Simulation {
       colonyMembers.get(org.colonyId)!.push(org);
     }
 
-    for (const [colonyId, members] of colonyMembers) {
+    for (const [, members] of colonyMembers) {
       if (members.length < 2) {
         for (const m of members) m.socialRank = 'solitary';
         continue;
@@ -1117,17 +1117,16 @@ export class Simulation {
       const org = this.organisms[idx];
       if (org && org.alive) {
         // Apply a tiny random shift to a random gene
-        const genes: (keyof typeof org.genome)[] = [
+        const genes: (keyof Genome)[] = [
           'hue', 'speed', 'senseRadius', 'metabolism', 'aggression',
           'cooperation', 'socialGene', 'curiosity', 'adaptability',
           'clustering', 'altruism', 'dominance', 'nicheBreadth',
         ];
         const gene = genes[this.rng.int(0, genes.length - 1)];
         const drift = this.rng.range(-0.02, 0.02);
-        (org.genome as any)[gene] += drift;
-        // Clamp to valid range
-        if (typeof (org.genome as any)[gene] === 'number') {
-          (org.genome as any)[gene] = Math.max(0, Math.min(1, (org.genome as any)[gene]));
+        const currentVal = org.genome[gene];
+        if (typeof currentVal === 'number') {
+          org.genome[gene] = Math.max(0, Math.min(1, currentVal + drift));
         }
         this.stats.neutralDriftEvents++;
       }

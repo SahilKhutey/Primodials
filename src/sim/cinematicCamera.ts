@@ -24,6 +24,7 @@ export class CinematicCamera {
   targetX: number;
   targetY: number;
   targetZoom: number;
+  reducedMotion = false;
   private sim: Simulation;
   private currentTarget: CameraTarget | null = null;
   private retargetTimer = 0;
@@ -68,6 +69,7 @@ export class CinematicCamera {
   }
 
   addShake(amount: number) {
+    if (this.reducedMotion) return;
     this.shake = Math.min(1, this.shake + amount);
   }
 

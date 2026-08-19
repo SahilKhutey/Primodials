@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Save, FolderOpen, Trash2, Loader2 } from 'lucide-react';
+import { Save, FolderOpen, Trash2, Loader2, HardDrive, Check } from 'lucide-react';
 import type { SnapshotRow } from '@/lib/supabase';
 import { supabase, supabaseEnabled } from '@/lib/supabase';
 import type { Simulation } from '@/sim/simulation';
+import { loadLocalSnapshot } from '@/sim/localSnapshot';
 
 type Props = {
   snapshots: SnapshotRow[];
@@ -11,6 +12,8 @@ type Props = {
   onSaved: () => void;
   onLoad: (row: SnapshotRow) => void;
   onDeleted: () => void;
+  onSaveLocal?: () => void;
+  onLoadLocal?: () => void;
 };
 
 export function HistoryPanel({
@@ -20,9 +23,14 @@ export function HistoryPanel({
   onSaved,
   onLoad,
   onDeleted,
+  onSaveLocal,
+  onLoadLocal,
 }: Props) {
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [localSaved, setLocalSaved] = useState(false);
+
+  const hasLocal = typeof window !== 'undefined' && !!loadLocalSnapshot();
 
   const handleSave = async () => {
     if (!supabase || sim.population === 0) return;
@@ -50,23 +58,71 @@ export function HistoryPanel({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Name this experiment..."
-          className="flex-1 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-neutral-400 focus:outline-none"
-        />
-        <button
-          onClick={handleSave}
-          disabled={!supabaseEnabled || saving || sim.population === 0}
-          title={!supabaseEnabled ? 'Cloud history is not configured (no Supabase project set)' : undefined}
-          className="flex items-center gap-2 rounded-lg bg-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-white disabled:opacity-50 active:scale-95"
-        >
-          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          Save
-        </button>
+    <div className="space-y-4">
+      {/* Offline Local Snapshot Controls */}
+      <div className="rounded-xl border border-neutral-800/80 bg-neutral-850/60 p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-neutral-300">
+            <HardDrive size={14} className="text-cyan-400" />
+            <span>Local Offline Snapshot</span>
+          </div>
+          {localSaved && (
+            <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium">
+              <Check size={12} /> Saved
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-neutral-500">
+          Save/restore a simulation snapshot directly in local browser storage (offline).
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              if (onSaveLocal) {
+                onSaveLocal();
+                setLocalSaved(true);
+                setTimeout(() => setLocalSaved(false), 2000);
+              }
+            }}
+            disabled={sim.population === 0}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 px-3 py-1.5 text-xs font-semibold text-neutral-200 transition disabled:opacity-50 active:scale-95"
+          >
+            <Save size={13} />
+            Save Local
+          </button>
+          <button
+            onClick={() => {
+              if (onLoadLocal) onLoadLocal();
+            }}
+            disabled={!hasLocal}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 px-3 py-1.5 text-xs font-semibold text-neutral-200 transition disabled:opacity-50 active:scale-95"
+          >
+            <FolderOpen size={13} />
+            Load Local
+          </button>
+        </div>
+      </div>
+
+      {/* Cloud Experiments Header */}
+      <div className="border-t border-neutral-800/80 pt-3 space-y-3">
+        <div className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Cloud Experiments</div>
+        <div className="flex gap-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Name cloud experiment..."
+            className="flex-1 rounded-lg border border-neutral-700 bg-neutral-800 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-neutral-400 focus:outline-none"
+          />
+          <button
+            onClick={handleSave}
+            disabled={!supabaseEnabled || saving || sim.population === 0}
+            title={!supabaseEnabled ? 'Cloud history is not configured (no Supabase project set)' : undefined}
+            className="flex items-center gap-2 rounded-lg bg-neutral-200 px-3 py-2 text-sm font-semibold text-neutral-900 transition hover:bg-white disabled:opacity-50 active:scale-95"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            Save Cloud
+          </button>
+        </div>
       </div>
 
       {!supabaseEnabled ? (

@@ -1,5 +1,5 @@
 import type { Simulation } from './simulation';
-import type { Organism, Structure, Biome, Remains, KnowledgeNode, StructureType, Camera, Particle } from './types';
+import type { Organism, Structure, Biome, Remains, KnowledgeNode, Camera, Particle } from './types';
 import { BIOME_INFO } from './types';
 import type { BiofilmCluster } from './microbial';
 import type { WallpaperTheme } from './themes';
@@ -98,7 +98,7 @@ export function render(
 
   // ── Chemical field (chemotaxis gradients) ────────────────────────────
   if (sim.chemicalField && sim.settings.chemicalField) {
-    drawChemicalField(ctx, sim, phase);
+    drawChemicalField(ctx, sim);
   }
 
   // Subtle grid
@@ -176,7 +176,7 @@ export function render(
 
   // ── Remains (dead organic matter) ────────────────────────────────────
   for (const r of sim.remains) {
-    drawRemains(ctx, r, phase);
+    drawRemains(ctx, r);
   }
 
   // ── Food ────────────────────────────────────────────────────────────
@@ -391,7 +391,7 @@ function drawKnowledgeNode(ctx: CanvasRenderingContext2D, kn: KnowledgeNode, pha
   ctx.fill();
 }
 
-function drawRemains(ctx: CanvasRenderingContext2D, r: Remains, phase: number) {
+function drawRemains(ctx: CanvasRenderingContext2D, r: Remains) {
   const decayRatio = Math.max(0, 1 - r.age / 300);
   const alpha = 0.3 + decayRatio * 0.3;
 
@@ -1053,7 +1053,7 @@ function drawOrganism(ctx: CanvasRenderingContext2D, org: Organism, showSense: b
   }
 }
 
-function drawChemicalField(ctx: CanvasRenderingContext2D, sim: Simulation, _phase: number) {
+function drawChemicalField(ctx: CanvasRenderingContext2D, sim: Simulation) {
   const field = sim.chemicalField!;
   const { cols, rows, cellSize, attractant, repellent } = field;
 
@@ -1106,7 +1106,7 @@ function drawBiofilm(ctx: CanvasRenderingContext2D, bf: BiofilmCluster, phase: n
 }
 
 // Pre-computed ambient particle positions (deterministic, no per-frame alloc)
-const AMBIENT_PARTICLES = Array.from({ length: 80 }, (_, i) => ({
+const AMBIENT_PARTICLES = Array.from({ length: 80 }, () => ({
   baseX: Math.random(),
   baseY: Math.random(),
   speed: 0.3 + Math.random() * 0.7,

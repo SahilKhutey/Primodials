@@ -5,6 +5,12 @@ import { render } from '@/sim/renderer';
 import { defaultCamera, type Camera, type GodTool } from '@/sim/types';
 import type { CinematicCamera } from '@/sim/cinematicCamera';
 import type { WallpaperTheme } from '@/sim/themes';
+import { PerformanceMonitor, type PerformanceSample } from '@/lib/performanceMonitor';
+import { PerformanceHud } from '@/components/PerformanceHud';
+import { RuntimeWatchdog } from '@/lib/runtimeWatchdog';
+import { RuntimeTelemetryCollector } from '@/lib/runtimeTelemetry';
+import { AdaptivePerformanceController } from '@/lib/adaptivePerformance';
+import { RuntimeHealthHud } from '@/components/RuntimeHealthHud';
 
 type Props = {
   sim: Simulation;
@@ -44,6 +50,12 @@ export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect
   cinematicRef.current = cinematic;
   const themeRef = useRef(theme);
   themeRef.current = theme;
+
+  const performanceRef = useRef(new PerformanceMonitor());
+  const watchdogRef = useRef(new RuntimeWatchdog());
+  const telemetryRef = useRef(new RuntimeTelemetryCollector());
+  const adaptiveRef = useRef(new AdaptivePerformanceController(wallpaperMode ? 'medium' : 'high', 45));
+  const [perfSample, setPerfSample] = useState<PerformanceSample | null>(null);
 
   const [camera, setCamera] = useState<Camera>(() => defaultCamera(sim.settings.worldWidth, sim.settings.worldHeight));
   const cameraRef = useRef(camera);
@@ -148,16 +160,30 @@ export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect
     const STEP_MS = 1000 / 30;
 
     const loop = (now: number) => {
+      const frameMs = performanceRef.current.beginFrame(now);
       const dt = Math.min(now - last, 100); // cap dt to avoid spiral-of-death on tab focus
       last = now;
       phase += dt * 0.002;
 
+      let steps = 0;
       if (runningRef.current) {
         acc += dt * speedRef.current;
         while (acc >= STEP_MS) {
           simRef.current.step();
           acc -= STEP_MS;
+          steps += 1;
         }
+      }
+
+      performanceRef.current.record(
+        steps,
+        simRef.current.population,
+        frameMs,
+      );
+
+      const event = watchdogRef.current.frame(frameMs, steps > 0);
+      if (event?.type === 'slow-frame' || event?.type === 'simulation-stall') {
+        telemetryRef.current.watchdog();
       }
 
       // Update cinematic camera
@@ -221,6 +247,24 @@ export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Update performance and telemetry metrics periodically
+  useEffect(() => {
+    const id = setInterval(() => {
+      const sample = performanceRef.current.snapshot();
+      setPerfSample(sample);
+      telemetryRef.current.frame(sample);
+      telemetryRef.current.simulation(
+        simRef.current.tick,
+        simRef.current.species.length,
+        simRef.current.stats.maxGeneration,
+      );
+      if (wallpaperRef.current && sample) {
+        adaptiveRef.current.observe(sample);
+      }
+    }, 250);
+    return () => clearInterval(id);
   }, []);
 
   // ── Mouse handlers ─────────────────────────────────────────────────
@@ -391,8 +435,21 @@ export function SimCanvas({ sim, running, speed, showSense, selectedId, onSelect
             </div>
           </div>
 
+          {/* Performance HUD */}
+          <PerformanceHud sample={perfSample} visible={!wallpaperMode} />
+
+          {/* Runtime Health HUD (Development only) */}
+          {import.meta.env.DEV && (
+            <RuntimeHealthHud
+              sample={perfSample}
+              adaptive={adaptiveRef.current.getState()}
+              watchdogUnhealthy={watchdogRef.current.isUnhealthy()}
+              visible={import.meta.env.DEV}
+            />
+          )}
+
           {/* Zoom indicator */}
-          <div className="absolute right-3 top-3 rounded-lg bg-neutral-950/70 px-2.5 py-1 text-xs font-mono text-neutral-300 ring-1 ring-white/10 backdrop-blur-sm">
+          <div className="absolute right-3 top-24 rounded-lg bg-neutral-950/70 px-2.5 py-1 text-xs font-mono text-neutral-300 ring-1 ring-white/10 backdrop-blur-sm">
             {camera.zoom.toFixed(2)}x
           </div>
 

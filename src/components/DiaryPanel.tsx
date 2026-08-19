@@ -115,8 +115,8 @@ export function DiaryPanel({ diary, visible, onClose }: Props) {
             </div>
           ) : (
             <div className="flex flex-col gap-1.5">
-              {entries.map((entry, i) => (
-                <DiaryEntryCard key={entry.id} entry={entry} index={i} diary={diary} />
+              {entries.map((entry) => (
+                <DiaryEntryCard key={entry.id} entry={entry} diary={diary} />
               ))}
             </div>
           )}
@@ -126,7 +126,7 @@ export function DiaryPanel({ diary, visible, onClose }: Props) {
   );
 }
 
-function DiaryEntryCard({ entry, index, diary }: { entry: DiaryEntry; index: number; diary: EcosystemDiary }) {
+function DiaryEntryCard({ entry, diary }: { entry: DiaryEntry; diary: EcosystemDiary }) {
   const bg = EVENT_BG[entry.type] ?? 'bg-neutral-500/10 ring-white/10';
   const icon = EVENT_ICONS[entry.type] ?? <Sparkles size={14} className="text-neutral-400" />;
 

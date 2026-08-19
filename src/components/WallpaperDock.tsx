@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import {
-  Play, Pause, RotateCcw, Sparkles, Eye, FlaskConical, Beaker,
-  Brain, Globe, Save, Maximize, Minimize, Camera, Palette, Gauge, Settings, SlidersHorizontal, ChevronUp, ChevronDown,
+  Play, Pause, RotateCcw, FlaskConical, Beaker,
+  Brain, Globe, Save, Maximize, Minimize, Camera, Palette, Gauge, Settings, SlidersHorizontal, ChevronUp, ChevronDown, Share2,
 } from 'lucide-react';
 import type { Simulation } from '@/sim/simulation';
 import type { SimSettings } from '@/sim/types';
 import type { CinematicCamera } from '@/sim/cinematicCamera';
 import { THEMES, PACING_PRESETS, type PacingPreset } from '@/sim/themes';
 import { useWallpaperSettings, type QualityPreset } from '@/hooks/useWallpaperSettings';
+import { applyQualityProfile } from '@/lib/qualityProfiles';
 
 type Props = {
   sim: Simulation;
@@ -23,16 +24,16 @@ type Props = {
   onThemeChange: (id: string) => void;
   pacing: PacingPreset;
   onPacingChange: (p: PacingPreset) => void;
+  onOpenShare?: () => void;
 };
 
 // Floating dock for wallpaper mode with persistent controls toggle
 export function WallpaperDock({
   sim, running, onToggleRun, onReset, settings, onToggleSetting,
   cinematic, onToggleFullscreen, isFullscreen,
-  themeId, onThemeChange, pacing, onPacingChange,
+  themeId, onThemeChange, pacing, onPacingChange, onOpenShare,
 }: Props) {
   const [visible, setVisible] = useState(true);
-  const [expanded, setExpanded] = useState(true);
   const [showThemes, setShowThemes] = useState(false);
   const [showPacing, setShowPacing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -130,6 +131,14 @@ export function WallpaperDock({
             label="Settings"
             activeClass="bg-purple-500/20 text-purple-300"
           />
+
+          {onOpenShare && (
+            <DockButton
+              onClick={onOpenShare}
+              icon={<Share2 size={16} />}
+              label="Share"
+            />
+          )}
 
           <Divider />
 
@@ -246,7 +255,11 @@ export function WallpaperDock({
                 max={500}
                 step={25}
                 value={wallpaperSettings.maxPopulation}
-                onChange={(e) => updateSetting('maxPopulation', parseInt(e.target.value))}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  updateSetting('maxPopulation', val);
+                  sim.settings = applyQualityProfile(sim.settings, wallpaperSettings.quality, val);
+                }}
                 className="w-full accent-cyan-400"
               />
             </div>
@@ -258,7 +271,10 @@ export function WallpaperDock({
                 {(['low', 'medium', 'high'] as QualityPreset[]).map((q) => (
                   <button
                     key={q}
-                    onClick={() => updateSetting('quality', q)}
+                    onClick={() => {
+                      updateSetting('quality', q);
+                      sim.settings = applyQualityProfile(sim.settings, q, wallpaperSettings.maxPopulation);
+                    }}
                     className={`flex-1 rounded-xl py-1.5 text-xs font-semibold capitalize transition ${
                       wallpaperSettings.quality === q
                         ? 'bg-purple-500/25 text-purple-300 ring-1 ring-purple-400/40'
