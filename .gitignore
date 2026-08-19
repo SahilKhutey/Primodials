@@ -6,9 +6,11 @@
 build/
 out/
 dist/
+dist-*/
 dist-wallpaper/
 dist-wallpaper-engine/
 dist-itch/
+dist-release-*/
 *.o
 *.obj
 *.a
