@@ -1,0 +1,33 @@
+{
+  "title": "Primordials — Living Ecosystem",
+  "description": "A real ecosystem that breathes on your desktop. Predator-prey dynamics in real-time. 60 FPS, low CPU, fully procedural.\n\nSix biomes:\n- Algae Bloom (default)\n- Deep Sea\n- Primordial Soup\n- Tundra\n- Coral Reef\n- Volcanic Vent\n\nBuilt on a custom C++23 ECS engine. Open source under MIT.\n\nGitHub: github.com/SahilKhutey/Primodials\nDiscord: discord.gg/primordials",
+  "tags": [
+    "Animated",
+    "Live Wallpaper",
+    "Ambient",
+    "Screensaver",
+    "Nature",
+    "Science",
+    "Dark",
+    "Minimalist",
+    "Loopable",
+    "Procedural"
+  ],
+  "preview_image": "preview.png",
+  "preview_video": "preview.webm",
+  "visibility": "public",
+  "price": "1.99",
+  "compatibility": {
+    "min_windows": "10",
+    "recommended_windows": "11",
+    "works_on": ["windows", "linux_steamdeck"]
+  },
+  "properties": {
+    "type": "web",
+    "audio_enabled": false,
+    "low_cpu_mode": true,
+    "max_fps": 60,
+    "supports_screensaver": true,
+    "supports_live_wallpaper": true
+  }
+}

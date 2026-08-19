@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Primordials — Living Wallpaper</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #0A0908;
+    }
+    iframe {
+      border: none;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+    body:fullscreen iframe,
+    body:-webkit-full-screen iframe {
+      cursor: none;
+    }
+  </style>
+</head>
+<body>
+  <iframe
+    src="index.html"
+    allow="autoplay; fullscreen"
+    loading="eager"
+    title="Primordials living wallpaper">
+  </iframe>
+
+  <script>
+    // Bridge Wallpaper Engine custom property controls to inner simulation iframe
+    window.wallpaperPropertyListener = {
+      applyUserProperties: function(properties) {
+        const iframe = document.querySelector('iframe');
+        if (!iframe || !iframe.contentWindow) return;
+
+        const payload = {
+          type: 'wallpaper-engine-props',
+          theme: properties.theme ? properties.theme.value : undefined,
+          targetFPS: properties.targetFPS ? properties.targetFPS.value : undefined,
+          pacing: properties.pacing ? properties.pacing.value : undefined,
+          simulationScale: properties.simulationScale ? properties.simulationScale.value : undefined,
+          showUI: properties.showUI ? properties.showUI.value : undefined,
+        };
+
+        iframe.contentWindow.postMessage(payload, '*');
+      },
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg-deep: 15 61 62;
+    --color-bg-void: 10 9 8;
+    --color-bg-surface: 26 77 78;
+    --color-accent-magenta: 255 79 163;
+    --color-accent-violet: 155 93 229;
+    --color-text-primary: 244 241 222;
+    --color-text-muted: 168 181 160;
+
+    --color-biome-algae: 78 205 196;
+    --color-biome-deepsea: 255 107 107;
+    --color-biome-soup: 255 217 61;
+    --color-biome-tundra: 107 203 119;
+    --color-biome-coral: 241 143 1;
+    --color-biome-volcanic: 214 34 70;
+
+    --shadow-glow-magenta: 0 0 40px rgba(255, 79, 163, 0.4);
+    --shadow-glow-biome: 0 0 60px rgba(78, 205, 196, 0.3);
+  }
+
+  * {
+    @apply border-bg-surface;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-bg-void text-text-primary;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255, 79, 163, 0.15), transparent),
+      radial-gradient(ellipse 60% 50% at 80% 50%, rgba(15, 61, 62, 0.4), transparent),
+      radial-gradient(ellipse 60% 50% at 20% 80%, rgba(155, 93, 229, 0.1), transparent);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    @apply bg-accent-magenta text-bg-void;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-accent-magenta focus:ring-offset-2 focus:ring-offset-bg-void disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent-magenta text-bg-void hover:scale-[1.02] hover:shadow-glow-magenta active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply btn border border-bg-surface bg-bg-surface text-text-primary hover:border-accent-magenta hover:bg-bg-surface/80;
+  }
+
+  .btn-ghost {
+    @apply btn text-text-primary hover:bg-bg-surface;
+  }
+
+  /* Containers */
+  .container-narrow {
+    @apply mx-auto w-full max-w-3xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-wide {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Cards */
+  .card {
+    @apply rounded-lg border border-bg-surface bg-bg-surface/50 p-6 backdrop-blur-sm transition-all hover:border-accent-magenta/50 hover:shadow-glow-magenta;
+  }
+
+  /* Section */
+  .section {
+    @apply py-20 sm:py-28;
+  }
+
+  /* Headings */
+  .h-display {
+    @apply font-display text-5xl font-black leading-[0.95] tracking-tightest sm:text-6xl lg:text-display-2;
+  }
+
+  .h-1 {
+    @apply text-4xl font-bold leading-tight tracking-tighter sm:text-5xl;
+  }
+
+  .h-2 {
+    @apply text-3xl font-bold tracking-tight sm:text-4xl;
+  }
+
+  .h-3 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+
+  /* Text Styles */
+  .lead {
+    @apply text-xl text-text-muted sm:text-2xl;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-accent-magenta via-accent-violet to-biome-algae bg-clip-text text-transparent;
+  }
+
+  .label-mono {
+    @apply font-mono text-xs uppercase tracking-widest text-text-muted;
+  }
+}

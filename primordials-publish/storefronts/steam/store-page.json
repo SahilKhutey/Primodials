@@ -1,0 +1,78 @@
+{
+  "$schema": "https://store.steampowered.com/schema/store-page-v2.json",
+  "app": {
+    "appid": "XXXXXXX",
+    "name": "Primordials — Living Ecosystem",
+    "type": "game",
+    "os": ["windows", "macos", "linux"],
+    "release_state": "released"
+  },
+  "basic_info": {
+    "name": "Primordials — Living Ecosystem",
+    "short_description": "Watch a real ecosystem live on your desktop. Inspired by Lotka-Volterra predator-prey dynamics, Primordials runs as a live wallpaper, screensaver, or windowed app — and looks alive.",
+    "about_the_game": "🌿 WATCH LIFE UNFOLD ON YOUR DESKTOP\n\nPrimordials is a desktop-native artificial life simulation that turns any monitor into a window into a primordial world. Inspired by the classic Lotka-Volterra predator-prey equations, every organism you see is following real ecological rules: births, hunger, reproduction, and death.\n\n— WHAT MAKES IT DIFFERENT —\nUnlike traditional screensavers or live wallpapers, Primordials isn't looping video. It's a true simulation. You can tune the parameters, add new species, change the carrying capacity, and watch how the system responds. The ecosystem you see is genuinely alive.\n\n— FEATURES —\n🧬 Real Lotka-Volterra dynamics\n🌿 6 biomes included (Algae Bloom, Deep Sea, Primordial Soup, Tundra, Coral Reef, Volcanic Vent)\n🎨 Distinctive polygonal vector art\n🖥️ 3 modes: Live Wallpaper, Screensaver, Windowed App\n⚡ High-performance C++23 ECS engine — 250K+ entities @ 60 FPS\n💾 Optional cloud-save for biome configurations (Supabase)\n🛠️ Custom biome support via JSON config\n🔌 Steam Workshop support (planned)\n📦 Open source (MIT) on GitHub\n\n— BY GENSOULS LAB —\nPrimordials is developed solo by Sahil Khutey under the Gensouls Lab indie banner. It's a passion project for everyone who's ever stared at a screensaver and wished it was alive.",
+    "supported_languages": ["English"],
+    "header_image": "header_capsule.png",
+    "capsule_image": "capsule.png",
+    "capsule_vertical": "capsule_vertical.png",
+    "library_hero": "library_hero.png",
+    "library_logo": "library_logo.png"
+  },
+  "pricing": {
+    "currency": "USD",
+    "base_price": 4.99,
+    "free_to_play": false,
+    "early_access": false
+  },
+  "platforms": {
+    "windows": {
+      "minimum": "Windows 10 (64-bit)",
+      "recommended": "Windows 11 (64-bit)",
+      "processor_min": "Dual-core 2.0 GHz",
+      "ram_min": "2 GB",
+      "graphics_min": "OpenGL 3.3+",
+      "storage_min": "200 MB"
+    },
+    "macos": {
+      "minimum": "macOS 12 (Monterey)",
+      "recommended": "macOS 14 (Sonoma)",
+      "processor_min": "Apple M1 or Intel dual-core 2.0 GHz",
+      "ram_min": "2 GB",
+      "graphics_min": "Metal-compatible GPU",
+      "storage_min": "200 MB"
+    },
+    "linux": {
+      "minimum": "Ubuntu 22.04 LTS",
+      "recommended": "Ubuntu 24.04 LTS",
+      "processor_min": "Dual-core 2.0 GHz",
+      "ram_min": "2 GB",
+      "graphics_min": "OpenGL 3.3+ / Vulkan 1.2+",
+      "storage_min": "200 MB"
+    }
+  },
+  "tags": {
+    "primary": "Simulation",
+    "secondary_tags": [
+      "Ambient",
+      "Cozy",
+      "Open Source",
+      "Education",
+      "Relaxing",
+      "Procedural",
+      "Singleplayer",
+      "Screensaver",
+      "Wallpaper"
+    ]
+  },
+  "developer": {
+    "name": "Gensouls Lab",
+    "url": "https://gensoulslab.dev"
+  },
+  "publisher": {
+    "name": "Gensouls Lab",
+    "url": "https://gensoulslab.dev"
+  },
+  "legal_notices": {
+    "copyright": "© 2026 Gensouls Lab. Licensed under MIT."
+  }
+}
