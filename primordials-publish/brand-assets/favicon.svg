@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="favPrey" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#78FFD6"/>
+      <stop offset="100%" stop-color="#0F3D3E"/>
+    </radialGradient>
+    <linearGradient id="favPred" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7597"/>
+      <stop offset="100%" stop-color="#FF4FA3"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0A0908"/>
+  <circle cx="28" cy="34" r="14" fill="url(#favPrey)"/>
+  <circle cx="28" cy="34" r="16" fill="none" stroke="#4ECDC4" stroke-width="1.5" opacity="0.8"/>
+  <!-- Orbiting Predator -->
+  <g transform="translate(44, 20) rotate(35)">
+    <polygon points="0,-10 6,8 -6,8" fill="url(#favPred)"/>
+  </g>
+</svg>
