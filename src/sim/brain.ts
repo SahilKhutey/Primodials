@@ -12,8 +12,8 @@ export type Brain = {
   weights: Float32Array; // full weight vector
 };
 
-export const N_INPUTS = 18;
-export const N_OUTPUTS = 5;
+export const N_INPUTS = 22;
+export const N_OUTPUTS = 7;
 // Every brain is stored at this fixed hidden-layer size regardless of the
 // owning genome's current intelligence tier — see evalBrain's `activeHidden`
 // param and hiddenForIntel below for how effective capacity still tracks

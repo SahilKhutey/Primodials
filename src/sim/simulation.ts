@@ -743,22 +743,55 @@ export class Simulation {
   private updateBiomeFeedback() {
     if (!this.settings.biomes || this.biomes.length === 0) return;
 
+    // Density threshold: 1 organism per 5000 sq-units of biome area is "crowded"
     for (const b of this.biomes) {
       let localCount = 0;
+      let herbivoreCount = 0;
       let photoSum = 0;
       this.spatialGrid.getNearby(b.cx, b.cy, b.radius, this.nearbyScratch);
       for (let i = 0; i < this.nearbyScratch.length; i++) {
         const o = this.nearbyScratch[i];
-        if (o.alive) {
-          localCount++;
-          photoSum += o.genome.photosynthesis;
-        }
+        if (!o.alive) continue;
+        localCount++;
+        photoSum += o.genome.photosynthesis;
+        if (o.genome.diet < 0.5) herbivoreCount++; // herbivores graze food resources
       }
 
       const info = BIOME_INFO[b.type];
-      const baseFoodRate = info ? info.foodRate : 1.0;
-      const targetFoodRate = Math.max(0.3, Math.min(2.5, baseFoodRate * (1 + photoSum * 0.1 - localCount * 0.02)));
-      b.foodRate += (targetFoodRate - b.foodRate) * 0.05;
+      const baseFoodRate   = info ? info.foodRate   : 1.0;
+      const baseDrain      = info ? info.energyDrain : 1.0;
+      const biomeArea      = Math.PI * b.radius * b.radius;
+      // Normalised density: 0 = empty, 1 = heavily crowded (1 per 3000 sq-units)
+      const density        = Math.min(1, localCount / Math.max(1, biomeArea / 3000));
+      const herbivorePressure = Math.min(1, herbivoreCount / Math.max(1, biomeArea / 5000));
+
+      // ── foodRate: photosynthesis boosts it, herbivore grazing degrades it ─
+      // Target moves toward baseline when pressure eases; degradation is 3× as
+      // fast as recovery (ecology: overgrazing happens quickly, recovery is slow)
+      const foodTarget = Math.max(
+        baseFoodRate * 0.3,  // floor: 30% of template
+        Math.min(
+          baseFoodRate * 1.8, // ceiling: 180% (photosynthesisers can enrich)
+          baseFoodRate * (1 + photoSum * 0.08 - herbivorePressure * 0.45),
+        ),
+      );
+      const foodRate = b.foodRate;
+      const foodDelta = foodTarget - foodRate;
+      // Degrade 3× faster than recovery to model overshoot lag
+      b.foodRate += foodDelta * (foodDelta < 0 ? 0.09 : 0.03);
+
+      // ── energyDrain: high population density raises local drain ───────────
+      // Models resource competition: crowded biomes are metabolically expensive
+      const drainTarget = Math.max(
+        baseDrain * 0.8,   // floor: biomes never get easier than 80% of template
+        Math.min(
+          baseDrain * 2.0, // ceiling: at most 200% of template drain
+          baseDrain * (1 + density * 0.6),
+        ),
+      );
+      const drainDelta = drainTarget - b.energyDrain;
+      // Drain rises quickly with density, recovers slowly when population leaves
+      b.energyDrain += drainDelta * (drainDelta > 0 ? 0.06 : 0.02);
     }
   }
 
@@ -1354,6 +1387,14 @@ export class Simulation {
         }
         if (intel >= 0.6 && other.colonyId !== null) score -= 200;
 
+        // Brain output[5]: strategic prey-selection bias (-1 = proximity/opportunity, +1 = vulnerable/low-energy prey)
+        if (org.brain && org.lastOutputs) {
+          const preyStrat = org.lastOutputs[5];
+          score += preyStrat * (1 - other.energy / 200) * 450;
+          if (other.threatLevel > 0.4) score += preyStrat * 200;
+          if (other.colonyId !== null) score -= preyStrat * 150;
+        }
+
         if (score > bestPreyScore) {
           bestPreyScore = score;
           targetX = other.x;
@@ -1625,6 +1666,14 @@ export class Simulation {
     inputs[16] = org.socialRank === 'alpha' ? 1.0 : org.socialRank === 'beta' ? 0.6 : org.socialRank === 'omega' ? 0.3 : 0.0;
     // [17] local density / cluster indicator
     inputs[17] = org.clusterId !== null ? 0.8 : 0.2;
+    // [18] dominance
+    inputs[18] = org.genome.dominance;
+    // [19] competitiveness
+    inputs[19] = org.genome.competitiveness;
+    // [20] socialGene
+    inputs[20] = org.genome.socialGene;
+    // [21] toxicity
+    inputs[21] = org.genome.toxicity;
     return inputs;
   }
 
@@ -2062,8 +2111,9 @@ export class Simulation {
     for (const org of this.organisms) {
       if (!org.alive || visited.has(org.id)) continue;
       const brainCoopMod = org.lastOutputs ? org.lastOutputs[4] * 0.4 : 0;
+      const brainColonyMod = org.lastOutputs ? org.lastOutputs[6] * 0.3 : 0;
       const effectiveCooperation = Math.max(0, Math.min(1, org.genome.cooperation + brainCoopMod));
-      const colonyTendency = (org.genome.socialGene + org.genome.intelligence * 0.3) * effectiveCooperation;
+      const colonyTendency = (org.genome.socialGene + org.genome.intelligence * 0.3 + brainColonyMod) * effectiveCooperation;
       if (colonyTendency < 0.3) { visited.add(org.id); continue; }
 
       const group: Organism[] = [org];
@@ -2076,7 +2126,8 @@ export class Simulation {
           for (const other of this.organisms) {
             if (visited.has(other.id) || !other.alive) continue;
             if (other.speciesId !== org.speciesId) continue;
-            if (other.genome.socialGene < 0.25) continue;
+            const otherColonyMod = other.lastOutputs ? other.lastOutputs[6] * 0.3 : 0;
+            if (other.genome.socialGene + otherColonyMod < 0.2) continue;
             const dx = other.x - member.x;
             const dy = other.y - member.y;
             if (dx * dx + dy * dy < r2) {

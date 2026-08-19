@@ -89,6 +89,12 @@ export function render(
   for (const b of sim.biomes) {
     drawBiome(ctx, b, phase);
   }
+  // ── Biome edge blending (second pass) ───────────────────────────────
+  // Draws soft hue-mix overlays in the overlap zones between adjacent
+  // biomes so stat-side blending (biomeBlendAt) has a matching visual.
+  if (sim.biomes.length > 1) {
+    drawBiomeBoundaryBlend(ctx, sim.biomes, phase);
+  }
 
   // ── Chemical field (chemotaxis gradients) ────────────────────────────
   if (sim.chemicalField && sim.settings.chemicalField) {
@@ -1211,5 +1217,58 @@ function drawAmbientParticles(
     ctx.beginPath();
     ctx.arc(x, y, pSize, 0, Math.PI * 2);
     ctx.fill();
+  }
+}
+// ── Biome boundary hue-blend overlay ───────────────────────────────────
+// For every pair of biomes whose radii overlap, renders a soft radial
+// gradient centred at the overlap midpoint. The gradient blends from
+// biomeA's hue to biomeB's hue across a zone proportional to the
+// overlap depth, matching the quadratic falloff used in biomeBlendAt().
+function drawBiomeBoundaryBlend(ctx: CanvasRenderingContext2D, biomes: Biome[], phase: number) {
+  for (let i = 0; i < biomes.length; i++) {
+    for (let j = i + 1; j < biomes.length; j++) {
+      const a = biomes[i];
+      const b = biomes[j];
+      const dx = b.cx - a.cx;
+      const dy = b.cy - a.cy;
+      const dist = Math.hypot(dx, dy);
+      // Only draw if circles actually overlap
+      if (dist >= a.radius + b.radius || dist <= 0) continue;
+
+      // Overlap depth: how far the edges penetrate each other
+      const overlap = (a.radius + b.radius - dist);
+      // Blend zone radius: half the overlap depth, clamped to a visible minimum
+      const blendR = Math.max(20, overlap * 0.5);
+
+      // Midpoint of the two centres (approximate boundary centroid)
+      const mx = a.cx + (dx / dist) * a.radius * 0.5 + (b.cx - a.cx) * 0.5;
+      const my = a.cy + (dy / dist) * a.radius * 0.5 + (b.cy - a.cy) * 0.5;
+
+      // Alpha scales with overlap depth, staying gentle
+      const baseAlpha = Math.min(0.22, (overlap / Math.max(a.radius, b.radius)) * 0.35);
+      const pulse = 1 + Math.sin(phase * 0.25 + a.id + b.id) * 0.06;
+      const alpha = baseAlpha * pulse;
+
+      // Gradient from biome A's hue to biome B's hue across the blend zone
+      const g = ctx.createRadialGradient(mx, my, 0, mx, my, blendR);
+      g.addColorStop(0,   hsl(a.hue, 28, 20, alpha));
+      g.addColorStop(0.5, hsl((a.hue + b.hue) / 2, 25, 18, alpha * 0.7));
+      g.addColorStop(1,   hsl(b.hue, 28, 20, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(mx, my, blendR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Thin seam stroke along the boundary midline for extra definition
+      const perpX = -dy / dist;
+      const perpY =  dx / dist;
+      const seam = blendR * 0.6;
+      ctx.strokeStyle = `hsla(${(a.hue + b.hue) / 2}, 20%, 40%, ${alpha * 0.4})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(mx - perpX * seam, my - perpY * seam);
+      ctx.lineTo(mx + perpX * seam, my + perpY * seam);
+      ctx.stroke();
+    }
   }
 }

@@ -473,8 +473,13 @@ function VitalBar({ label, value, max, color, icon, inverse }: { label: string; 
   );
 }
 
-const INPUT_LABELS = ['Energy', 'Health', 'Intel', 'Aggro', 'Carnivore', 'Repro', 'Carry', 'Knowledge', 'Threat', 'Colony', 'FoodDirX', 'FoodDirY', 'ThreatDirX', 'ThreatDirY'];
-const OUTPUT_LABELS = ['SteerX', 'SteerY', 'Speed', 'Aggro', 'Flee'];
+const INPUT_LABELS = [
+  'Energy', 'Health', 'Intel', 'Aggro', 'Carnivore', 'Repro', 'Carry', 'Knowledge',
+  'Threat', 'Colony', 'FoodDirX', 'FoodDirY', 'ThreatDirX', 'ThreatDirY',
+  'Cooperation', 'Altruism', 'SocialRank', 'ClusterDensity',
+  'Dominance', 'Competitiveness', 'SocialGene', 'Toxicity',
+];
+const OUTPUT_LABELS = ['SteerX', 'SteerY', 'Speed', 'Aggro', 'SocialIntent', 'PreyTargeting', 'ColonyIntent'];
 
 function NeuralActivityCard({ inputs, outputs, nHidden }: { inputs: Float32Array; outputs: Float32Array; nHidden: number }) {
   return (
