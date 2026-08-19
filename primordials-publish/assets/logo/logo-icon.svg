@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Icon-only version (square crop, no padding for tight placements) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Primordials icon">
+  <rect width="256" height="256" fill="#0F3D3E"/>
+  <circle cx="128" cy="128" r="30" fill="#F4F1DE"/>
+  <circle cx="128" cy="128" r="8" fill="#0F3D3E"/>
+  <ellipse cx="128" cy="128" rx="92" ry="40" transform="rotate(-22 128 128)" fill="none" stroke="#F4F1DE" stroke-width="2" stroke-opacity="0.4"/>
+  <polygon points="216,128 240,140 240,116" fill="#FF4FA3"/>
+</svg>

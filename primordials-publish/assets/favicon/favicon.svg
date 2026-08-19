@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Primordials favicon">
+  <rect width="64" height="64" rx="12" fill="#0F3D3E"/>
+  <ellipse cx="32" cy="32" rx="22" ry="10" transform="rotate(-25 32 32)" fill="none" stroke="#F4F1DE" stroke-width="1.2" stroke-opacity="0.45"/>
+  <circle cx="32" cy="32" r="9" fill="#F4F1DE"/>
+  <circle cx="32" cy="32" r="3" fill="#0F3D3E"/>
+  <polygon points="50,32 56,38 56,26" fill="#FF4FA3"/>
+</svg>

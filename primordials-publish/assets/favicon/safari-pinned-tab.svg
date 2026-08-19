@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="8" fill="black"/>
+  <ellipse cx="32" cy="32" rx="22" ry="10" transform="rotate(-25 32 32)" fill="none" stroke="black" stroke-width="3"/>
+  <polygon points="48,32 56,40 56,24" fill="black"/>
+</svg>

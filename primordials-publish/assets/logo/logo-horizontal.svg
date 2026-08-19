@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Horizontal lockup: mark + wordmark -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200" role="img" aria-label="Primordials">
+  <title>Primordials</title>
+  <!-- Mark group -->
+  <g transform="translate(20, 20)">
+    <rect width="160" height="160" rx="28" fill="#0F3D3E"/>
+    <circle cx="80" cy="80" r="22" fill="#F4F1DE"/>
+    <circle cx="80" cy="80" r="6" fill="#0F3D3E"/>
+    <ellipse cx="80" cy="80" rx="60" ry="26" transform="rotate(-22 80 80)" fill="none" stroke="#F4F1DE" stroke-width="1.5" stroke-opacity="0.4"/>
+    <polygon points="135,80 152,89 152,71" fill="#FF4FA3"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="210" y="125" font-family="'Space Grotesk', Inter, sans-serif" font-weight="700" font-size="84" fill="#F4F1DE" letter-spacing="-3">
+    primordials
+  </text>
+  <!-- Period dot -->
+  <circle cx="752" cy="125" r="6" fill="#FF4FA3"/>
+</svg>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Primordials — Primary Logo
+     Circle (prey) + Triangle (predator) on orbital path
+     Background: Deep Teal #0F3D3E
+     Prey: Bone White #F4F1DE
+     Predator: Bioluminescent Magenta #FF4FA3
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Primordials logo">
+  <title>Primordials</title>
+  <rect width="256" height="256" rx="48" fill="#0F3D3E"/>
+  <circle cx="128" cy="128" r="100" fill="none" stroke="#F4F1DE" stroke-width="1" stroke-opacity="0.08"/>
+  <ellipse cx="128" cy="128" rx="84" ry="36" transform="rotate(-22 128 128)" fill="none" stroke="#F4F1DE" stroke-width="1.5" stroke-opacity="0.35" stroke-dasharray="2 4"/>
+  <circle cx="128" cy="128" r="26" fill="#F4F1DE"/>
+  <circle cx="128" cy="128" r="6" fill="#0F3D3E"/>
+  <g transform="translate(204 116) rotate(20)">
+    <polygon points="0,0 22,11 22,-11" fill="#FF4FA3"/>
+  </g>
+  <g transform="translate(52 140) rotate(160)">
+    <polygon points="0,0 12,6 12,-6" fill="#FF4FA3" fill-opacity="0.6"/>
+  </g>
+</svg>
