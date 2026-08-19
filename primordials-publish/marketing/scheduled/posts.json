@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-08-19T09:05:37.790Z",
+  "launchDate": "2026-08-15T13:00:00Z",
+  "posts": [
+    {
+      "id": "tw-001",
+      "platform": "twitter",
+      "type": "thread-root",
+      "scheduledFor": "2026-08-15T13:00:00Z",
+      "content": "I spent 6 months building a desktop ecosystem that actually lives.\n\n🧬 Predators hunt, prey flee, balance emerges.\n\nIt's free, open source, and runs at 60 FPS.\n\nHere's the story 🧵👇",
+      "media": [
+        "demo-gif--algae-bloom--6s--twitter.gif"
+      ],
+      "hashtags": [
+        "#indiedev",
+        "#gamedev",
+        "#opensource"
+      ]
+    },
+    {
+      "id": "rd-001",
+      "platform": "reddit",
+      "subreddit": "wallpaperengine",
+      "scheduledFor": "2026-08-15T13:00:00Z",
+      "title": "I built an interactive predator-prey ecosystem wallpaper (60 FPS, low CPU, free & open source)",
+      "content": "Hey r/wallpaperengine! Long-time lurker...\n\n[Full text in marketing/04_REDDIT_LAUNCH_KIT.md]"
+    }
+  ]
+}
