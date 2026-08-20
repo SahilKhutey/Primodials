@@ -35,12 +35,8 @@ export function WorldShareDialog({
 
   const copy = async () => {
     try {
-      if (typeof navigator !== "undefined" && navigator.clipboard) {
-        await navigator.clipboard.writeText(shareToUrl(value));
-        setMessage("Share URL copied to clipboard.");
-      } else {
-        setMessage("Clipboard unavailable — copy the text manually.");
-      }
+      await navigator.clipboard.writeText(shareToUrl(value));
+      setMessage("Share URL copied.");
     } catch {
       setMessage("Clipboard unavailable — copy the text manually.");
     }
@@ -62,7 +58,7 @@ export function WorldShareDialog({
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold text-white">World Share</h2>
-            <p className="text-xs text-neutral-500">Share a reproducible world seed and configuration.</p>
+            <p className="text-xs text-neutral-500">Share a reproducible world seed and settings.</p>
           </div>
           <button onClick={onClose} className="text-xs text-neutral-400 hover:text-white">Close</button>
         </div>
@@ -70,13 +66,13 @@ export function WorldShareDialog({
         <div className="mb-3 flex gap-2">
           <button
             onClick={() => setMode("share")}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${mode === "share" ? "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-400/30" : "bg-neutral-900 text-neutral-400"}`}
+            className={`rounded-lg px-3 py-1.5 text-xs ${mode === "share" ? "bg-cyan-500/20 text-cyan-300" : "bg-neutral-900 text-neutral-400"}`}
           >
             Share
           </button>
           <button
             onClick={() => setMode("load")}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${mode === "load" ? "bg-cyan-500/20 text-cyan-300 ring-1 ring-cyan-400/30" : "bg-neutral-900 text-neutral-400"}`}
+            className={`rounded-lg px-3 py-1.5 text-xs ${mode === "load" ? "bg-cyan-500/20 text-cyan-300" : "bg-neutral-900 text-neutral-400"}`}
           >
             Load
           </button>
@@ -85,23 +81,23 @@ export function WorldShareDialog({
         <textarea
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="min-h-32 w-full resize-y rounded-xl border border-white/10 bg-black/40 p-3 font-mono text-xs text-neutral-200 outline-none focus:border-cyan-400/40"
+          className="min-h-32 w-full resize-y rounded-xl border border-white/10 bg-black/30 p-3 font-mono text-xs text-neutral-200 outline-none focus:border-cyan-400/40"
           spellCheck={false}
         />
 
         <div className="mt-3 flex items-center justify-between gap-3">
-          <span className="text-xs text-neutral-400">{message}</span>
+          <span className="text-xs text-neutral-500">{message}</span>
           {mode === "share" ? (
             <button
               onClick={copy}
-              className="rounded-xl bg-cyan-500/20 px-4 py-2 text-xs font-semibold text-cyan-300 ring-1 ring-cyan-400/20 hover:bg-cyan-500/30 transition-colors"
+              className="rounded-xl bg-cyan-500/20 px-4 py-2 text-xs font-semibold text-cyan-300 ring-1 ring-cyan-400/20"
             >
               Copy URL
             </button>
           ) : (
             <button
               onClick={load}
-              className="rounded-xl bg-emerald-500/20 px-4 py-2 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-400/20 hover:bg-emerald-500/30 transition-colors"
+              className="rounded-xl bg-emerald-500/20 px-4 py-2 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-400/20"
             >
               Load World
             </button>

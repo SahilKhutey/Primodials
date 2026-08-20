@@ -1,0 +1,19 @@
+@keyframes pp-loader {
+  0% { transform: translateX(-130%); opacity: 0.15; }
+  50% { transform: translateX(160%); opacity: 0.9; }
+  100% { transform: translateX(430%); opacity: 0.15; }
+}
+
+@keyframes pp-grid-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(80px, 80px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -27,7 +27,7 @@ export class AdaptivePerformanceController {
     this.state = { quality: initial, targetFps, pressure: 0 };
   }
 
-  observe(sample: Partial<PerformanceSample> & { fps: number; frameMs: number }): QualityPreset | null {
+  observe(sample: PerformanceSample): QualityPreset | null {
     if (!Number.isFinite(sample.fps)) return null;
 
     const fpsRatio = sample.fps / this.state.targetFps;
@@ -53,7 +53,7 @@ export class AdaptivePerformanceController {
       }
     }
 
-    if (this.stableWindows >= 8 && this.state.pressure > 0) {
+    if (this.stableWindows >= 8) {
       this.stableWindows = 0;
       this.state.pressure = Math.max(0, this.state.pressure - 0.2);
       const next = shiftQuality(this.state.quality, 1);

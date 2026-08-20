@@ -24,7 +24,7 @@ function isFiniteSimulation(sim: Simulation): boolean {
     ]),
   ];
 
-  return values.every((v) => typeof v === "number" && Number.isFinite(v));
+  return values.every(Number.isFinite);
 }
 
 export function runSoakTest(

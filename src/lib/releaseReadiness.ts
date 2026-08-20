@@ -8,13 +8,13 @@ export type ReadinessItem = {
 };
 
 export function evaluateReleaseReadiness(settings: SimSettings): ReadinessItem[] {
-  const secureContext = typeof window !== "undefined" && (window.isSecureContext || location.hostname === "localhost");
+  const secureContext = window.isSecureContext || location.hostname === "localhost";
 
   return [
     {
       id: "canvas",
       label: "Canvas rendering",
-      ok: typeof document !== "undefined" && !!document.createElement("canvas").getContext("2d"),
+      ok: !!document.createElement("canvas").getContext("2d"),
       detail: "2D canvas support",
     },
     {
@@ -22,7 +22,6 @@ export function evaluateReleaseReadiness(settings: SimSettings): ReadinessItem[]
       label: "Local persistence",
       ok: (() => {
         try {
-          if (typeof window === "undefined") return false;
           const k = "__pp_release__";
           localStorage.setItem(k, "1");
           localStorage.removeItem(k);
@@ -36,7 +35,7 @@ export function evaluateReleaseReadiness(settings: SimSettings): ReadinessItem[]
     {
       id: "secure",
       label: "Secure context",
-      ok: !!secureContext,
+      ok: secureContext,
       detail: secureContext ? "secure origin" : "non-secure origin",
     },
     {
@@ -48,8 +47,8 @@ export function evaluateReleaseReadiness(settings: SimSettings): ReadinessItem[]
     {
       id: "viewport",
       label: "Viewport",
-      ok: typeof window !== "undefined" ? window.innerWidth >= 640 && window.innerHeight >= 360 : true,
-      detail: typeof window !== "undefined" ? `${window.innerWidth}×${window.innerHeight}` : "SSR/test",
+      ok: window.innerWidth >= 640 && window.innerHeight >= 360,
+      detail: `${window.innerWidth}×${window.innerHeight}`,
     },
   ];
 }

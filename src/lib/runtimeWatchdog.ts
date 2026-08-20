@@ -12,8 +12,8 @@ export type WatchdogEvent =
 
 export class RuntimeWatchdog {
   private state: WatchdogState = {
-    lastFrameAt: typeof performance !== "undefined" ? performance.now() : 0,
-    lastSimulationAt: typeof performance !== "undefined" ? performance.now() : 0,
+    lastFrameAt: performance.now(),
+    lastSimulationAt: performance.now(),
     consecutiveSlowFrames: 0,
     consecutiveSimulationStalls: 0,
   };
@@ -27,7 +27,7 @@ export class RuntimeWatchdog {
   ) {}
 
   frame(frameMs: number, simulationAdvanced: boolean): WatchdogEvent | null {
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const now = performance.now();
     this.state.lastFrameAt = now;
 
     if (frameMs >= this.slowFrameThresholdMs) {

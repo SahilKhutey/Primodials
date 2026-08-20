@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Dna, FlaskConical, Layers, Settings, TrendingUp, Microscope,
-  Maximize, Monitor, LineChart, BookOpen, Share2,
+  Maximize, Monitor, LineChart, BookOpen, Share2, Film,
 } from 'lucide-react';
 import { Simulation } from '@/sim/simulation';
 import { DEFAULT_SETTINGS, type SimSettings, type BoundaryMode } from '@/sim/types';
@@ -38,6 +38,12 @@ import { useRuntimeRecovery } from '@/hooks/useRuntimeRecovery';
 import { RuntimeRecoveryBanner } from '@/components/RuntimeRecoveryBanner';
 import { Phase4UXShell } from '@/components/Phase4UXShell';
 import { SettingsSection, SettingsRow } from '@/components/SettingsSection';
+import { usePresentationMode } from '@/hooks/usePresentationMode';
+import { VisualEffectsOverlay } from '@/components/VisualEffectsOverlay';
+import { PresentationChrome } from '@/components/PresentationChrome';
+import { CaptureFrame } from '@/components/CaptureFrame';
+import { VersionBadge } from '@/components/VersionBadge';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 function App() {
   const { settings, setSettings, resetSettings } = usePersistentSettings(DEFAULT_SETTINGS);
@@ -72,10 +78,17 @@ function App() {
   const [themeId, setThemeId] = useState(DEFAULT_THEME_ID);
   const [pacing, setPacing] = useState<PacingPreset>('peaceful');
   const [showDiary, setShowDiary] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const presentation = usePresentationMode();
   const theme = getTheme(themeId);
   const cinematicRef = useRef<CinematicCamera | null>(null);
   const diaryRef = useRef<EcosystemDiary | null>(null);
   const prevThemeIdRef = useRef<string>(themeId);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setInitialLoading(false), 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!diaryRef.current) {
     diaryRef.current = new EcosystemDiary();
@@ -446,7 +459,13 @@ function App() {
             cinematic={cinematicRef.current!}
             theme={theme}
           />
-          <AmbientHUD sim={sim} visible />
+          <VisualEffectsOverlay
+            theme={theme}
+            cinematic={presentation.isCinematic}
+            captureMode={presentation.isCapture}
+            reducedMotion={reducedMotion}
+          />
+          <AmbientHUD sim={sim} visible={!presentation.isCapture} />
           <WallpaperInfoPopover sim={sim} selectedId={selectedId} onClose={() => setSelectedId(null)} />
           <WallpaperDock
             sim={sim}
@@ -517,6 +536,23 @@ function App() {
             />
           )}
 
+          <CaptureFrame
+            sim={sim}
+            theme={theme}
+            visible={presentation.isCapture}
+          />
+
+          {presentation.isPresentation && (
+            <PresentationChrome
+              mode={presentation.mode}
+              onModeChange={presentation.setMode}
+              onClose={() => presentation.setMode('normal')}
+            />
+          )}
+
+          <VersionBadge visible={import.meta.env.DEV} />
+          <LoadingScreen visible={initialLoading} />
+
           <RuntimeRecoveryBanner
             visible={runtimeRecovery.uncleanPreviousRun && !dismissRecovery && !runtimeRecovery.recovered}
             onRecover={handleRecoverSession}
@@ -563,6 +599,17 @@ function App() {
                 <span className="font-medium text-neutral-300">{sim.population}</span>
                 <span className="text-neutral-500">organisms alive</span>
               </div>
+              {/* Presentation mode toggle */}
+              <button
+                onClick={presentation.cycle}
+                className="flex items-center gap-2 rounded-xl bg-neutral-900 border border-neutral-800 px-3.5 py-2 text-sm font-semibold text-neutral-300 transition hover:bg-neutral-800 active:scale-95"
+                title="Cycle presentation modes (Normal, Cinematic, Capture)"
+              >
+                <Film size={16} />
+                <span className="hidden sm:inline">
+                  {presentation.mode === 'normal' ? 'Presentation' : presentation.mode === 'cinematic' ? 'Cinematic' : 'Capture'}
+                </span>
+              </button>
               {/* World Share */}
               <button
                 onClick={() => setShowWorldShare(true)}
@@ -582,6 +629,27 @@ function App() {
             </div>
           </div>
         </header>
+
+        <VisualEffectsOverlay
+          theme={theme}
+          cinematic={presentation.isCinematic}
+          captureMode={presentation.isCapture}
+          reducedMotion={reducedMotion}
+        />
+        <CaptureFrame
+          sim={sim}
+          theme={theme}
+          visible={presentation.isCapture}
+        />
+        {presentation.isPresentation && (
+          <PresentationChrome
+            mode={presentation.mode}
+            onModeChange={presentation.setMode}
+            onClose={() => presentation.setMode('normal')}
+          />
+        )}
+        <VersionBadge visible={import.meta.env.DEV} />
+        <LoadingScreen visible={initialLoading} />
 
         {/* Main */}
         <main className="mx-auto max-w-[1600px] px-6 py-6">

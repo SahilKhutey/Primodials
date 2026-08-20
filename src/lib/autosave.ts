@@ -4,7 +4,7 @@ import { getSafeStorage } from "./safeStorage";
 
 const META_KEY = "polygonal-primordials.autosave.meta.v1";
 
-export type AutosaveMeta = {
+type AutosaveMeta = {
   savedAt: string;
   tick: number;
   population: number;

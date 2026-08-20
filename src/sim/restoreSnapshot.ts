@@ -1,31 +1,22 @@
-/**
- * restoreSnapshot — reconstruct a Simulation from a saved snapshot
- *
- * The simulation class owns the deep state (organisms, brains,
- * species, colonies, structures, remains, knowledge, stats).
- *
- * License: MIT
- */
-
 import { Simulation } from "./simulation";
 import type { SimSettings } from "./types";
-import type { LocalSimulationSnapshot, SimulationSnapshot } from "./localSnapshot";
+import type { LocalSimulationSnapshot } from "./localSnapshot";
 
 export function restoreSimulationSnapshot(
-  snapshot: LocalSimulationSnapshot | SimulationSnapshot,
+  snapshot: LocalSimulationSnapshot,
 ): Simulation {
   const sim = new Simulation(Date.now(), snapshot.settings as SimSettings);
   sim.tick = snapshot.tick;
   sim.stats = snapshot.stats;
-  sim.food = snapshot.food ?? [];
-  sim.species = (snapshot.species ?? []).map((s) => ({
+  sim.food = snapshot.food;
+  sim.species = snapshot.species.map((s) => ({
     ...s,
     representative: {
       ...s.representative,
-      camouflage: s.representative?.camouflage ?? 0,
-      bioluminescence: s.representative?.bioluminescence ?? 0,
-      echolocation: s.representative?.echolocation ?? 0,
-      hibernation: s.representative?.hibernation ?? 0,
+      camouflage: s.representative.camouflage ?? 0,
+      bioluminescence: s.representative.bioluminescence ?? 0,
+      echolocation: s.representative.echolocation ?? 0,
+      hibernation: s.representative.hibernation ?? 0,
     },
     avgIntelligence: s.avgIntelligence ?? 0,
     rank: s.rank ?? 0,
@@ -42,7 +33,7 @@ export function restoreSimulationSnapshot(
   sim.remains = snapshot.remains ?? [];
   sim.knowledgeNodes = snapshot.knowledgeNodes ?? [];
 
-  sim.organisms = (snapshot.organisms ?? []).map((o) => ({
+  sim.organisms = snapshot.organisms.map((o) => ({
     ...o,
     vx: 0,
     vy: 0,

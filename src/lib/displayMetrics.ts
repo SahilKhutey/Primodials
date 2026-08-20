@@ -7,16 +7,6 @@ export type DisplayMetrics = {
 };
 
 export function readDisplayMetrics(): DisplayMetrics {
-  if (typeof window === "undefined") {
-    return {
-      width: 1920,
-      height: 1080,
-      devicePixelRatio: 1,
-      aspect: 16 / 9,
-      refreshRateHint: null,
-    };
-  }
-
   const width = Math.max(1, window.innerWidth);
   const height = Math.max(1, window.innerHeight);
 
@@ -32,10 +22,6 @@ export function readDisplayMetrics(): DisplayMetrics {
 export function installDisplayMetricsListener(
   onChange: (metrics: DisplayMetrics) => void,
 ): () => void {
-  if (typeof window === "undefined") {
-    return () => {};
-  }
-
   let frame = 0;
 
   const notify = () => {

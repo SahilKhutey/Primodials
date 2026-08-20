@@ -38,6 +38,8 @@ node_modules/
 .eslintcache
 .parcel-cache/
 .vite/
+playwright-report/
+test-results/
 *.log
 
 # ── Python ───────────────────────────────────

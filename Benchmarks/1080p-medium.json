@@ -1,0 +1,14 @@
+﻿{
+  "version": "1.0.0",
+  "resolution": "1920x1080",
+  "quality": "medium",
+  "population": 250,
+  "species": 8,
+  "generation": 12,
+  "averageFps": 60.0,
+  "onePercentLow": 54.2,
+  "frameTimeAvgMs": 16.6,
+  "memoryMb": 184,
+  "runtimeSeconds": 300,
+  "timestamp": "2026-08-20T19:00:00.000Z"
+}

@@ -9,7 +9,6 @@ const STORAGE_KEY = 'polygonal-primordials.dismissed-announcements.v1';
 
 function readDismissed(): string[] {
   try {
-    if (typeof localStorage === 'undefined') return [];
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
@@ -28,9 +27,7 @@ export function dismissAnnouncement(id: string): void {
   if (current.includes(id)) return;
 
   try {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify([...current, id]));
-    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...current, id]));
   } catch {
     // Non-critical.
   }

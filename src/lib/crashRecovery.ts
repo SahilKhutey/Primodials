@@ -6,7 +6,6 @@ const CRASH_FLAG = "polygonal-primordials.runtime.flag.v1";
 
 export function markRuntimeStarted(): void {
   try {
-    if (typeof localStorage === "undefined") return;
     localStorage.setItem(
       CRASH_FLAG,
       JSON.stringify({
@@ -15,13 +14,12 @@ export function markRuntimeStarted(): void {
       }),
     );
   } catch {
-    // Storage quota or security exception — non-fatal
+    // Storage access failure ignored
   }
 }
 
 export function markRuntimeClean(): void {
   try {
-    if (typeof localStorage === "undefined") return;
     localStorage.setItem(
       CRASH_FLAG,
       JSON.stringify({
@@ -30,13 +28,12 @@ export function markRuntimeClean(): void {
       }),
     );
   } catch {
-    // Storage quota or security exception — non-fatal
+    // Storage access failure ignored
   }
 }
 
 export function previousRunWasUnclean(): boolean {
   try {
-    if (typeof localStorage === "undefined") return false;
     const raw = localStorage.getItem(CRASH_FLAG);
     if (!raw) return false;
     const value = JSON.parse(raw) as { clean?: boolean };
@@ -53,30 +50,24 @@ export function installCrashRecovery(sim: Simulation): () => void {
     try {
       saveLocalSnapshot(sim);
     } catch {
-      // Snapshot write failed during abnormal termination
+      // Snapshot error ignored
     }
   };
 
-  if (typeof window !== "undefined") {
-    window.addEventListener("beforeunload", save);
-    window.addEventListener("pagehide", save);
+  window.addEventListener("beforeunload", save);
+  window.addEventListener("pagehide", save);
 
-    const onError = () => save();
-    const onRejection = () => save();
+  const onError = () => save();
+  const onRejection = () => save();
 
-    window.addEventListener("error", onError);
-    window.addEventListener("unhandledrejection", onRejection);
-
-    return () => {
-      window.removeEventListener("beforeunload", save);
-      window.removeEventListener("pagehide", save);
-      window.removeEventListener("error", onError);
-      window.removeEventListener("unhandledrejection", onRejection);
-      markRuntimeClean();
-    };
-  }
+  window.addEventListener("error", onError);
+  window.addEventListener("unhandledrejection", onRejection);
 
   return () => {
+    window.removeEventListener("beforeunload", save);
+    window.removeEventListener("pagehide", save);
+    window.removeEventListener("error", onError);
+    window.removeEventListener("unhandledrejection", onRejection);
     markRuntimeClean();
   };
 }

@@ -30,6 +30,9 @@ import { createSeededWorld, randomSeed } from '@/sim/seededWorld';
 import { useRuntimeRecovery } from '@/hooks/useRuntimeRecovery';
 import { RuntimeRecoveryBanner } from '@/components/RuntimeRecoveryBanner';
 import { Phase4UXShell } from '@/components/Phase4UXShell';
+import { VisualEffectsOverlay } from '@/components/VisualEffectsOverlay';
+import { VersionBadge } from '@/components/VersionBadge';
+import { LoadingScreen } from '@/components/LoadingScreen';
 
 export function WallpaperRoot() {
   const { settings, setSettings } = usePersistentSettings(DEFAULT_SETTINGS);
@@ -51,6 +54,12 @@ export function WallpaperRoot() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [themeId, setThemeId] = useState(DEFAULT_THEME_ID);
   const [pacing, setPacing] = useState<PacingPreset>('peaceful');
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setInitialLoading(false), 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   const cinematicRef = useRef<CinematicCamera | null>(null);
   const diaryRef = useRef<EcosystemDiary | null>(null);
@@ -218,6 +227,12 @@ export function WallpaperRoot() {
           theme={theme}
         />
 
+        <VisualEffectsOverlay
+          theme={theme}
+          cinematic={true}
+          reducedMotion={reducedMotion}
+        />
+
         <AmbientHUD sim={simRef.current} visible />
 
         <WallpaperDock
@@ -292,6 +307,9 @@ export function WallpaperRoot() {
             <AmbientOrganismCard org={org} onClose={() => setSelectedId(null)} />
           ) : null;
         })()}
+
+        <VersionBadge visible={import.meta.env.DEV} />
+        <LoadingScreen visible={initialLoading} />
 
         <RuntimeRecoveryBanner
           visible={runtimeRecovery.uncleanPreviousRun && !dismissRecovery && !runtimeRecovery.recovered}

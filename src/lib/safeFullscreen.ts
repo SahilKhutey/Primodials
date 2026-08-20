@@ -1,5 +1,4 @@
-export async function enterFullscreen(element: HTMLElement = document.documentElement): Promise<boolean> {
-  if (typeof document === "undefined") return false;
+export async function enterFullscreen(element: HTMLElement = document.documentElement) {
   if (document.fullscreenElement) return true;
   try {
     await element.requestFullscreen();
@@ -9,8 +8,7 @@ export async function enterFullscreen(element: HTMLElement = document.documentEl
   }
 }
 
-export async function exitFullscreen(): Promise<boolean> {
-  if (typeof document === "undefined") return false;
+export async function exitFullscreen() {
   if (!document.fullscreenElement) return true;
   try {
     await document.exitFullscreen();

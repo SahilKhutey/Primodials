@@ -9,9 +9,8 @@ describe("adaptive performance", () => {
       c.observe({
         fps: 20,
         frameMs: 50,
-        simStepsPerSec: 30,
+        simulationSteps: 30,
         population: 300,
-        samples: 60,
       });
     }
 
@@ -23,9 +22,8 @@ describe("adaptive performance", () => {
     c.observe({
       fps: 60,
       frameMs: 12,
-      simStepsPerSec: 30,
+      simulationSteps: 30,
       population: 100,
-      samples: 60,
     });
 
     expect(c.getState().quality).toBe("medium");

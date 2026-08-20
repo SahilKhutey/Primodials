@@ -81,10 +81,10 @@ export function FirstRunOverlay({ open, onComplete }: Props) {
               {index === 3 && <Check size={16} className="text-emerald-300" />}
               {step.title}
             </div>
-            <p className="text-sm leading-6 text-neutral-400">{step.body}</p>
+            <p className="text-sm leading-6 text-neutral-500">{step.body}</p>
           </div>
 
-          <div className="mt-5 flex items-center gap-2 rounded-xl bg-black/20 px-3 py-2.5 text-[11px] text-neutral-400">
+          <div className="mt-5 flex items-center gap-2 rounded-xl bg-black/20 px-3 py-2.5 text-[11px] text-neutral-500">
             <Keyboard size={14} className="text-neutral-400" />
             <span><strong className="text-neutral-300">Space / P</strong> play · <strong className="text-neutral-300">R</strong> reset · <strong className="text-neutral-300">H / ?</strong> help · <strong className="text-neutral-300">Ctrl/Cmd+F</strong> fullscreen</span>
           </div>

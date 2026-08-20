@@ -44,7 +44,7 @@ export class AppErrorBoundary extends React.Component<Props, State> {
             The interface hit an unexpected error.
           </h1>
 
-          <p className="mt-3 text-sm leading-6 text-neutral-400">
+          <p className="mt-3 text-sm leading-6 text-neutral-500">
             Your local recovery system may still contain the latest world state.
             Reload the application and use recovery when offered.
           </p>
@@ -58,7 +58,7 @@ export class AppErrorBoundary extends React.Component<Props, State> {
           <button
             type="button"
             onClick={this.handleReload}
-            className="mt-6 flex items-center gap-2 rounded-xl bg-red-400/10 px-4 py-2.5 text-xs font-semibold text-red-200 ring-1 ring-red-300/15 hover:bg-red-400/15 transition"
+            className="mt-6 flex items-center gap-2 rounded-xl bg-red-400/10 px-4 py-2.5 text-xs font-semibold text-red-200 ring-1 ring-red-300/15 hover:bg-red-400/15"
           >
             <RefreshCcw size={14} />
             Reload application

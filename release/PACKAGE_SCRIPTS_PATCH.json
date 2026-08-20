@@ -1,0 +1,9 @@
+{
+  "scripts_to_add_if_missing": {
+    "test": "vitest run",
+    "release:preflight": "node tools/validate-release.mjs",
+    "release:build-info": "node tools/create-build-info.mjs",
+    "release:manifest": "node tools/generate-release-manifest.mjs"
+  },
+  "note": "Phase 6 assumes the Phase 1 Vitest setup is installed."
+}

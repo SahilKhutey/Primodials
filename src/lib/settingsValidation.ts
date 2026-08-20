@@ -1,103 +1,47 @@
-/**
- * settingsValidation — clamps + bounds-check SimSettings
- *
- * The simulation accepts many numeric controls. Without validation,
- * a UI bug, corrupted localStorage, or copy-paste mistake could crash
- * the simulation or break invariants.
- *
- * License: MIT
- */
-
 import { DEFAULT_SETTINGS, type BoundaryMode, type SimSettings } from "@/sim/types";
-
-export type { BoundaryMode, SimSettings };
-export { DEFAULT_SETTINGS };
 
 const boundaryModes = new Set<BoundaryMode>(["wrap", "reflect", "open"]);
 
-// Bounds (the simulation cannot tolerate values outside these)
-export const SETTINGS_BOUNDS = {
-  worldWidth: { min: 100, max: 20000, default: 800 },
-  worldHeight: { min: 100, max: 12000, default: 600 },
-  initialPopulation: { min: 1, max: 5000, default: 80 },
-  maxPopulation: { min: 1, max: 1000000, default: 600 },
-  initialFood: { min: 0, max: 10000, default: 200 },
-  startingFood: { min: 0, max: 10000, default: 200 },
-  foodGrowthRate: { min: 0, max: 100, default: 0.02 },
-  mutationRate: { min: 0, max: 1, default: 0.05 },
-  reproductionThreshold: { min: 0, max: 1000, default: 0.6 },
-  maxFood: { min: 1, max: 1000000, default: 500 },
-  colonyRadius: { min: 10, max: 1000, default: 80 },
-  generationCycleTicks: { min: 30, max: 1000000, default: 300 },
-  worldExpansionInterval: { min: 60, max: 1000000, default: 1200 },
-  maxAge: { min: 10, max: 10000, default: 200 },
-  generationInterval: { min: 1, max: 10000, default: 60 },
-  simulationStepHz: { min: 1, max: 120, default: 30 },
-} as const;
-
-export function clamp(value: number, min: number, max: number): number {
-  if (typeof value !== "number" || Number.isNaN(value) || !Number.isFinite(value)) return min;
-  return Math.min(max, Math.max(min, value));
-}
-
-export function clampNumber(value: unknown, min: number, max: number, fallback: number): number {
+export function clampNumber(value: unknown, min: number, max: number, fallback: number) {
   const n = typeof value === "number" && Number.isFinite(value) ? value : fallback;
   return Math.min(max, Math.max(min, n));
 }
 
-export function isPlainObject(v: unknown): v is Record<string, unknown> {
-  return typeof v === "object" && v !== null && !Array.isArray(v);
-}
+export function validateSettings(input: Partial<SimSettings>, defaults: SimSettings = DEFAULT_SETTINGS): SimSettings {
+  const inp = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  const next: SimSettings = {
+    worldWidth: Math.round(clampNumber(inp.worldWidth, 400, 20000, defaults.worldWidth)),
+    worldHeight: Math.round(clampNumber(inp.worldHeight, 300, 12000, defaults.worldHeight)),
+    initialPopulation: Math.round(clampNumber(inp.initialPopulation, 1, 5000, defaults.initialPopulation)),
+    initialFood: Math.round(clampNumber(inp.initialFood, 0, 10000, defaults.initialFood)),
+    foodGrowthRate: clampNumber(inp.foodGrowthRate, 0, 100, defaults.foodGrowthRate),
+    mutationRate: clampNumber(inp.mutationRate, 0, 1, defaults.mutationRate),
+    reproductionThreshold: clampNumber(inp.reproductionThreshold, 1, 1000, defaults.reproductionThreshold),
+    maxPopulation: Math.round(clampNumber(inp.maxPopulation, 1, 1000000, defaults.maxPopulation)),
+    maxFood: Math.round(clampNumber(inp.maxFood, 1, 1000000, defaults.maxFood)),
+    colonyRadius: clampNumber(inp.colonyRadius, 10, 1000, defaults.colonyRadius),
+    generationCycleTicks: Math.round(clampNumber(inp.generationCycleTicks, 30, 1000000, defaults.generationCycleTicks)),
+    worldExpansionInterval: Math.round(
+      clampNumber(inp.worldExpansionInterval, 60, 1000000, defaults.worldExpansionInterval),
+    ),
+    sexualReproduction: typeof inp.sexualReproduction === "boolean" ? inp.sexualReproduction : defaults.sexualReproduction,
+    colonyFormation: typeof inp.colonyFormation === "boolean" ? inp.colonyFormation : defaults.colonyFormation,
+    structureBuilding: typeof inp.structureBuilding === "boolean" ? inp.structureBuilding : defaults.structureBuilding,
+    biomes: typeof inp.biomes === "boolean" ? inp.biomes : defaults.biomes,
+    knowledgeNodes: typeof inp.knowledgeNodes === "boolean" ? inp.knowledgeNodes : defaults.knowledgeNodes,
+    blueprints: typeof inp.blueprints === "boolean" ? inp.blueprints : defaults.blueprints,
+    neuralBrains: typeof inp.neuralBrains === "boolean" ? inp.neuralBrains : defaults.neuralBrains,
+    worldExpansion: typeof inp.worldExpansion === "boolean" ? inp.worldExpansion : defaults.worldExpansion,
+    advancedBiology: typeof inp.advancedBiology === "boolean" ? inp.advancedBiology : defaults.advancedBiology,
+    microbialBehavior: typeof inp.microbialBehavior === "boolean" ? inp.microbialBehavior : defaults.microbialBehavior,
+    diseaseEvents: typeof inp.diseaseEvents === "boolean" ? inp.diseaseEvents : defaults.diseaseEvents,
+    chemicalField: typeof inp.chemicalField === "boolean" ? inp.chemicalField : defaults.chemicalField,
+    socialBehavior: typeof inp.socialBehavior === "boolean" ? inp.socialBehavior : defaults.socialBehavior,
+    neutralDrift: typeof inp.neutralDrift === "boolean" ? inp.neutralDrift : defaults.neutralDrift,
+    endlessGeneration: typeof inp.endlessGeneration === "boolean" ? inp.endlessGeneration : defaults.endlessGeneration,
+    autoCheckpoint: typeof inp.autoCheckpoint === "boolean" ? inp.autoCheckpoint : defaults.autoCheckpoint,
+    boundaryMode: boundaryModes.has(inp.boundaryMode as BoundaryMode) ? (inp.boundaryMode as BoundaryMode) : defaults.boundaryMode,
+  };
 
-/**
- * Validate + clamp a SimSettings object.
- *
- * Always returns a fully populated, in-bounds SimSettings.
- * Unknown keys are dropped. Invalid values fall back to defaults.
- */
-export function validateSettings(
-  input: unknown,
-  defaults: SimSettings = DEFAULT_SETTINGS
-): SimSettings {
-  const out: SimSettings = { ...defaults };
-
-  if (!isPlainObject(input)) return out;
-
-  for (const [key, value] of Object.entries(input)) {
-    if (!(key in out)) continue;
-
-    const def = (out as Record<string, unknown>)[key];
-
-    if (typeof def === "number") {
-      if (typeof value !== "number" || Number.isNaN(value) || !Number.isFinite(value)) {
-        continue;
-      }
-      const bounds = (SETTINGS_BOUNDS as Record<string, { min: number; max: number }>)[key];
-      if (bounds) {
-        (out as unknown as Record<string, number>)[key] = clamp(value, bounds.min, bounds.max);
-      } else {
-        (out as unknown as Record<string, number>)[key] = value;
-      }
-    } else if (typeof def === "boolean") {
-      if (typeof value === "boolean") {
-        (out as unknown as Record<string, boolean>)[key] = value;
-      }
-    } else if (key === "boundaryMode") {
-      if (typeof value === "string" && boundaryModes.has(value as BoundaryMode)) {
-        out.boundaryMode = value as BoundaryMode;
-      }
-    } else if (def === null) {
-      if (value === null || (typeof value === "number" && Number.isFinite(value))) {
-        (out as unknown as Record<string, unknown>)[key] = value;
-      }
-    }
-  }
-
-  // Cross-field invariants
-  if (out.maxPopulation < out.initialPopulation) {
-    out.maxPopulation = Math.max(out.initialPopulation, defaults.maxPopulation);
-  }
-  if (out.foodGrowthRate < 0) out.foodGrowthRate = 0;
-
-  return out;
+  return next;
 }

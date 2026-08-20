@@ -1,36 +1,38 @@
-<!-- markdownlint-configure-file { "MD013": false, "MD033": false, "MD041": false }-->
+﻿<!-- markdownlint-configure-file { "MD013": false, "MD033": false, "MD041": false }-->
 <div align="center">
 
 <img src="primordials-publish/assets/logo/logo-primary.svg" alt="Primordials" width="160"/>
 
-# Primordials
-### A living ecosystem on your desktop.
+# Primordials (Polygonal Primordials)
+### A living, evolving artificial life ecosystem & desktop wallpaper.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://en.cppreference.com/w/cpp/23)
-[![Tests](https://img.shields.io/badge/Tests-221_passing-brightgreen.svg)](#-testing)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue.svg)](https://www.typescriptlang.org/)
+[![React 18](https://img.shields.io/badge/React-18.3-cyan.svg)](https://react.dev/)
+[![Tests](https://img.shields.io/badge/Tests-92_passing-brightgreen.svg)](#-automated-testing--qa)
+[![E2E](https://img.shields.io/badge/E2E-Playwright_13_passing-green.svg)](#-browser-e2e-testing)
 [![itch.io](https://img.shields.io/badge/itch.io-Play%20Online-fa5c5c.svg)](https://gensoulslab.itch.io/polygonal-primordials)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2.svg)](https://discord.gg/primordials)
-[![GitHub release](https://img.shields.io/github/v/release/SahilKhutey/Primodials)](https://github.com/SahilKhutey/Primodials/releases)
+[![GitHub release](https://img.shields.io/github/v/release/SahilKhutey/Primodilas)](https://github.com/SahilKhutey/Primodilas/releases)
 
-**Real Lotka-Volterra predator-prey dynamics running at 60 FPS on your desktop. Free, open-source, MIT licensed.**
+**Real Lotka-Volterra predator-prey dynamics and neural network evolution running at 60 FPS on your desktop. Free, open-source, MIT licensed.**
 
-[**Download**](https://github.com/SahilKhutey/Primodials/releases) • [**Wallpaper Engine**](https://steamcommunity.com/sharedfiles/filedetails/?id=XXXXX) • [**itch.io**](https://gensoulslab.itch.io/polygonal-primordials) • [**Discord**](https://discord.gg/primordials)
+[**Download**](https://github.com/SahilKhutey/Primodilas/releases) • [**Wallpaper Engine**](https://steamcommunity.com/sharedfiles/filedetails/?id=XXXXX) • [**itch.io**](https://gensoulslab.itch.io/polygonal-primordials) • [**Discord**](https://discord.gg/primordials)
 
 </div>
 
 ---
 
-## 🧬 What is Primordials?
+## 🧬 What is Polygonal Primordials?
 
-**Primordials** is a real-time artificial life simulation that turns your monitor into a window into a primordial world.
+**Polygonal Primordials** is an artificial life and evolutionary biology sandbox that transforms your display into an evolving ecosystem.
 
-Inspired by the classic **Lotka-Volterra predator-prey equations** taught in ecology, every organism you see follows real rules:
-- 🐛 **Prey** graze on nutrients, reproduce, and flee from threats
-- 🦈 **Predators** hunt, starve, and reproduce when nourished
-- ⚖️ **The system finds balance** — or collapses dramatically
-
-It runs as a **live desktop wallpaper**, **screensaver**, or **standalone windowed laboratory**, and ships with six biomes ranging from a peaceful pond to a volcanic deep-sea vent.
+Organisms inhabit a continuous physical environment governed by emergent biological rules:
+- 🐛 **Herbivores & Grazers** seek food particles, cluster into colonies, and construct structures.
+- 🦈 **Predators & Carnivores** hunt, coordinate in social hierarchies, and adapt through evolutionary pressure.
+- 🧠 **Neural Brains** evolve connection weights across generations to navigate, avoid hazards, and cooperate.
+- 🌿 **Microbial Behaviors** exhibit chemotaxis, biofilm formation, quorum sensing, and horizontal gene transfer (HGT).
+- ⚖️ **Ecosystem Balance** dynamically reacts to environmental changes, disease events, and catastrophe strikes.
 
 ---
 
@@ -38,125 +40,111 @@ It runs as a **live desktop wallpaper**, **screensaver**, or **standalone window
 
 | Feature | Description |
 |:---|:---|
-| 🧬 **Real Ecology** | Lotka-Volterra dynamics with continuous differential equation solving. |
-| 🌿 **6 Dynamic Biomes** | Algae Bloom, Deep Sea, Primordial Soup, Tundra, Coral Reef, and Volcanic Vent. |
-| ⚡ **250K+ Entities** | Up to 250,000+ simultaneous organisms at 60 FPS in native C++ engine. |
-| 🎨 **Bioluminescent Vector Art** | Distinctive polygonal aesthetic with customizable glow intensity. |
-| 🖥️ **3 Display Modes** | Live Wallpaper, Ambient Screensaver, and Interactive Sandbox Window. |
-| 💾 **100% Offline by Default** | Private and local-first; optional Supabase cloud saves. |
-| 🛠️ **Custom Biomes** | Extensible JSON schema for designing custom species and parameters. |
-| 📦 **Open Source** | Fully MIT licensed, zero telemetry, zero trackers. |
+| 🧬 **Real Evolutionary Biology** | Evolving neural networks, mutation engine, sexual reproduction, and genetic drift. |
+| 🌿 **Dynamic Themes & Biomes** | Deep Sea, Coral Reef, Aurora, Microorganisms, Forest Floor, Crystal Cave, Cyberpunk, and Solar Flare. |
+| 🎬 **Presentation Modes** | Normal simulation view, distraction-free Cinematic mode, and lower-third Capture mode for recording. |
+| 🖥️ **Live Wallpaper Engine Integration** | Native Wallpaper Engine Workshop package with auto-pause, property bridges, and ambient HUD. |
+| 🔗 **Seed & World Sharing** | Export/import reproducible worlds via compact `PP1.` URL sharing codes. |
+| 🛡️ **Defensive Architecture** | Resilient storage layer with automatic QuotaExceeded fallbacks and crash recovery banners. |
+| ⚡ **60 FPS High-DPI Rendering** | DPR-scaled Canvas 2D engine with adaptive performance scaling and long-frame watchdogs. |
+| 📦 **Open Source & Local-First** | Zero tracking, 100% offline functionality, and optional Supabase cloud backups. |
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Web & Desktop Wallpaper (React + TypeScript)
+### Development
 
 ```bash
 # Clone the repository
-git clone https://github.com/SahilKhutey/Primodials.git
-cd Primodials
+git clone https://github.com/SahilKhutey/Primodilas.git
+cd Primodilas
 
-# Install dependencies and start development server
+# Install dependencies
 npm install
+
+# Start local development server
 npm run dev
 ```
 
-* Open `http://localhost:5173` for the interactive sandbox.
-* Add `?wallpaper=1` to the URL or click **Wallpaper Mode** in the HUD for ambient playback.
+- Navigate to `http://localhost:5173` for the interactive laboratory.
+- Append `?wallpaper=1` or click **Wallpaper Mode** in the header for the ambient wallpaper experience.
 
-### 2. Standalone Installers
+### Building & Packaging
 
-| Platform | Download / Installer |
-| :--- | :--- |
-| **Windows** | [PolygonalPrimordials-Setup-2.0.0.exe](https://github.com/SahilKhutey/Primodials/releases) |
-| **Linux (.deb)** | [polygonal-primordials_2.0.0_amd64.deb](https://github.com/SahilKhutey/Primodials/releases) |
-| **Linux (Universal)** | [PolygonalPrimordials-2.0.0-x86_64.AppImage](https://github.com/SahilKhutey/Primodials/releases) |
-| **macOS** | [PolygonalPrimordials-2.0.0.pkg](https://github.com/SahilKhutey/Primodials/releases) |
+```bash
+# Build production web bundle
+npm run build
+
+# Build wallpaper mode bundle
+npm run build:wallpaper
+
+# Package for Wallpaper Engine Workshop
+npm run package:wallpaper
+
+# Package for itch.io and distribution
+npm run package:all
+```
 
 ---
 
-## 🛠️ For Developers (Native C++ Engine)
+## 🧪 Automated Testing & QA
 
-### Prerequisites
-* C++23 compiler (GCC 13+, Clang 17+, MSVC 19.30+)
-* CMake ≥ 3.25
-* SDL3 development libraries
-* Node.js ≥ 18 (for web app)
-* Python ≥ 3.10 (for build scripts)
-
-### One-Command Setup
+Polygonal Primordials maintains a 10-Tier Commercial QA Architecture:
 
 ```bash
-./dev/setup_dev.sh
+# 1. Run unit, simulation, integration, fault injection, compatibility suites (38 files, 92 tests)
+npm run test
+
+# 2. Run full multi-tier test matrix
+npm run test:matrix
+
+# 3. Run Playwright Browser E2E suite (13 Chromium specs)
+npm run test:e2e
+
+# 4. Run automated performance benchmark
+npm run benchmark
+
+# 5. Run browser rendering benchmark
+npm run benchmark:browser
+
+# 6. Run physical hardware profiler (Windows)
+powershell -ExecutionPolicy Bypass -File scripts/hardware-report.ps1
+
+# 7. Run full 12-stage Master Release Gate
+npm run release:gate
 ```
-
-### Build Commands
-
-```bash
-./build_all.sh engine     # ShapeEngine static library
-./build_all.sh game       # Main simulation game binary
-./build_all.sh wallpaper  # Live desktop wallpaper mode
-./build_all.sh package    # Standalone release tarball
-./build_all.sh installer  # Platform installer package
-```
-
-### Run Test Suite
-
-```bash
-./build_all.sh engine && ctest --test-dir build/test --output-on-failure
-```
-*221 test cases · 1,311 assertions · 0 failures*
 
 ---
 
-## 🧪 Architecture
+## 📁 Project Architecture
 
-Primordials is built on two complementary pillars:
-
-```
-Primodials/
-├── src/                          # 🌐 Wallpaper & Web Application (Primary Product)
-│   ├── components/               # React 18 / Tailwind HUD & controls
-│   ├── sim/                      # TypeScript simulation runtime & Canvas 2D renderer
-│   └── styles/                   # Design tokens & color system
+```text
+Primodilas/
+├── src/                          # 🌐 Core Simulation & Web/Wallpaper UI
+│   ├── components/               # React 18 HUD, overlays, dialogs, presentation chrome
+│   ├── hooks/                    # Persistent settings, first-run, keyboard, presentation hooks
+│   ├── lib/                      # Adaptive performance, safe storage, world sharing, diagnostics
+│   ├── sim/                      # 30Hz deterministic simulation engine, entities, biomes, neural brains
+│   └── styles/                   # Phase 5 presentation animations & Tailwind CSS
 │
-├── Engine/ & Games/              # ⚡ Native C++23 Engine (Research Platform)
-│   ├── Engine/                   # Custom ECS, spatial partitioning, lockstep netcode
-│   └── EngineTests/              # Catch2 unit + integration tests (221 cases)
+├── e2e/                          # 🎭 Playwright Browser E2E Test Suite (13 specs)
+│   ├── fixtures/app.ts           # App boot and preparation fixtures
+│   └── *.spec.ts                 # Startup, onboarding, controls, settings, sharing, recovery
 │
-└── packaging/                    # 📦 Platform Packaging (Wallpaper Engine, InnoSetup)
+├── tests/                        # 🧪 Vitest Test Suite (38 files, 92 tests)
+│   ├── unit/                     # RNG, settings, storage, watchdog, autosave, themes
+│   ├── simulation/               # Step invariants, initialization, determinism, biology
+│   ├── integration/              # Deep snapshot/restore, runtime contracts, full smoke
+│   ├── fault-injection/          # Quota errors, corrupt URLs, malformed snapshots
+│   └── compatibility/            # Schema migration helpers, v1 snapshot decoding
+│
+├── benchmarks/                   # 📊 Machine-Readable Performance Baselines & Reports
+├── packaging/                    # 📦 Platform Packaging (Wallpaper Engine, itch.io)
+├── release/                      # 📋 Release Candidate Notes, Checklists & Manifests
+├── tools/                        # 🛠️ Release Gate, Test Matrix & Benchmark Automation Scripts
+└── docs/                         # 📖 QA, Release Pipeline & Architecture Specifications
 ```
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full architectural specifications.
-
----
-
-## 🌿 The Biomes
-
-| Biome | Population Dynamics | Visual Atmosphere |
-| :--- | :--- | :--- |
-| 🌱 **Algae Bloom** | High prey density, sparse grazers | Peaceful pond surface at dawn |
-| 🐙 **Deep Sea** | Low density, bioluminescent hunters | Abyssal darkness 2km below |
-| 🍲 **Primordial Soup** | Emerging, unstable protocells | Ancient ocean 4 billion years ago |
-| ❄️ **Tundra** | Rapid boom-and-bust population cycles | Stark Arctic summer tundra |
-| 🪸 **Coral Reef** | Dense multi-species equilibrium | Vibrant tropical coral sanctuary |
-| 🌋 **Volcanic Vent** | Thermal-resistant extremophiles | Geothermal vents & sulfur beds |
-
-* 🛠️ Biome schema: [docs/BIOME_SCHEMA.md](docs/BIOME_SCHEMA.md)
-* 🌿 Contribute a biome: [docs/CONTRIBUTING_BIOMES.md](docs/CONTRIBUTING_BIOMES.md)
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please check:
-* 🐛 [Bug Report](.github/ISSUE_TEMPLATE/bug_report.md)
-* 💡 [Feature Request](.github/ISSUE_TEMPLATE/feature_request.md)
-* 🌿 [Biome Idea](.github/ISSUE_TEMPLATE/biome_idea.md)
-* 📖 [Contributing Guide](CONTRIBUTING.md)
-* 📜 [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ---
 
@@ -164,12 +152,6 @@ Contributions are welcome! Please check:
 
 Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.
 
-```
+```text
 Copyright (c) 2024-2026 Sahil Khutey (Gensouls Lab)
 ```
-
----
-
-<div align="center">
-  <sub>Made with 🧬 by <a href="https://gensoulslab.dev/">Gensouls Lab</a></sub>
-</div>

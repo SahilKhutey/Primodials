@@ -33,7 +33,7 @@ export function HelpOverlay({ open, onClose }: Props) {
             <h2 id="primordials-help-title" className="mt-1 text-xl font-bold text-white">
               Control your ecosystem
             </h2>
-            <p className="mt-2 text-sm leading-6 text-neutral-400">
+            <p className="mt-2 text-sm leading-6 text-neutral-500">
               Most actions are also available from the visible controls in Simulation View and Wallpaper Mode.
             </p>
           </div>

@@ -1,14 +1,3 @@
-/**
- * safeStorage — defensive localStorage wrapper
- *
- * - Quota-exceeded safe
- * - Corrupt-JSON safe
- * - Disabled in private mode
- * - Returns null on any failure
- *
- * License: MIT
- */
-
 export type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 export function getSafeStorage(): StorageLike | null {
@@ -23,51 +12,51 @@ export function getSafeStorage(): StorageLike | null {
   }
 }
 
-export function safeGetJSON<T>(key: string): T | null {
-  try {
-    if (typeof window === "undefined") return null;
-    const raw = window.localStorage.getItem(key);
-    if (raw === null) return null;
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
-}
-
-export function safeSetJSON(key: string, value: unknown): boolean {
-  try {
-    if (typeof window === "undefined") return false;
-    const json = JSON.stringify(value);
-    window.localStorage.setItem(key, json);
-    return true;
-  } catch {
-    // QuotaExceededError, SecurityError, etc.
-    return false;
-  }
-}
-
-export function safeRemove(key: string): void {
-  try {
-    if (typeof window === "undefined") return;
-    window.localStorage.removeItem(key);
-  } catch {
-    // Ignore
-  }
-}
-
 export function safeGetString(key: string): string | null {
+  const storage = getSafeStorage();
+  if (!storage) return null;
   try {
-    if (typeof window === "undefined") return null;
-    return window.localStorage.getItem(key);
+    return storage.getItem(key);
   } catch {
     return null;
   }
 }
 
 export function safeSetString(key: string, value: string): boolean {
+  const storage = getSafeStorage();
+  if (!storage) return false;
   try {
-    if (typeof window === "undefined") return false;
-    window.localStorage.setItem(key, value);
+    storage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function safeGetJSON<T = unknown>(key: string): T | null {
+  const raw = safeGetString(key);
+  if (raw === null) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+export function safeSetJSON<T = unknown>(key: string, value: T): boolean {
+  try {
+    const raw = JSON.stringify(value);
+    return safeSetString(key, raw);
+  } catch {
+    return false;
+  }
+}
+
+export function safeRemoveItem(key: string): boolean {
+  const storage = getSafeStorage();
+  if (!storage) return false;
+  try {
+    storage.removeItem(key);
     return true;
   } catch {
     return false;

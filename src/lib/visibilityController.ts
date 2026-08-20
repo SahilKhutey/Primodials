@@ -6,10 +6,6 @@ export type VisibilityCallbacks = {
 export function installVisibilityController(
   callbacks: VisibilityCallbacks,
 ): () => void {
-  if (typeof document === "undefined") {
-    return () => {};
-  }
-
   const handler = () => {
     if (document.visibilityState === "hidden") callbacks.onHidden();
     else callbacks.onVisible();

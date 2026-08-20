@@ -1,24 +1,11 @@
-/**
- * localSnapshot — offline save / load for the running simulation
- *
- * The existing App.tsx has a Supabase cloud snapshot path.
- * This adds an OFFLINE-FIRST path that works without any account
- * or internet connection.
- *
- * License: MIT
- */
-
-import { safeGetJSON, safeSetJSON, safeRemove } from "@/lib/safeStorage";
 import type { SimSettings, SimStats, Species, Colony, Structure, Biome, Remains, KnowledgeNode, Food, Organism } from "./types";
 import type { Simulation } from "./simulation";
 
-const SNAPSHOT_KEY = "primordials:snapshot:v1";
-const SNAPSHOT_INDEX_KEY = "primordials:snapshots:index:v1";
+const STORAGE_KEY = "polygonal-primordials.snapshot.v1";
 
 export type LocalSimulationSnapshot = {
   version: 1;
   savedAt: string;
-  createdAt: number;
   tick: number;
   organisms: Array<Omit<Organism, "brain"> & {
     brain: null | {
@@ -37,10 +24,7 @@ export type LocalSimulationSnapshot = {
   knowledgeNodes: KnowledgeNode[];
   stats: SimStats;
   settings: SimSettings;
-  state?: unknown;
 };
-
-export type SimulationSnapshot = LocalSimulationSnapshot;
 
 function encodeBrain(organism: Organism) {
   if (!organism.brain) return null;
@@ -53,11 +37,9 @@ function encodeBrain(organism: Organism) {
 }
 
 export function captureLocalSnapshot(sim: Simulation): LocalSimulationSnapshot {
-  const now = Date.now();
   return {
     version: 1,
-    savedAt: new Date(now).toISOString(),
-    createdAt: now,
+    savedAt: new Date().toISOString(),
     tick: sim.tick,
     organisms: sim.organisms.map((o) => ({
       ...o,
@@ -77,47 +59,37 @@ export function captureLocalSnapshot(sim: Simulation): LocalSimulationSnapshot {
   };
 }
 
-/**
- * Save the current simulation state to localStorage.
- * Returns true on success, false if storage failed.
- */
-export function saveLocalSnapshot(sim: unknown): boolean {
+export function saveLocalSnapshot(sim: Simulation): boolean {
+  if (typeof window === "undefined") return false;
   try {
-    if (!sim) return false;
-    const simTyped = sim as Simulation;
-    const snapshot = captureLocalSnapshot(simTyped);
-
-    if (!safeSetJSON(SNAPSHOT_KEY, snapshot)) return false;
-
-    // Also update index
-    const index = safeGetJSON<string[]>(SNAPSHOT_INDEX_KEY) ?? [];
-    index.push(`snapshot-${snapshot.createdAt}`);
-    safeSetJSON(SNAPSHOT_INDEX_KEY, index.slice(-20));
-
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(captureLocalSnapshot(sim)));
     return true;
   } catch {
+    // Storage failures must never crash the simulation.
     return false;
   }
 }
 
-/**
- * Load the most recent local snapshot.
- * Returns null if no snapshot exists or it can't be parsed.
- */
 export function loadLocalSnapshot(): LocalSimulationSnapshot | null {
-  return safeGetJSON<LocalSimulationSnapshot>(SNAPSHOT_KEY);
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as LocalSimulationSnapshot;
+    if (parsed?.version !== 1) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
-/**
- * List all known snapshot identifiers.
- */
-export function listLocalSnapshots(): string[] {
-  return safeGetJSON<string[]>(SNAPSHOT_INDEX_KEY) ?? [];
-}
-
-/**
- * Delete the local snapshot.
- */
-export function clearLocalSnapshot(): void {
-  safeRemove(SNAPSHOT_KEY);
+export function clearLocalSnapshot(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+    return true;
+  } catch {
+    // Intentionally ignored.
+    return false;
+  }
 }
