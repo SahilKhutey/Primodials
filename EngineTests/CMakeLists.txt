@@ -82,9 +82,7 @@ target_link_libraries(ShapeEngineTests PRIVATE
     Catch2::Catch2WithMain
 )
 
-if(NOT MSVC)
-    target_link_options(ShapeEngineTests PRIVATE -static)
-endif()
+# Static linking is handled by target_link_libraries dependencies
 
 # Target-specific compiler options
 if(MSVC)

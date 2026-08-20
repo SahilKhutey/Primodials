@@ -3,16 +3,16 @@ import { spawnSync } from "node:child_process";
 const commands = [
   ["typecheck", "npm", ["run", "typecheck"]],
   ["lint", "npm", ["run", "lint"]],
-  ["test-matrix", "node", ["tools/run-test-matrix.mjs"]],
-  ["benchmark", "node", ["tools/run-benchmark.mjs"]],
+  ["test-matrix", "node", ["Tools/run-test-matrix.mjs"]],
+  ["benchmark", "node", ["Tools/run-benchmark.mjs"]],
   ["web-build", "npm", ["run", "build"]],
   ["wallpaper-build", "npm", ["run", "build:wallpaper"]],
   ["wallpaper-package", "npm", ["run", "package:wallpaper"]],
-  ["wallpaper-qa", "node", ["tools/verify-wallpaper-qa.mjs"]],
-  ["release-preflight", "node", ["tools/validate-release.mjs"]],
-  ["build-info", "node", ["tools/create-build-info.mjs"]],
-  ["artifact-audit", "node", ["tools/validate-release-artifacts.mjs"]],
-  ["release-manifest", "node", ["tools/generate-release-manifest.mjs"]],
+  ["wallpaper-qa", "node", ["Tools/verify-wallpaper-qa.mjs"]],
+  ["release-preflight", "node", ["Tools/validate-release.mjs"]],
+  ["build-info", "node", ["Tools/create-build-info.mjs"]],
+  ["artifact-audit", "node", ["Tools/validate-release-artifacts.mjs"]],
+  ["release-manifest", "node", ["Tools/generate-release-manifest.mjs"]],
 ];
 
 for (const [name, command, args] of commands) {
@@ -23,7 +23,7 @@ for (const [name, command, args] of commands) {
     args,
     {
       stdio: "inherit",
-      shell: process.platform === "win32",
+      shell: true,
     },
   );
 

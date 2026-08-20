@@ -19,7 +19,7 @@ for (const [name, command, ...args] of groups) {
     [command, ...args],
     {
       stdio: "inherit",
-      shell: process.platform === "win32",
+      shell: true,
     },
   );
 
