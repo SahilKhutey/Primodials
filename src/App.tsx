@@ -173,12 +173,7 @@ function App() {
     setLoadingHistory(false);
   }, []);
 
-  useEffect(() => {
-    loadHistory();
-    registerAutoCheckpoint(simRef.current);
-  }, [loadHistory]);
-
-  const registerAutoCheckpoint = (sim: Simulation) => {
+  const registerAutoCheckpoint = useCallback((sim: Simulation) => {
     sim.onAutoCheckpoint = async (cycle: number, tick: number) => {
       if (!sim.settings.autoCheckpoint) return;
       if (!supabase) return;
@@ -203,19 +198,18 @@ function App() {
               nOutputs: o.brain.nOutputs, weights: Array.from(o.brain.weights),
             } : null,
             fitness: o.fitness,
-            tumbleTimer: o.tumbleTimer,
-            inBiofilm: o.inBiofilm,
-            biofilmId: o.biofilmId,
-            sporeMode: o.sporeMode,
-            sporeTimer: o.sporeTimer,
-            infected: o.infected,
-            infectionTimer: o.infectionTimer,
-            symbiosisPartner: o.symbiosisPartner,
-            socialRank: o.socialRank,
-            clusterId: o.clusterId,
+            fitnessScore: o.fitness,
+            dominantTraits: [],
           })),
-          food: sim.food,
-          species: sim.species,
+          species: sim.species.map((s) => ({
+            id: s.id, name: s.name, color: s.color,
+            population: s.population, peakPopulation: s.peakPopulation,
+            representative: { ...s.representative },
+            avgIntelligence: s.avgIntelligence, rank: s.rank,
+            totalKills: s.totalKills, structuresBuilt: s.structuresBuilt,
+            civilizationLevel: s.civilizationLevel, knowledgeDiscovered: s.knowledgeDiscovered,
+            evolutionLeaps: s.evolutionLeaps,
+          })),
           colonies: sim.colonies,
           structures: sim.structures,
           biomes: sim.biomes,
@@ -228,7 +222,12 @@ function App() {
       await supabase.from('simulation_snapshots').insert(snapshot);
       loadHistory();
     };
-  };
+  }, [loadHistory]);
+
+  useEffect(() => {
+    loadHistory();
+    registerAutoCheckpoint(simRef.current);
+  }, [loadHistory, registerAutoCheckpoint]);
 
   const reducedMotion = useReducedMotion();
   const viewport = useResponsiveWallpaper();

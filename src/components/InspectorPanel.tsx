@@ -85,7 +85,7 @@ const BIOME_ICONS: Record<BiomeType, React.ReactNode> = {
 export function InspectorPanel({ sim, selectedId, onClear }: Props) {
   const selected = useMemo(
     () => sim.organisms.find((o) => o.id === selectedId && o.alive) ?? null,
-    [sim, selectedId, sim.tick],
+    [sim, selectedId],
   );
 
   const speciesOf = useMemo(() => {

@@ -26,5 +26,5 @@ Events are processed with a 1-tick delay to ensure deterministic ordering:
 
 ## 3. CommandBuffer Flushing
 All structural modifications are applied in batch mode during Phase 3:
-* **Entites Deletion:** Components are removed from sparse sets first, then entity indices are recycled.
+* **Entities Deletion:** Components are removed from sparse sets first, then entity indices are recycled.
 * **Entities Creation:** New IDs are generated and components are allocated.

@@ -11,7 +11,7 @@
 namespace Shape::Simulation {
 
 struct NeuralBrainComponent {
-    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::MindComponent); // Re-use MindComponent slot or dedicated
+    static constexpr u32 TypeId = static_cast<u32>(ComponentTypeId::MindComponent); // Reuse MindComponent slot or dedicated
     AI::NeuralNetwork network;
     std::vector<f32> last_inputs;
     std::vector<f32> last_outputs;
