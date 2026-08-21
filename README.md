@@ -10,7 +10,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue.svg)](https://www.typescriptlang.org/)
 [![React 18](https://img.shields.io/badge/React-18.3-cyan.svg)](https://react.dev/)
 [![Tests](https://img.shields.io/badge/Tests-92_passing-brightgreen.svg)](#-automated-testing--qa)
-[![E2E](https://img.shields.io/badge/E2E-Playwright_13_passing-green.svg)](#-browser-e2e-testing)
+[![E2E](https://img.shields.io/badge/E2E-Playwright_13_passing-green.svg)](#-automated-testing--qa)
 [![itch.io](https://img.shields.io/badge/itch.io-Play%20Online-fa5c5c.svg)](https://gensoulslab.itch.io/polygonal-primordials)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2.svg)](https://discord.gg/primordials)
 [![GitHub release](https://img.shields.io/github/v/release/SahilKhutey/Primodilas)](https://github.com/SahilKhutey/Primodilas/releases)
@@ -51,26 +51,58 @@ Organisms inhabit a continuous physical environment governed by emergent biologi
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Install & Installation
 
-### Development
-
+### Option 1: Web & Desktop Application
 ```bash
 # Clone the repository
 git clone https://github.com/SahilKhutey/Primodilas.git
 cd Primodilas
 
-# Install dependencies
+# Install dependencies and launch
 npm install
-
-# Start local development server
 npm run dev
 ```
 
-- Navigate to `http://localhost:5173` for the interactive laboratory.
-- Append `?wallpaper=1` or click **Wallpaper Mode** in the header for the ambient wallpaper experience.
+- Open `http://localhost:5173` in your browser.
+- Append `?wallpaper=1` for distraction-free ambient wallpaper mode.
 
-### Building & Packaging
+### Option 2: Standalone Installers
+Download pre-compiled native installers directly from [GitHub Releases](https://github.com/SahilKhutey/Primodilas/releases):
+- **Windows**: `PolygonalPrimordials-Setup-1.0.0.exe`
+- **Linux**: `polygonal-primordials_1.0.0_amd64.deb` / `AppImage`
+- **macOS**: `PolygonalPrimordials-1.0.0.pkg`
+
+---
+
+## 🖥️ System Requirements
+
+| Specification | Minimum | Recommended |
+|---|---|---|
+| **OS** | Windows 10/11, macOS 12+, Ubuntu 22.04+ | Windows 11 64-bit |
+| **CPU** | 2.0 GHz Dual-Core 64-bit | 3.0+ GHz Quad-Core (AMD Ryzen / Intel Core) |
+| **Memory** | 2 GB RAM | 4 GB RAM |
+| **Graphics** | WebGL 2.0 / Canvas 2D compatible GPU | Dedicated GPU (NVIDIA RTX / AMD Radeon) |
+| **Storage** | 200 MB available space | 500 MB available space |
+
+---
+
+## 🛠️ For Developers
+
+### Prerequisites
+- Node.js ≥ 20.0.0 & npm ≥ 10.0.0
+- C++23 Compiler (GCC 13+, Clang 17+, MSVC 2022) & CMake ≥ 3.22 (for native research engine)
+
+### Setup
+```bash
+# One-command development setup
+npm install
+./dev/setup_dev.sh
+```
+
+---
+
+## 📦 Build & Packaging
 
 ```bash
 # Build production web bundle
@@ -82,7 +114,7 @@ npm run build:wallpaper
 # Package for Wallpaper Engine Workshop
 npm run package:wallpaper
 
-# Package for itch.io and distribution
+# Package for itch.io distribution
 npm run package:all
 ```
 
@@ -109,7 +141,7 @@ npm run benchmark
 npm run benchmark:browser
 
 # 6. Run physical hardware profiler (Windows)
-powershell -ExecutionPolicy Bypass -File scripts/hardware-report.ps1
+powershell -ExecutionPolicy Bypass -File Scripts/hardware-report.ps1
 
 # 7. Run full 12-stage Master Release Gate
 npm run release:gate
@@ -139,10 +171,10 @@ Primodilas/
 │   ├── fault-injection/          # Quota errors, corrupt URLs, malformed snapshots
 │   └── compatibility/            # Schema migration helpers, v1 snapshot decoding
 │
-├── benchmarks/                   # 📊 Machine-Readable Performance Baselines & Reports
+├── Benchmarks/                   # 📊 Machine-Readable Performance Baselines & Reports
 ├── packaging/                    # 📦 Platform Packaging (Wallpaper Engine, itch.io)
 ├── release/                      # 📋 Release Candidate Notes, Checklists & Manifests
-├── tools/                        # 🛠️ Release Gate, Test Matrix & Benchmark Automation Scripts
+├── Tools/                        # 🛠️ Release Gate, Test Matrix & Benchmark Automation Scripts
 └── docs/                         # 📖 QA, Release Pipeline & Architecture Specifications
 ```
 
