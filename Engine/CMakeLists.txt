@@ -1,4 +1,4 @@
-add_library(ShapeEngine STATIC
+﻿add_library(ShapeEngine STATIC
     # UI & Wallpaper Systems (Phases 7, 8, 9, 10)
     UI/Loading/LoadingScreen.cpp
     UI/Menus/MainMenu.cpp
@@ -112,6 +112,11 @@ if(MSVC)
         /volatile:iso
         /EHsc
         /fp:precise
+    )
+    target_compile_definitions(ShapeEngine PRIVATE
+        _CRT_SECURE_NO_WARNINGS
+        NOMINMAX
+        WIN32_LEAN_AND_MEAN
     )
 else()
     target_compile_options(ShapeEngine PRIVATE

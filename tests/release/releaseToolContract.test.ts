@@ -4,12 +4,15 @@ import { resolve } from "node:path";
 
 describe("release tooling", () => {
   it("contains all release scripts", () => {
-    for (const file of [
-      "tools/validate-release.mjs",
-      "tools/create-build-info.mjs",
-      "tools/generate-release-manifest.mjs",
-    ]) {
-      expect(existsSync(resolve(process.cwd(), file))).toBe(true);
+    const required = [
+      ["Tools/validate-release.mjs", "tools/validate-release.mjs"],
+      ["Tools/create-build-info.mjs", "tools/create-build-info.mjs"],
+      ["Tools/generate-release-manifest.mjs", "tools/generate-release-manifest.mjs"],
+    ];
+
+    for (const candidates of required) {
+      const exists = candidates.some((file) => existsSync(resolve(process.cwd(), file)));
+      expect(exists, `Missing release tool. Tried: ${candidates.join(", ")}`).toBe(true);
     }
   });
 

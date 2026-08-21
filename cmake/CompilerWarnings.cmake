@@ -35,7 +35,6 @@ function(shape_apply_warnings target)
             -Wnull-dereference
             -Wdouble-promotion
             -fno-fast-math
-            -Wno-c2y-extensions
             $<$<CONFIG:Debug>:-Werror>
         )
     endif()

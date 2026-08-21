@@ -94,6 +94,11 @@ if(MSVC)
         /EHsc
         /fp:precise
     )
+    target_compile_definitions(ShapeEngineTests PRIVATE
+        _CRT_SECURE_NO_WARNINGS
+        NOMINMAX
+        WIN32_LEAN_AND_MEAN
+    )
 else()
     target_compile_options(ShapeEngineTests PRIVATE
         -Wall
@@ -101,7 +106,6 @@ else()
         -Werror
         -pedantic
         -fno-fast-math
-        -Wno-c2y-extensions
     )
 endif()
 
