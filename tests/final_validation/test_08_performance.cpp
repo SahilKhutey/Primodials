@@ -1,20 +1,28 @@
-// tests/final_validation/test_08_performance.cpp
-//
-// Quick performance validation to ensure engine subsystems run fast.
+#include <chrono>
+#include <cstdint>
 
 #include <catch2/catch_test_macros.hpp>
-#include <chrono>
 
-TEST_CASE("Perf: Engine core allocation timing", "[validation][perf]") {
-    auto start = std::chrono::steady_clock::now();
-    
-    volatile int sum = 0;
-    for (int i = 0; i < 100000; ++i) {
-        sum += i;
+TEST_CASE("Basic engine performance remains within validation budget",
+          "[performance][final-validation]") {
+    constexpr std::uint64_t iterations = 1'000'000;
+
+    volatile std::uint64_t sink = 0;
+
+    const auto start = std::chrono::steady_clock::now();
+
+    for (std::uint64_t i = 0; i < iterations; ++i) {
+        sink += (i * 2654435761ULL) ^ (i >> 7U);
     }
-    
-    auto elapsed = std::chrono::duration<double, std::milli>(
-        std::chrono::steady_clock::now() - start).count();
-    
-    REQUIRE(elapsed < 100.0);
+
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - start
+    ).count();
+
+    // Keep the accumulator observable so an optimizing compiler cannot
+    // eliminate the loop entirely.
+    REQUIRE(sink != 0);
+
+    // This is a smoke-test budget, not a published product benchmark.
+    REQUIRE(elapsed < 1000);
 }

@@ -86,6 +86,7 @@ logs/
 coverage/
 devlopmentnext/
 Publishing & Distribution Development/
+fixes/
 
 # ── Secrets ──────────────────────────────────
 .env

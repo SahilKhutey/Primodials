@@ -110,4 +110,7 @@ include(CTest)
 enable_testing()
 
 include(Catch)
-catch_discover_tests(ShapeEngineTests)
+catch_discover_tests(
+    ShapeEngineTests
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
