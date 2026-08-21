@@ -8,6 +8,8 @@
 
 #include "Core/Platform.hpp"
 #include <cstring>
+#include <utility>
+#include <new>
 
 namespace Shape::ECS2 {
 
