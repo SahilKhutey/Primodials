@@ -1,4 +1,4 @@
-﻿add_library(ShapeEngine STATIC
+add_library(ShapeEngine STATIC
     # UI & Wallpaper Systems (Phases 7, 8, 9, 10)
     UI/Loading/LoadingScreen.cpp
     UI/Menus/MainMenu.cpp
@@ -103,30 +103,7 @@ target_include_directories(ShapeEngine PUBLIC
 find_package(Threads REQUIRED)
 target_link_libraries(ShapeEngine PUBLIC Threads::Threads SDL3::SDL3)
 
-# Target-specific compiler options
-if(MSVC)
-    target_compile_options(ShapeEngine PRIVATE
-        /W4          # Warning level 4
-        /WX          # Treat warnings as errors
-        /permissive- # Standards conformance
-        /volatile:iso
-        /EHsc
-        /fp:precise
-    )
-    target_compile_definitions(ShapeEngine PRIVATE
-        _CRT_SECURE_NO_WARNINGS
-        NOMINMAX
-        WIN32_LEAN_AND_MEAN
-    )
-else()
-    target_compile_options(ShapeEngine PRIVATE
-        -Wall
-        -Wextra
-        -Werror
-        -pedantic
-        -fno-fast-math
-    )
-endif()
+shape_apply_warnings(ShapeEngine)
 
 add_subdirectory(Replay)
 add_subdirectory(Network)

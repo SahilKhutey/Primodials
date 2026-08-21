@@ -84,30 +84,7 @@ target_link_libraries(ShapeEngineTests PRIVATE
 
 # Static linking is handled by target_link_libraries dependencies
 
-# Target-specific compiler options
-if(MSVC)
-    target_compile_options(ShapeEngineTests PRIVATE
-        /W4          # Warning level 4
-        /WX          # Treat warnings as errors
-        /permissive- # Standards conformance
-        /volatile:iso
-        /EHsc
-        /fp:precise
-    )
-    target_compile_definitions(ShapeEngineTests PRIVATE
-        _CRT_SECURE_NO_WARNINGS
-        NOMINMAX
-        WIN32_LEAN_AND_MEAN
-    )
-else()
-    target_compile_options(ShapeEngineTests PRIVATE
-        -Wall
-        -Wextra
-        -Werror
-        -pedantic
-        -fno-fast-math
-    )
-endif()
+shape_apply_warnings(ShapeEngineTests)
 
 # Include the Catch module to discover tests automatically
 include(CTest)
