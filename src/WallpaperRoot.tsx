@@ -33,6 +33,8 @@ import { Phase4UXShell } from '@/components/Phase4UXShell';
 import { VisualEffectsOverlay } from '@/components/VisualEffectsOverlay';
 import { VersionBadge } from '@/components/VersionBadge';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { ReleaseChannelBadge } from '@/components/ReleaseChannelBadge';
+import { recordFirstLaunchEvent } from '@/lib/firstLaunchTelemetry';
 
 export function WallpaperRoot() {
   const { settings, setSettings } = usePersistentSettings(DEFAULT_SETTINGS);
@@ -57,6 +59,7 @@ export function WallpaperRoot() {
   const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
+    recordFirstLaunchEvent('wallpaper-start');
     const timer = setTimeout(() => setInitialLoading(false), 400);
     return () => clearTimeout(timer);
   }, []);
@@ -308,6 +311,7 @@ export function WallpaperRoot() {
           ) : null;
         })()}
 
+        <ReleaseChannelBadge />
         <VersionBadge visible={import.meta.env.DEV} />
         <LoadingScreen visible={initialLoading} />
 

@@ -12,6 +12,8 @@ const commands = [
   ["release-preflight", "node", ["Tools/validate-release.mjs"]],
   ["build-info", "node", ["Tools/create-build-info.mjs"]],
   ["artifact-audit", "node", ["Tools/validate-release-artifacts.mjs"]],
+  ["publish-preflight", "node", ["Tools/publish-preflight.mjs"]],
+  ["store-manifest", "node", ["Tools/create-store-manifest.mjs"]],
   ["release-manifest", "node", ["Tools/generate-release-manifest.mjs"]],
 ];
 

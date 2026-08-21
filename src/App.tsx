@@ -44,6 +44,8 @@ import { PresentationChrome } from '@/components/PresentationChrome';
 import { CaptureFrame } from '@/components/CaptureFrame';
 import { VersionBadge } from '@/components/VersionBadge';
 import { LoadingScreen } from '@/components/LoadingScreen';
+import { ReleaseChannelBadge } from '@/components/ReleaseChannelBadge';
+import { recordFirstLaunchEvent } from '@/lib/firstLaunchTelemetry';
 
 function App() {
   const { settings, setSettings, resetSettings } = usePersistentSettings(DEFAULT_SETTINGS);
@@ -86,6 +88,7 @@ function App() {
   const prevThemeIdRef = useRef<string>(themeId);
 
   useEffect(() => {
+    recordFirstLaunchEvent('launch');
     const timer = setTimeout(() => setInitialLoading(false), 400);
     return () => clearTimeout(timer);
   }, []);
@@ -544,6 +547,7 @@ function App() {
             />
           )}
 
+          <ReleaseChannelBadge />
           <VersionBadge visible={import.meta.env.DEV} />
           <LoadingScreen visible={initialLoading} />
 
@@ -744,6 +748,8 @@ function App() {
           onRecover={handleRecoverSession}
           onDismiss={() => setDismissRecovery(true)}
         />
+
+        <ReleaseChannelBadge />
       </div>
     </Phase4UXShell>
   );

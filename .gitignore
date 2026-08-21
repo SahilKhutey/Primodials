@@ -84,6 +84,8 @@ $RECYCLE.BIN/
 .primordials/
 logs/
 coverage/
+devlopmentnext/
+Publishing & Distribution Development/
 
 # ── Secrets ──────────────────────────────────
 .env

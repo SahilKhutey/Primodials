@@ -32,6 +32,9 @@
     "release:artifacts": "node Tools/validate-release-artifacts.mjs",
     "release:manifest": "node Tools/generate-release-manifest.mjs",
     "release:gate": "node Tools/run-release-gate.mjs",
+    "publish:preflight": "node Tools/publish-preflight.mjs",
+    "publish:store-manifest": "node Tools/create-store-manifest.mjs",
+    "publish:itch": "node Tools/publish-itch.mjs",
     "check": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {

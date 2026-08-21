@@ -6,6 +6,7 @@ const groups = [
   ["integration", "vitest", "run", "tests/integration"],
   ["fault-injection", "vitest", "run", "tests/fault-injection"],
   ["compatibility", "vitest", "run", "tests/compatibility"],
+  ["publishing", "vitest", "run", "tests/publishing"],
   ["release", "vitest", "run", "tests/release"],
   ["all", "vitest", "run", "tests"],
 ];

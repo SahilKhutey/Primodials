@@ -1,0 +1,19 @@
+{
+  "product": "Polygonal Primordials",
+  "version": "1.0.0",
+  "shortDescription": "A living artificial ecosystem that evolves on your desktop.",
+  "genres": [
+    "Simulation",
+    "Sandbox"
+  ],
+  "primaryPlatforms": [
+    "Windows"
+  ],
+  "launchChannels": [
+    "Wallpaper Engine",
+    "itch.io",
+    "Steam"
+  ],
+  "claimsPolicy": "Only publish features verified in the exact release artifact.",
+  "createdAt": "2026-08-21T14:36:08.331Z"
+}
