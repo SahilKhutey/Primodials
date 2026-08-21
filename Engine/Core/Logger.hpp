@@ -30,9 +30,17 @@ public:
 
 } // namespace Shape
 
-// Logging Macros using C++20 __VA_OPT__ for clean standards compliance
-#define SHAPE_LOG_TRACE(fmt, ...)    ::Shape::Logger::LogFormat(::Shape::LogLevel::Trace, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
-#define SHAPE_LOG_INFO(fmt, ...)     ::Shape::Logger::LogFormat(::Shape::LogLevel::Info, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
-#define SHAPE_LOG_WARN(fmt, ...)     ::Shape::Logger::LogFormat(::Shape::LogLevel::Warning, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
-#define SHAPE_LOG_ERROR(fmt, ...)    ::Shape::Logger::LogFormat(::Shape::LogLevel::Error, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
-#define SHAPE_LOG_CRITICAL(fmt, ...) ::Shape::Logger::LogFormat(::Shape::LogLevel::Critical, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
+// Logging Macros supporting both modern standard __VA_OPT__ and traditional preprocessors
+#if defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
+  #define SHAPE_LOG_TRACE(fmt, ...)    ::Shape::Logger::LogFormat(::Shape::LogLevel::Trace, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+  #define SHAPE_LOG_INFO(fmt, ...)     ::Shape::Logger::LogFormat(::Shape::LogLevel::Info, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+  #define SHAPE_LOG_WARN(fmt, ...)     ::Shape::Logger::LogFormat(::Shape::LogLevel::Warning, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+  #define SHAPE_LOG_ERROR(fmt, ...)    ::Shape::Logger::LogFormat(::Shape::LogLevel::Error, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+  #define SHAPE_LOG_CRITICAL(fmt, ...) ::Shape::Logger::LogFormat(::Shape::LogLevel::Critical, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
+#else
+  #define SHAPE_LOG_TRACE(fmt, ...)    ::Shape::Logger::LogFormat(::Shape::LogLevel::Trace, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
+  #define SHAPE_LOG_INFO(fmt, ...)     ::Shape::Logger::LogFormat(::Shape::LogLevel::Info, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
+  #define SHAPE_LOG_WARN(fmt, ...)     ::Shape::Logger::LogFormat(::Shape::LogLevel::Warning, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
+  #define SHAPE_LOG_ERROR(fmt, ...)    ::Shape::Logger::LogFormat(::Shape::LogLevel::Error, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
+  #define SHAPE_LOG_CRITICAL(fmt, ...) ::Shape::Logger::LogFormat(::Shape::LogLevel::Critical, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__)
+#endif

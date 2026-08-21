@@ -11,6 +11,7 @@ function(shape_apply_warnings target)
             $<$<CONFIG:Debug>:/WX>
             /permissive-
             /Zc:__cplusplus
+            /Zc:preprocessor
             /utf-8
             /volatile:iso
             /EHsc
