@@ -64,14 +64,31 @@ jobs:
       - name: Build project (Unix)
         if: matrix.os != 'windows-latest'
         run: |
+          set -o pipefail
           cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DSHAPE_BUILD_TESTS=ON -DSHAPE_BUILD_EXAMPLES=OFF -DSHAPE_BUILD_BENCHMARKS=OFF -DSHAPE_BUILD_GAMES=OFF -DSHAPE_BUILD_LAUNCHER=OFF -DSHAPE_BUILD_TOOLS=OFF -DCMAKE_PREFIX_PATH="$(brew --prefix 2>/dev/null || echo /usr)"
-          cmake --build build --config Release --target ShapeEngineTests --verbose
+          cmake --build build --config Release --target ShapeEngineTests --verbose 2>&1 | tee build.log || {
+            echo "### Unix/macOS Build Failure Log" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            tail -n 80 build.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
       
       - name: Build project (Windows)
         if: matrix.os == 'windows-latest'
+        shell: pwsh
         run: |
           cmake -G "Visual Studio 17 2022" -A x64 -B build -DCMAKE_BUILD_TYPE=Release -DSHAPE_BUILD_TESTS=ON -DSHAPE_BUILD_EXAMPLES=OFF -DSHAPE_BUILD_BENCHMARKS=OFF -DSHAPE_BUILD_GAMES=OFF -DSHAPE_BUILD_LAUNCHER=OFF -DSHAPE_BUILD_TOOLS=OFF
-          cmake --build build --config Release --target ShapeEngineTests --verbose
+          try {
+            cmake --build build --config Release --target ShapeEngineTests --verbose 2>&1 | Tee-Object -FilePath build.log
+            if ($LASTEXITCODE -ne 0) { throw "Build failed with exit code $LASTEXITCODE" }
+          } catch {
+            "### Windows Build Failure Log" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            '```text' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            Get-Content build.log -Tail 80 | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            exit 1
+          }
       
       - name: Run validation tests
         run: |

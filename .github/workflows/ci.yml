@@ -75,10 +75,17 @@ jobs:
             -DCMAKE_PREFIX_PATH="$(brew --prefix)"
       - name: Build
         run: |
+          set -o pipefail
           cmake --build build/test \
             --config ${{ env.BUILD_TYPE }} \
             --target ShapeEngineTests \
-            --verbose
+            --verbose 2>&1 | tee build.log || {
+            echo "### macOS Build Failure Log" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            tail -n 80 build.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          }
       - name: Test
         run: |
           ctest \
@@ -108,7 +115,18 @@ jobs:
       - name: Configure
         run: cmake -G "Visual Studio 17 2022" -A x64 -S . -B build/test -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DSHAPE_BUILD_TESTS=ON -DSHAPE_BUILD_EXAMPLES=OFF -DSHAPE_BUILD_BENCHMARKS=OFF -DSHAPE_BUILD_GAMES=OFF -DSHAPE_BUILD_LAUNCHER=OFF -DSHAPE_BUILD_TOOLS=OFF
       - name: Build
-        run: cmake --build build/test --config ${{ env.BUILD_TYPE }} --target ShapeEngineTests --verbose
+        shell: pwsh
+        run: |
+          try {
+            cmake --build build/test --config ${{ env.BUILD_TYPE }} --target ShapeEngineTests --verbose 2>&1 | Tee-Object -FilePath build.log
+            if ($LASTEXITCODE -ne 0) { throw "Build failed with exit code $LASTEXITCODE" }
+          } catch {
+            "### Windows Build Failure Log" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            '```text' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            Get-Content build.log -Tail 80 | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            exit 1
+          }
       - name: Test
         run: ctest --test-dir build/test -C ${{ env.BUILD_TYPE }} --output-on-failure --verbose
 

@@ -47,25 +47,31 @@ include(SecurityHardening)
 # ─── Third-party dependencies ─────────────────────────────────────────────────
 include(FetchContent)
 
-FetchContent_Declare(
-    Catch2
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG v3.4.0
-)
-FetchContent_MakeAvailable(Catch2)
+find_package(Catch2 3.4.0 QUIET)
+if(NOT Catch2_FOUND)
+    FetchContent_Declare(
+        Catch2
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v3.4.0
+    )
+    FetchContent_MakeAvailable(Catch2)
+endif()
 
-set(SDL_SHARED OFF CACHE BOOL "Build shared SDL library" FORCE)
-set(SDL_STATIC ON  CACHE BOOL "Build static SDL library" FORCE)
-set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
-set(SDL_TESTS        OFF CACHE BOOL "" FORCE)
-set(SDL_INSTALL      OFF CACHE BOOL "" FORCE)
+find_package(SDL3 QUIET)
+if(NOT SDL3_FOUND)
+    set(SDL_SHARED OFF CACHE BOOL "Build shared SDL library" FORCE)
+    set(SDL_STATIC ON  CACHE BOOL "Build static SDL library" FORCE)
+    set(SDL_TEST_LIBRARY OFF CACHE BOOL "" FORCE)
+    set(SDL_TESTS        OFF CACHE BOOL "" FORCE)
+    set(SDL_INSTALL      OFF CACHE BOOL "" FORCE)
 
-FetchContent_Declare(
-    SDL3
-    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-    GIT_TAG release-3.2.8
-)
-FetchContent_MakeAvailable(SDL3)
+    FetchContent_Declare(
+        SDL3
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG release-3.2.8
+    )
+    FetchContent_MakeAvailable(SDL3)
+endif()
 
 # ─── Subdirectories ───────────────────────────────────────────────────────────
 add_subdirectory(Engine)
