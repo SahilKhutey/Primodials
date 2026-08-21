@@ -84,6 +84,9 @@ jobs:
             echo '```text' >> $GITHUB_STEP_SUMMARY
             tail -n 80 build.log >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -E "error:|fatal error:|undefined reference|Undefined symbols" build.log | head -n 30 | while read -r line; do
+              echo "::error::$line"
+            done
             exit 1
           }
       - name: Upload macOS build log on failure
@@ -131,6 +134,9 @@ jobs:
             '```text' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
             Get-Content build.log -Tail 80 | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
             '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+            Get-Content build.log | Select-String -Pattern "error C|fatal error|LNK[0-9]{4}|undefined reference" | Select-Object -First 30 | ForEach-Object {
+              Write-Output "::error::$($_.Line)"
+            }
             exit 1
           }
       - name: Upload Windows build log on failure
