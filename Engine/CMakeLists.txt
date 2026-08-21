@@ -97,6 +97,36 @@ target_include_directories(ShapeEngine PUBLIC
 find_package(Threads REQUIRED)
 target_link_libraries(ShapeEngine PUBLIC Threads::Threads SDL3::SDL3)
 
+if(APPLE)
+    target_link_libraries(ShapeEngine PUBLIC
+        "-framework Cocoa"
+        "-framework IOKit"
+        "-framework CoreAudio"
+        "-framework CoreVideo"
+        "-framework Metal"
+        "-framework CoreFoundation"
+        "-framework QuartzCore"
+        "-framework AudioToolbox"
+        "-framework ForceFeedback"
+        "-framework Carbon"
+        "-framework UniformTypeIdentifiers"
+    )
+elseif(WIN32)
+    target_link_libraries(ShapeEngine PUBLIC
+        user32
+        gdi32
+        winmm
+        imm32
+        ole32
+        oleaut32
+        version
+        uuid
+        advapi32
+        shell32
+        setupapi
+    )
+endif()
+
 shape_apply_warnings(ShapeEngine)
 
 add_subdirectory(Replay)
