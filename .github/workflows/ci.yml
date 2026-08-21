@@ -107,27 +107,54 @@ jobs:
     runs-on: windows-2022
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Setup MSVC
+
+      - name: Initialize MSVC
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
-      - name: Diagnose toolchain
+
+      - name: Verify toolchain
         shell: pwsh
         run: |
-          cmake --version
-          cl
-          where.exe cmake
+          Write-Host "=== Visual Studio / MSVC ==="
           where.exe cl
-      - name: Configure
-        run: cmake -G "Visual Studio 17 2022" -A x64 -S . -B build/test -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DSHAPE_BUILD_TESTS=ON -DSHAPE_BUILD_EXAMPLES=OFF -DSHAPE_BUILD_BENCHMARKS=OFF -DSHAPE_BUILD_GAMES=OFF -DSHAPE_BUILD_LAUNCHER=OFF -DSHAPE_BUILD_TOOLS=OFF
-      - name: Build
+          cl
+
+          Write-Host "=== CMake ==="
+          where.exe cmake
+          cmake --version
+
+          Write-Host "=== VSWhere ==="
+          where.exe vswhere
+          & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest `
+            -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
+
+      - name: Configure CMake
+        shell: pwsh
+        run: |
+          cmake -G "Visual Studio 17 2022" -A x64 `
+            -S . `
+            -B build `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DSHAPE_BUILD_TESTS=ON `
+            -DSHAPE_BUILD_EXAMPLES=OFF `
+            -DSHAPE_BUILD_BENCHMARKS=OFF `
+            -DSHAPE_BUILD_GAMES=OFF `
+            -DSHAPE_BUILD_LAUNCHER=OFF `
+            -DSHAPE_BUILD_TOOLS=OFF
+
+      - name: Build engine tests
         shell: pwsh
         run: |
           try {
-            cmake --build build/test --config ${{ env.BUILD_TYPE }} --target ShapeEngineTests --verbose 2>&1 | Tee-Object -FilePath build.log
+            cmake --build build --config Release --target ShapeEngineTests --parallel 2 --verbose 2>&1 | Tee-Object -FilePath build.log
             if ($LASTEXITCODE -ne 0) { throw "Build failed with exit code $LASTEXITCODE" }
           } catch {
             "### Windows Build Failure Log" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
@@ -139,14 +166,22 @@ jobs:
             }
             exit 1
           }
+
       - name: Upload Windows build log on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: windows-build-log
           path: build.log
-      - name: Test
-        run: ctest --test-dir build/test -C ${{ env.BUILD_TYPE }} --output-on-failure --verbose
+
+      - name: Run engine tests
+        shell: pwsh
+        run: |
+          ctest `
+            --test-dir build `
+            -C Release `
+            --output-on-failure `
+            --verbose
 
   # ─── Web App ────────────────────────────────
   web:

@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-2022, macos-14]
     
     steps:
       - uses: actions/checkout@v4
@@ -33,39 +33,50 @@ jobs:
             libxxf86vm-dev libwayland-dev libxkbcommon-dev libgl1-mesa-dev
       
       - name: Install system dependencies (macOS)
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-14'
         run: |
           brew update
           brew install cmake ninja sdl3 sdl3_image sdl3_ttf sdl3_mixer || brew install cmake ninja
 
       - name: Diagnose dependencies (macOS)
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-14'
         run: |
           cmake --version
           clang++ --version
           brew --prefix
           brew list --versions cmake ninja sdl3 sdl3_image sdl3_ttf sdl3_mixer || true
       
-      - name: Setup MSVC (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Initialize MSVC (Windows)
+        if: matrix.os == 'windows-2022'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
 
-      - name: Diagnose toolchain (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Verify toolchain (Windows)
+        if: matrix.os == 'windows-2022'
         shell: pwsh
         run: |
-          cmake --version
-          cl
-          where.exe cmake
+          Write-Host "=== Visual Studio / MSVC ==="
           where.exe cl
+          cl
+
+          Write-Host "=== CMake ==="
+          where.exe cmake
+          cmake --version
+
+          Write-Host "=== VSWhere ==="
+          where.exe vswhere
+          & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -latest `
+            -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
       
       - name: Build project (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-2022'
         run: |
           set -o pipefail
-          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DSHAPE_BUILD_TESTS=ON -DSHAPE_BUILD_EXAMPLES=OFF -DSHAPE_BUILD_BENCHMARKS=OFF -DSHAPE_BUILD_GAMES=OFF -DSHAPE_BUILD_LAUNCHER=OFF -DSHAPE_BUILD_TOOLS=OFF -DCMAKE_PREFIX_PATH="$(brew --prefix 2>/dev/null || echo /usr)"
+          cmake -G Ninja -S . -B build -DCMAKE_BUILD_TYPE=Release -DSHAPE_BUILD_TESTS=ON -DSHAPE_BUILD_EXAMPLES=OFF -DSHAPE_BUILD_BENCHMARKS=OFF -DSHAPE_BUILD_GAMES=OFF -DSHAPE_BUILD_LAUNCHER=OFF -DSHAPE_BUILD_TOOLS=OFF -DCMAKE_PREFIX_PATH="$(brew --prefix 2>/dev/null || echo /usr)"
           cmake --build build --config Release --target ShapeEngineTests --verbose 2>&1 | tee build.log || {
             echo "### Unix/macOS Build Failure Log" >> $GITHUB_STEP_SUMMARY
             echo '```text' >> $GITHUB_STEP_SUMMARY
@@ -75,12 +86,21 @@ jobs:
           }
       
       - name: Build project (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-2022'
         shell: pwsh
         run: |
-          cmake -G "Visual Studio 17 2022" -A x64 -B build -DCMAKE_BUILD_TYPE=Release -DSHAPE_BUILD_TESTS=ON -DSHAPE_BUILD_EXAMPLES=OFF -DSHAPE_BUILD_BENCHMARKS=OFF -DSHAPE_BUILD_GAMES=OFF -DSHAPE_BUILD_LAUNCHER=OFF -DSHAPE_BUILD_TOOLS=OFF
+          cmake -G "Visual Studio 17 2022" -A x64 `
+            -S . `
+            -B build `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DSHAPE_BUILD_TESTS=ON `
+            -DSHAPE_BUILD_EXAMPLES=OFF `
+            -DSHAPE_BUILD_BENCHMARKS=OFF `
+            -DSHAPE_BUILD_GAMES=OFF `
+            -DSHAPE_BUILD_LAUNCHER=OFF `
+            -DSHAPE_BUILD_TOOLS=OFF
           try {
-            cmake --build build --config Release --target ShapeEngineTests --verbose 2>&1 | Tee-Object -FilePath build.log
+            cmake --build build --config Release --target ShapeEngineTests --parallel 2 --verbose 2>&1 | Tee-Object -FilePath build.log
             if ($LASTEXITCODE -ne 0) { throw "Build failed with exit code $LASTEXITCODE" }
           } catch {
             "### Windows Build Failure Log" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
