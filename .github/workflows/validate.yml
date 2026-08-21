@@ -35,18 +35,36 @@ jobs:
       - name: Install system dependencies (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          brew install cmake ninja
+          brew update
+          brew install cmake ninja sdl3 sdl3_image sdl3_ttf sdl3_mixer || brew install cmake ninja
+
+      - name: Diagnose dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          cmake --version
+          clang++ --version
+          brew --prefix
+          brew list --versions cmake ninja sdl3 sdl3_image sdl3_ttf sdl3_mixer || true
       
       - name: Setup MSVC (Windows)
         if: matrix.os == 'windows-latest'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
+
+      - name: Diagnose toolchain (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          cmake --version
+          cl
+          where.exe cmake
+          where.exe cl
       
       - name: Build project (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DSHAPE_BUILD_TESTS=ON -DSHAPE_BUILD_EXAMPLES=OFF -DSHAPE_BUILD_BENCHMARKS=OFF -DSHAPE_BUILD_GAMES=OFF -DSHAPE_BUILD_LAUNCHER=OFF -DSHAPE_BUILD_TOOLS=OFF
+          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DSHAPE_BUILD_TESTS=ON -DSHAPE_BUILD_EXAMPLES=OFF -DSHAPE_BUILD_BENCHMARKS=OFF -DSHAPE_BUILD_GAMES=OFF -DSHAPE_BUILD_LAUNCHER=OFF -DSHAPE_BUILD_TOOLS=OFF -DCMAKE_PREFIX_PATH="$(brew --prefix 2>/dev/null || echo /usr)"
           cmake --build build --config Release --target ShapeEngineTests --verbose
       
       - name: Build project (Windows)
