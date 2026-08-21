@@ -2,9 +2,9 @@
   "product": "Polygonal Primordials",
   "packageName": "polygonal-primordials",
   "packageVersion": "1.0.0",
-  "commit": "218a7cc1827530d885abcc1ce8f1ebbe8250e7a4",
+  "commit": "5b0321d5e0dd6aff6331d4997fdef0cfca805113",
   "branch": "main",
   "dirty": true,
-  "builtAt": "2026-08-20T15:44:40.865Z",
+  "builtAt": "2026-08-21T14:27:24.322Z",
   "node": "v24.18.0"
 }
