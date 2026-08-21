@@ -7,6 +7,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <utility>
 
 struct SDL_Window;
 struct SDL_Renderer;
