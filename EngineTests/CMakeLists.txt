@@ -75,6 +75,9 @@ add_executable(ShapeEngineTests
 
 target_include_directories(ShapeEngineTests PRIVATE
     ${CMAKE_SOURCE_DIR}/Games/PolygonalPrimordials/src
+    ${CMAKE_SOURCE_DIR}/Engine
+    ${CMAKE_SOURCE_DIR}/Engine/Platform/Include
+    ${CMAKE_SOURCE_DIR}/Engine/Math/Include
 )
 
 target_link_libraries(ShapeEngineTests PRIVATE

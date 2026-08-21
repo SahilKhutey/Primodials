@@ -83,12 +83,6 @@ add_library(ShapeEngine STATIC
     Rendering/RenderingSystem.cpp
 )
 
-# Win32Window.cpp uses <windows.h> and only makes sense on Windows; the cross-platform
-# Platform/Window.cpp (SDL3-based) is what's actually used on all platforms including Windows.
-if(WIN32)
-    target_sources(ShapeEngine PRIVATE Platform/Source/Windows/Win32Window.cpp)
-endif()
-
 target_include_directories(ShapeEngine PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/Platform/Include>

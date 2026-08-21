@@ -17,6 +17,11 @@
     #endif
     #include <windows.h>
     #undef CreateDirectory
+#elif defined(__APPLE__)
+    #include <unistd.h>
+    #include <dlfcn.h>
+    #include <sys/types.h>
+    #include <sys/sysctl.h>
 #else
     #include <unistd.h>
     #include <dlfcn.h>
@@ -74,6 +79,15 @@ CPUInfo SystemInfo::GetCPUInfo() {
     memStatus.dwLength = sizeof(memStatus);
     GlobalMemoryStatusEx(&memStatus);
     info.RAM = memStatus.ullTotalPhys;
+#elif defined(__APPLE__)
+    info.LogicalCores = static_cast<u32>(sysconf(_SC_NPROCESSORS_ONLN));
+    int64_t mem = 0;
+    size_t len = sizeof(mem);
+    if (sysctlbyname("hw.memsize", &mem, &len, nullptr, 0) == 0) {
+        info.RAM = static_cast<u64>(mem);
+    } else {
+        info.RAM = 16ULL * 1024 * 1024 * 1024; // 16GB fallback
+    }
 #else
     info.LogicalCores = sysconf(_SC_NPROCESSORS_ONLN);
     struct sysinfo si;
