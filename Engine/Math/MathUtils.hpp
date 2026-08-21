@@ -44,7 +44,7 @@ SHAPE_INLINE constexpr T Lerp(T a, T b, f32 t) {
     return a + static_cast<T>((b - a) * t);
 }
 
-SHAPE_INLINE bool NearEquals(f32 a, f32 b, f32 epsilon = EPSILON) {
+SHAPE_INLINE constexpr bool NearEquals(f32 a, f32 b, f32 epsilon = EPSILON) {
     return Abs(a - b) <= epsilon;
 }
 
