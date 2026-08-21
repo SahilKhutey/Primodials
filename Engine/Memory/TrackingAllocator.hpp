@@ -31,15 +31,13 @@ public:
     ~TrackingAllocator() noexcept override {
 #if SHAPE_LOGGING_ENABLED
         if (m_liveAllocations > 0) {
-            Logger::instance().log(LogLevel::Warn, "Memory",
-                std::format("[{}] {} live allocation(s) on destruction "
-                            "— {} bytes leaked",
-                            m_name, m_liveAllocations, m_liveBytes));
+            SHAPE_LOG_WARN("[{}] {} live allocation(s) on destruction — {} bytes leaked",
+                           m_name, m_liveAllocations, m_liveBytes);
         }
 #endif
     }
 
-    SHAPE_NODISCARD void* Allocate(usize size, usize alignment = 8) noexcept override {
+    SHAPE_NODISCARD void* Allocate(usize size, usize alignment = alignof(std::max_align_t)) noexcept override {
         void* ptr = m_inner.Allocate(size, alignment);
         if (ptr) {
             ++m_totalAllocations;
@@ -51,22 +49,17 @@ public:
         return ptr;
     }
 
-    void Free(void* ptr, usize size = 0) noexcept override {
+    void Deallocate(void* ptr) noexcept override {
         if (!ptr) return;
-        m_inner.Free(ptr, size);
+        m_inner.Deallocate(ptr);
         if (m_liveAllocations > 0) --m_liveAllocations;
-        m_liveBytes -= size;
         ++m_totalFrees;
     }
 
-    SHAPE_NODISCARD void* Reallocate(void* ptr, usize oldSize, usize newSize,
-                                      usize alignment = 8) noexcept override {
-        void* newPtr = m_inner.Reallocate(ptr, oldSize, newSize, alignment);
-        if (newPtr) {
-            m_totalBytes += newSize > oldSize ? (newSize - oldSize) : 0;
-            m_liveBytes  += newSize - oldSize;
-        }
-        return newPtr;
+    void Reset() noexcept override {
+        m_inner.Reset();
+        m_liveAllocations = 0;
+        m_liveBytes = 0;
     }
 
     // ── Stats ─────────────────────────────────────────────────────────────────
@@ -81,10 +74,9 @@ public:
 
     void ReportToLog() const {
 #if SHAPE_LOGGING_ENABLED
-        Logger::instance().log(LogLevel::Info, "Memory", std::format(
-            "[{}] allocs={} frees={} live={} peak={}B total={}B",
-            m_name, m_totalAllocations, m_totalFrees,
-            m_liveAllocations, m_peakBytes, m_totalBytes));
+        SHAPE_LOG_INFO("[{}] allocs={} frees={} live={} peak={}B total={}B",
+                       m_name, m_totalAllocations, m_totalFrees,
+                       m_liveAllocations, m_peakBytes, m_totalBytes);
 #endif
     }
 
